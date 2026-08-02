@@ -1,11 +1,11 @@
 <!doctype html>
-<!-- RoomRelay Build v16.0.0 -->
+<!-- RoomRelay Build v17.0.0 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#172033" />
-  <title>RoomRelay 3D v16.0.0 — Shared Room Planner</title>
+  <title>RoomRelay 3D v17.0.0 — Shared Room Planner</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -277,7 +277,7 @@
     .opening-editor-grid .wide { grid-column: span 2; }
     .opening-nudge { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .three-presence { display: inline-flex; margin-top: 7px; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 999px; padding: 5px 9px; background: var(--panel2); font-size: .78rem; }
-    .three-presence::before { content: "●"; color: #22c55e; font-size: .7rem; }
+    .three-presence::before { content: "🌱"; font-size: .86rem; line-height: 1; }
     .three-placement-banner { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 8; display: flex; align-items: center; gap: 8px; max-width: calc(100% - 24px); padding: 8px 10px; border-radius: 12px; background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--accent); box-shadow: var(--shadow); font-size: .82rem; font-weight: 700; }
     .catalog-backdrop { position: fixed; inset: 0; z-index: 200; display: grid; align-items: end; background: rgba(10, 15, 25, .54); backdrop-filter: blur(3px); padding: 12px; }
     .catalog-sheet { width: min(100%, 760px); max-height: min(88vh, 760px); margin: 0 auto; display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); gap: 10px; overflow: hidden; padding: 14px; border-radius: 22px 22px 16px 16px; background: var(--panel); border: 1px solid var(--border); box-shadow: 0 24px 80px rgba(0,0,0,.30); }
@@ -452,7 +452,7 @@
     <section id="joinView" class="panel join stack">
       <div>
         <div class="join-mark">⌂</div>
-        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v16.0.0</span></div>
+        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v17.0.0</span></div>
         <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, realistic seating, IKEA-inspired storage, lighting, and cozy decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
@@ -474,7 +474,7 @@
         <div>
           <div class="brandline">
             <span class="brand">RoomRelay 3D</span>
-            <span class="version-badge" data-app-version>v16.0.0</span>
+            <span class="version-badge" data-app-version>v17.0.0</span>
             <span class="status"><span id="statusDot" class="dot connecting"></span><span id="statusText">Starting</span></span>
           </div>
           <div class="small muted">Room <span id="roomCodeLabel" class="code"></span> · <span id="peopleLabel">1 person</span></div>
@@ -651,7 +651,7 @@
       <section id="threeTab" class="hidden panel three-panel three-v12">
         <div id="threeHost" class="three-host">
           <div class="three-viewport-head" aria-live="polite">
-            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v16.0.0</span></div>
+            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v17.0.0</span></div>
             <div id="threeSelection" class="three-statusline">Tap to select · hold to move · triple-tap selected item to delete</div>
           </div>
           <div id="threePresence" class="three-presence">Only you in 3D</div>
@@ -838,7 +838,7 @@ const $ = id => document.getElementById(id);
 const canvas = $('roomCanvas');
 const joinView = $('joinView');
 const plannerView = $('plannerView');
-const APP_VERSION = '16.0.0';
+const APP_VERSION = '17.0.0';
 const WALL_SNAP_DISTANCE = 12;
 const WALL_ROTATIONS = { top: 0, right: 270, bottom: 180, left: 90 };
 const HOLD_TO_MOVE_MS = 420;
@@ -2926,7 +2926,7 @@ async function init3D() {
 
     threeRuntime = {
       THREE, scene, camera, renderer, controls, roomGroup, openingGroup, furnitureGroup, presenceGroup, lightingGroup,
-      ambient, hemi, warm, fill, raycaster, pointer, floorPlane, planePoint, furnitureObjects: new Map(), openingObjects: new Map(), wallObjects: [], drag: null, pendingHold: null,
+      ambient, hemi, warm, fill, raycaster, pointer, floorPlane, planePoint, furnitureObjects: new Map(), openingObjects: new Map(), presenceObjects: new Map(), wallObjects: [], drag: null, pendingHold: null,
       activePointers: new Map(), pointerEntities: new Map(), pinchResize: null, tapTracker: null, surfaceHold: null, radial: null,
       pointerStart: null, animationId: null, roomW: 12.5, roomD: 10.5
     };
@@ -2956,6 +2956,7 @@ async function init3D() {
       threeRuntime.animationId = requestAnimationFrame(animate);
       controls.update();
       updateWallFade();
+      animate3DPresence(performance.now());
       renderer.render(scene, camera);
     };
     animate();
@@ -5464,42 +5465,205 @@ function updateWallFade() {
   apply(threeRuntime.openingGroup);
 }
 
+function createSproutBuddy(THREE, color, peerId, name) {
+  const root = new THREE.Group();
+  root.userData.presenceBuddy = true;
+  root.userData.peerId = peerId;
+  root.userData.name = name;
+  root.userData.phase = (String(peerId).split('').reduce((sum, char) => sum + char.charCodeAt(0), 0) % 628) / 100;
+  root.userData.targetX = 0;
+  root.userData.targetZ = 0;
+  root.userData.targetRotation = 0;
+
+  const visual = new THREE.Group();
+  root.add(visual);
+  root.userData.buddyVisual = visual;
+
+  const bodyMaterial = new THREE.MeshStandardMaterial({ color, roughness: .62, metalness: .02 });
+  const bodyAccent = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).offsetHSL(0, .04, .10), roughness: .72 });
+  const eyeWhite = new THREE.MeshStandardMaterial({ color: 0xfffdf7, roughness: .4 });
+  const pupilMaterial = new THREE.MeshStandardMaterial({ color: 0x18202a, roughness: .32 });
+  const blushMaterial = new THREE.MeshStandardMaterial({ color: 0xf29ca3, roughness: .78 });
+  const leafMaterial = new THREE.MeshStandardMaterial({ color: 0x70b95d, roughness: .78, side: THREE.DoubleSide });
+  const stemMaterial = new THREE.MeshStandardMaterial({ color: 0x4d8e48, roughness: .72 });
+
+  const body = new THREE.Mesh(new THREE.SphereGeometry(.24, 24, 18), bodyMaterial);
+  body.scale.set(.82, 1.25, .76);
+  body.position.y = .61;
+  body.castShadow = true;
+  visual.add(body);
+
+  const belly = new THREE.Mesh(new THREE.SphereGeometry(.15, 20, 14), bodyAccent);
+  belly.scale.set(.9, 1.12, .36);
+  belly.position.set(0, .58, .19);
+  visual.add(belly);
+
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.29, 28, 20), bodyMaterial);
+  head.scale.set(.95, 1.02, .9);
+  head.position.y = 1.07;
+  head.castShadow = true;
+  visual.add(head);
+
+  const makeLimb = (x, y, z, length, rotationZ) => {
+    const limb = new THREE.Mesh(new THREE.CylinderGeometry(.038, .048, length, 12), bodyMaterial);
+    limb.position.set(x, y, z);
+    limb.rotation.z = rotationZ;
+    limb.castShadow = true;
+    visual.add(limb);
+    return limb;
+  };
+  const leftArm = makeLimb(-.27, .66, .01, .42, -.58);
+  const rightArm = makeLimb(.27, .66, .01, .42, .58);
+  const leftLeg = makeLimb(-.11, .24, 0, .34, -.08);
+  const rightLeg = makeLimb(.11, .24, 0, .34, .08);
+  root.userData.leftArm = leftArm;
+  root.userData.rightArm = rightArm;
+  root.userData.leftLeg = leftLeg;
+  root.userData.rightLeg = rightLeg;
+
+  for (const x of [-.11, .11]) {
+    const foot = new THREE.Mesh(new THREE.SphereGeometry(.08, 16, 12), bodyMaterial);
+    foot.scale.set(1.28, .45, 1.65);
+    foot.position.set(x, .075, .055);
+    foot.castShadow = true;
+    visual.add(foot);
+  }
+
+  for (const x of [-.105, .105]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.074, 18, 14), eyeWhite);
+    eye.scale.set(1, 1.08, .62);
+    eye.position.set(x, 1.11, .235);
+    visual.add(eye);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(.032, 16, 12), pupilMaterial);
+    pupil.scale.z = .52;
+    pupil.position.set(x, 1.11, .286);
+    visual.add(pupil);
+  }
+
+  for (const x of [-.19, .19]) {
+    const cheek = new THREE.Mesh(new THREE.SphereGeometry(.036, 14, 10), blushMaterial);
+    cheek.scale.set(1.25, .65, .35);
+    cheek.position.set(x, 1.005, .253);
+    visual.add(cheek);
+  }
+
+  const smile = new THREE.Mesh(new THREE.TorusGeometry(.052, .009, 8, 18, Math.PI), pupilMaterial);
+  smile.rotation.set(Math.PI / 2, 0, 0);
+  smile.position.set(0, .995, .284);
+  visual.add(smile);
+
+  const stem = new THREE.Mesh(new THREE.CylinderGeometry(.022, .03, .44, 12), stemMaterial);
+  stem.position.y = 1.48;
+  stem.castShadow = true;
+  visual.add(stem);
+
+  const leftLeaf = new THREE.Mesh(new THREE.SphereGeometry(.14, 18, 12), leafMaterial);
+  leftLeaf.scale.set(1.25, .3, .62);
+  leftLeaf.position.set(-.12, 1.70, 0);
+  leftLeaf.rotation.z = .42;
+  visual.add(leftLeaf);
+  const rightLeaf = leftLeaf.clone();
+  rightLeaf.position.x = .12;
+  rightLeaf.rotation.z = -.42;
+  visual.add(rightLeaf);
+  root.userData.leftLeaf = leftLeaf;
+  root.userData.rightLeaf = rightLeaf;
+
+  const haloMaterial = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .26, side: THREE.DoubleSide, depthWrite: false });
+  const halo = new THREE.Mesh(new THREE.RingGeometry(.31, .43, 32), haloMaterial);
+  halo.rotation.x = -Math.PI / 2;
+  halo.position.y = .015;
+  root.add(halo);
+  root.userData.halo = halo;
+
+  const sprite = createTextSprite(THREE, name, 0xffffff, color);
+  sprite.position.y = 2.03;
+  sprite.scale.set(1.75, .44, 1);
+  root.add(sprite);
+  root.userData.nameSprite = sprite;
+  return root;
+}
+
+function animate3DPresence(nowMs) {
+  if (!threeRuntime?.presenceObjects) return;
+  const t = nowMs / 1000;
+  for (const buddy of threeRuntime.presenceObjects.values()) {
+    const data = buddy.userData;
+    buddy.position.x += (data.targetX - buddy.position.x) * .16;
+    buddy.position.z += (data.targetZ - buddy.position.z) * .16;
+    const angleDelta = Math.atan2(Math.sin(data.targetRotation - buddy.rotation.y), Math.cos(data.targetRotation - buddy.rotation.y));
+    buddy.rotation.y += angleDelta * .18;
+    const phase = data.phase || 0;
+    const step = Math.sin(t * 4.2 + phase);
+    if (data.buddyVisual) data.buddyVisual.position.y = .025 + Math.sin(t * 3.15 + phase) * .035;
+    if (data.leftArm) data.leftArm.rotation.z = -.58 + step * .12;
+    if (data.rightArm) data.rightArm.rotation.z = .58 - step * .12;
+    if (data.leftLeg) data.leftLeg.rotation.z = -.08 - step * .08;
+    if (data.rightLeg) data.rightLeg.rotation.z = .08 + step * .08;
+    if (data.leftLeaf) data.leftLeaf.rotation.z = .42 + Math.sin(t * 2.25 + phase) * .10;
+    if (data.rightLeaf) data.rightLeaf.rotation.z = -.42 - Math.sin(t * 2.25 + phase) * .10;
+    if (data.halo?.material) data.halo.material.opacity = .20 + (Math.sin(t * 2.4 + phase) + 1) * .055;
+  }
+}
+
 function update3DPresence() {
   const label = $('threePresence');
   const active = [...remotePresence.entries()].filter(([, data]) => data.mode === 'three' && Date.now() - (data.lastSeen || 0) < 12000);
   if (label) {
     if (!active.length) label.textContent = 'Only you in 3D';
-    else label.textContent = `${active.map(([id, data]) => data.name || peers.get(id) || 'Partner').join(', ')} in 3D`;
+    else {
+      const names = active.map(([id, data]) => data.name || peers.get(id) || 'Partner');
+      label.textContent = `${names.join(', ')} ${names.length === 1 ? 'is' : 'are'} here as ${names.length === 1 ? 'a sprout buddy' : 'sprout buddies'}`;
+    }
   }
   if (!threeRuntime) return;
   const { THREE, presenceGroup, roomW, roomD } = threeRuntime;
-  clearGroup(presenceGroup);
+  if (!threeRuntime.presenceObjects) threeRuntime.presenceObjects = new Map();
+  const activeIds = new Set(active.map(([peerId]) => peerId));
+
+  for (const [peerId, buddy] of [...threeRuntime.presenceObjects.entries()]) {
+    if (activeIds.has(peerId)) continue;
+    presenceGroup.remove(buddy);
+    disposeObject(buddy);
+    threeRuntime.presenceObjects.delete(peerId);
+  }
+
   for (const [peerId, data] of active) {
     const color = Number(data.color) || actorColor(peerId);
-    const group = new THREE.Group();
-    const material = new THREE.MeshStandardMaterial({ color, roughness: .55 });
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(.22, .28, .9, 18), material);
-    body.position.y = .72;
-    body.castShadow = true;
-    const head = new THREE.Mesh(new THREE.SphereGeometry(.20, 18, 12), new THREE.MeshStandardMaterial({ color: 0xd7b59a, roughness: .75 }));
-    head.position.y = 1.38;
-    head.castShadow = true;
-    const pointer = new THREE.Mesh(new THREE.ConeGeometry(.12, .34, 12), material.clone());
-    pointer.rotation.x = Math.PI / 2;
-    pointer.position.set(0, .82, -.42);
-    group.add(body, head, pointer);
     const name = data.name || peers.get(peerId) || 'Partner';
-    const sprite = createTextSprite(THREE, name, 0xffffff, color);
-    sprite.position.y = 1.92;
-    sprite.scale.set(1.8, .45, 1);
-    group.add(sprite);
+    let buddy = threeRuntime.presenceObjects.get(peerId);
+    if (!buddy || buddy.userData.name !== name) {
+      if (buddy) {
+        presenceGroup.remove(buddy);
+        disposeObject(buddy);
+      }
+      buddy = createSproutBuddy(THREE, color, peerId, name);
+      threeRuntime.presenceObjects.set(peerId, buddy);
+      presenceGroup.add(buddy);
+    }
+
     const camera = data.camera || { x: 0, z: 0 };
-    const x = Math.max(-roomW / 2 + .45, Math.min(roomW / 2 - .45, Number(camera.x) || 0));
-    const z = Math.max(-roomD / 2 + .45, Math.min(roomD / 2 - .45, Number(camera.z) || 0));
-    group.position.set(x, 0, z);
     const target = data.target || { x: 0, z: 0 };
-    group.rotation.y = Math.atan2((Number(target.x) || 0) - x, (Number(target.z) || 0) - z);
-    presenceGroup.add(group);
+    const cameraX = Number(camera.x) || 0;
+    const cameraZ = Number(camera.z) || 0;
+    const targetX = Number(target.x) || 0;
+    const targetZ = Number(target.z) || 0;
+    const cameraInsideRoom = Math.abs(cameraX) <= roomW / 2 && Math.abs(cameraZ) <= roomD / 2;
+    const anchorX = cameraInsideRoom ? cameraX : targetX;
+    const anchorZ = cameraInsideRoom ? cameraZ : targetZ;
+    const x = Math.max(-roomW / 2 + .45, Math.min(roomW / 2 - .45, anchorX));
+    const z = Math.max(-roomD / 2 + .45, Math.min(roomD / 2 - .45, anchorZ));
+    const viewX = targetX - cameraX;
+    const viewZ = targetZ - cameraZ;
+    const facing = Math.abs(viewX) + Math.abs(viewZ) > .001 ? Math.atan2(viewX, viewZ) : buddy.rotation.y;
+    buddy.userData.targetX = x;
+    buddy.userData.targetZ = z;
+    buddy.userData.targetRotation = facing;
+    if (!buddy.userData.initializedPosition) {
+      buddy.position.set(x, 0, z);
+      buddy.rotation.y = facing;
+      buddy.userData.initializedPosition = true;
+    }
   }
 }
 
