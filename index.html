@@ -1,11 +1,11 @@
 <!doctype html>
-<!-- RoomRelay Build v9.0.0 -->
+<!-- RoomRelay Build v12.0.0 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#172033" />
-  <title>RoomRelay 3D v9.0.0 — Shared Room Planner</title>
+  <title>RoomRelay 3D v12.0.0 — Shared Room Planner</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -306,6 +306,93 @@
       .three-inspector-fields .measure-grid { grid-template-columns: 1fr 1fr; }
       .three-inspector-fields .measure-grid label:last-child { grid-column: 1 / -1; }
     }
+
+
+    /* v12 viewport-first 3D UI */
+    .three-v12 { padding: 0; overflow: visible; background: transparent; border: 0; box-shadow: none; }
+    .three-v12 .three-host {
+      height: min(78svh, 860px); min-height: 560px; border-radius: 20px;
+      box-shadow: 0 16px 44px rgba(23,32,51,.14); isolation: isolate;
+    }
+    .three-viewport-head {
+      position: absolute; top: 12px; left: 12px; z-index: 54; display: grid; gap: 3px;
+      max-width: min(47%, 420px); padding: 8px 10px; border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+      border-radius: 12px; background: color-mix(in srgb, var(--panel) 84%, transparent);
+      backdrop-filter: blur(14px); box-shadow: 0 8px 24px rgba(15,23,42,.10); pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .three-viewport-title { display: flex; align-items: center; gap: 7px; font-size: .9rem; }
+    .three-viewport-head .three-statusline { min-height: 0; font-size: .72rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .three-v12 .three-presence {
+      position: absolute; top: 12px; right: 12px; z-index: 54; margin: 0; background: color-mix(in srgb, var(--panel) 84%, transparent);
+      backdrop-filter: blur(14px); transition: opacity .18s ease, transform .18s ease;
+    }
+    .three-v12 .three-commandbar {
+      position: absolute; z-index: 78; left: 50%; right: auto; top: auto; bottom: 12px; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 5px; width: auto; max-width: calc(100% - 24px); margin: 0; padding: 5px;
+      border: 1px solid color-mix(in srgb, var(--border) 76%, transparent); border-radius: 16px;
+      background: color-mix(in srgb, var(--panel) 86%, transparent); backdrop-filter: blur(18px);
+      box-shadow: 0 12px 38px rgba(15,23,42,.22); transition: opacity .18s ease, transform .18s ease;
+    }
+    .viewport-tool, .three-v12 .tool-menu > summary {
+      min-height: 42px; width: auto; min-width: 44px; padding: 8px 11px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      border: 1px solid var(--border); border-radius: 11px; background: color-mix(in srgb, var(--panel2) 94%, transparent);
+      color: var(--text); font: inherit; font-size: .82rem; font-weight: 800; cursor: pointer; white-space: nowrap;
+    }
+    .viewport-tool.primary { color: var(--accent-text); background: var(--accent); border-color: var(--accent); }
+    .viewport-tool-icon { font-size: 1rem; line-height: 1; }
+    .three-v12 .tool-menu { position: static; }
+    .three-v12 .tool-menu[open] > summary { background: var(--soft); border-color: var(--accent); }
+    .three-v12 .tool-menu-panel {
+      position: fixed; left: 50%; right: auto; top: auto; bottom: max(70px, calc(env(safe-area-inset-bottom) + 64px));
+      transform: translateX(-50%); width: min(470px, calc(100vw - 20px)); max-height: min(58svh, 620px); overflow: auto;
+      z-index: 1200; padding: 13px; border-radius: 18px; box-shadow: 0 24px 70px rgba(10,15,25,.34);
+      overscroll-behavior: contain;
+    }
+    .three-v12 .tool-menu-panel.wide { width: min(540px, calc(100vw - 20px)); }
+    .compact-section { display: grid; gap: 7px; }
+    .compact-section-label { font-size: .72rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    .compact-toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .advanced-fields { border: 1px solid var(--border); border-radius: 11px; overflow: hidden; background: var(--panel2); }
+    .advanced-fields > summary { cursor: pointer; list-style: none; padding: 9px 10px; font-size: .78rem; font-weight: 800; }
+    .advanced-fields > summary::-webkit-details-marker { display: none; }
+    .advanced-fields[open] > summary { border-bottom: 1px solid var(--border); }
+    .advanced-fields > .tool-grid { padding: 9px; }
+    .three-ui-show {
+      position: absolute; left: 50%; bottom: 12px; z-index: 75; transform: translateX(-50%);
+      min-height: 40px; padding: 8px 13px; border: 1px solid var(--border); border-radius: 999px;
+      background: color-mix(in srgb, var(--panel) 82%, transparent); backdrop-filter: blur(14px); color: var(--text); font-weight: 800;
+      box-shadow: 0 10px 28px rgba(15,23,42,.20);
+    }
+    .three-host.ui-hidden .three-commandbar, .three-host.ui-hidden .three-viewport-head, .three-host.ui-hidden .three-presence, .three-host.ui-hidden .three-hint {
+      opacity: 0; pointer-events: none; transform: translateY(8px);
+    }
+    .three-host.ui-hidden .three-commandbar { transform: translate(-50%, 8px); }
+    .three-v12 .three-hint { bottom: 68px; left: 50%; transform: translateX(-50%); white-space: nowrap; opacity: .82; }
+    .three-v12 .three-placement-banner { top: 70px; z-index: 76; }
+    .three-panel.focus-mode { position: fixed; inset: 0; z-index: 1000; padding: 0; margin: 0; background: #0f1720; border-radius: 0; }
+    .three-panel.focus-mode .three-host { width: 100vw; height: 100svh; min-height: 0; max-height: none; border: 0; border-radius: 0; }
+    body.three-focus { overflow: hidden; overscroll-behavior: none; }
+    .catalog-backdrop { z-index: 1600; }
+    .cozy-collection-note { border: 1px solid color-mix(in srgb, #d798b3 46%, var(--border)); background: color-mix(in srgb, #f6dbe6 34%, var(--panel)); }
+
+    @media (max-width: 620px) {
+      .three-v12 { margin-left: -8px; margin-right: -8px; }
+      .three-v12 .three-host { height: calc(100svh - 158px); min-height: 520px; border-radius: 16px; }
+      .three-viewport-head { top: 8px; left: 8px; max-width: 58%; padding: 6px 8px; }
+      .three-v12 .three-presence { top: 8px; right: 8px; padding: 4px 7px; font-size: .7rem; }
+      .three-v12 .three-commandbar { bottom: max(8px, env(safe-area-inset-bottom)); max-width: calc(100% - 16px); padding: 4px; gap: 4px; }
+      .viewport-tool, .three-v12 .tool-menu > summary { min-height: 40px; min-width: 40px; padding: 7px 9px; }
+      .viewport-tool-label { display: none; }
+      #threeAddObjectBtn .viewport-tool-label { display: inline; }
+      .three-v12 .tool-menu-caret { display: none; }
+      .three-v12 .tool-menu-panel { bottom: max(62px, calc(env(safe-area-inset-bottom) + 54px)); max-height: 54svh; }
+      .three-v12 .three-hint { display: none; }
+      .three-v12 .three-placement-banner { top: 54px; }
+      .compact-toggle-row { grid-template-columns: 1fr; }
+      .quick-edit-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
   </style>
 </head>
 <body>
@@ -313,8 +400,8 @@
     <section id="joinView" class="panel join stack">
       <div>
         <div class="join-mark">⌂</div>
-        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v9.0.0</span></div>
-        <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, shelves, lights, and decor together in 2D or 3D.</p>
+        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v12.0.0</span></div>
+        <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, realistic seating, soft-cozy furniture, lighting, and detailed decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
       <label>Your name
@@ -335,7 +422,7 @@
         <div>
           <div class="brandline">
             <span class="brand">RoomRelay 3D</span>
-            <span class="version-badge" data-app-version>v9.0.0</span>
+            <span class="version-badge" data-app-version>v12.0.0</span>
             <span class="status"><span id="statusDot" class="dot connecting"></span><span id="statusText">Starting</span></span>
           </div>
           <div class="small muted">Room <span id="roomCodeLabel" class="code"></span> · <span id="peopleLabel">1 person</span></div>
@@ -488,116 +575,111 @@
         </section>
       </section>
 
-      <section id="threeTab" class="hidden panel three-panel">
-        <div class="three-topline">
-          <div class="three-heading">
-            <div class="row"><h2>3D room</h2><span class="version-badge" data-app-version>v9.0.0</span></div>
-            <div id="threeSelection" class="small muted three-statusline" aria-live="polite">Tap to select · hold briefly to move · pinch to zoom</div>
+      <section id="threeTab" class="hidden panel three-panel three-v12">
+        <div id="threeHost" class="three-host">
+          <div class="three-viewport-head" aria-live="polite">
+            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v12.0.0</span></div>
+            <div id="threeSelection" class="three-statusline">Tap to select · hold to move</div>
           </div>
           <div id="threePresence" class="three-presence">Only you in 3D</div>
-        </div>
 
-        <div id="threeCommandbar" class="three-commandbar" aria-label="3D room controls">
-          <button id="threeAddObjectBtn" class="btn compact primary" type="button">＋ Add object</button>
+          <div id="threeCommandbar" class="three-commandbar" aria-label="3D room controls">
+            <button id="threeAddObjectBtn" class="viewport-tool primary" type="button" aria-label="Add object"><span class="viewport-tool-icon">＋</span><span class="viewport-tool-label">Add</span></button>
 
-          <details class="tool-menu" data-three-menu>
-            <summary><span>View</span><span class="tool-menu-caret">▼</span></summary>
-            <div class="tool-menu-panel left">
-              <div class="tool-menu-title"><span>Camera view</span><span class="muted">One tap</span></div>
-              <div class="tool-action-grid">
-                <button id="resetViewBtn" class="btn compact" type="button">Room view</button>
-                <button id="topViewBtn" class="btn compact" type="button">Top view</button>
-              </div>
-              <p class="three-menu-help">Drag empty space to orbit. Pinch to zoom. Two-finger drag pans the camera.</p>
-            </div>
-          </details>
-
-          <details class="tool-menu" data-three-menu>
-            <summary><span>Lighting</span><span class="tool-menu-caret">▼</span></summary>
-            <div class="tool-menu-panel">
-              <div class="tool-menu-title"><span>Room lighting</span><span class="muted">Live preview</span></div>
-              <div class="tool-grid single">
-                <label>Lighting preset
-                  <select id="lightingMode">
-                    <option value="day">Daylight</option>
-                    <option value="warm">Warm evening</option>
-                    <option value="studio">Bright studio</option>
-                  </select>
-                </label>
-              </div>
-            </div>
-          </details>
-
-          <details class="tool-menu" data-three-menu>
-            <summary><span>Placement</span><span class="tool-menu-caret">▼</span></summary>
-            <div class="tool-menu-panel">
-              <div class="tool-menu-title"><span>Movement settings</span><span class="muted">Hold to move</span></div>
-              <div class="tool-grid single">
-                <label>Drag direction
-                  <select id="threeMoveMode">
-                    <option value="floor">Across floor or wall</option>
-                    <option value="height">Up and down</option>
-                  </select>
-                </label>
-                <label class="tool-toggle"><input id="threeSnapToggle" type="checkbox" /> Snap to 3-inch increments</label>
-                <label class="tool-toggle"><input id="threeWallSnapToggle" type="checkbox" checked /> Snap near walls and face the room</label>
-              </div>
-            </div>
-          </details>
-
-          <details id="threeSelectedMenu" class="tool-menu" data-three-menu>
-            <summary class="selected-tool-summary"><span id="threeSelectedSummary">No selection</span><span class="tool-menu-caret">▼</span></summary>
-            <div class="tool-menu-panel wide">
-              <div class="tool-menu-title"><span>Selected object</span><span id="threeSelectedTypeLabel" class="muted">Nothing selected</span></div>
-              <div id="threeInspectorEmpty" class="three-inspector-empty">Select furniture, a door, or a window in the 3D room.</div>
-
-              <div id="threeFurnitureInspector" class="three-inspector-fields hidden">
+            <details id="threeSceneMenu" class="tool-menu" data-three-menu>
+              <summary aria-label="Scene controls"><span class="viewport-tool-icon">☰</span><span class="viewport-tool-label">Scene</span><span class="tool-menu-caret">▾</span></summary>
+              <div class="tool-menu-panel scene-panel">
+                <div class="tool-menu-title"><span>Scene controls</span><span class="muted">View, light, placement</span></div>
+                <div class="compact-section">
+                  <span class="compact-section-label">Camera</span>
+                  <div class="tool-action-grid">
+                    <button id="resetViewBtn" class="btn compact" type="button">Room view</button>
+                    <button id="topViewBtn" class="btn compact" type="button">Top view</button>
+                  </div>
+                </div>
                 <div class="tool-grid">
-                  <label>Name<input id="threeItemName" maxlength="40" /></label>
-                  <label>Elevation (in)<input id="threeItemElevation" type="number" min="0" max="120" step="0.5" /></label>
-                </div>
-                <div class="tool-grid measure-grid">
-                  <label>Width (in)<input id="threeItemWidth" type="number" min="1" max="240" step="0.5" /></label>
-                  <label>Depth (in)<input id="threeItemDepth" type="number" min="1" max="240" step="0.5" /></label>
-                  <label>Height (in)<input id="threeItemHeight" type="number" min="1" max="144" step="0.5" /></label>
-                </div>
-                <button id="threeApplyFurnitureBtn" class="btn compact primary" type="button">Apply size and name</button>
-              </div>
-
-              <div id="threeOpeningInspector" class="three-inspector-fields hidden">
-                <div class="tool-grid opening-grid">
-                  <label class="wide">Name<input id="threeOpeningName" maxlength="40" /></label>
-                  <label>Type
-                    <select id="threeOpeningType"><option value="door">Door</option><option value="window">Window</option></select>
+                  <label>Lighting
+                    <select id="lightingMode">
+                      <option value="day">Daylight</option>
+                      <option value="warm">Warm evening</option>
+                      <option value="studio">Bright studio</option>
+                    </select>
                   </label>
-                  <label>Wall
-                    <select id="threeOpeningWall"><option value="top">Top</option><option value="right">Right</option><option value="bottom">Bottom</option><option value="left">Left</option></select>
+                  <label>Move mode
+                    <select id="threeMoveMode">
+                      <option value="floor">Across floor or wall</option>
+                      <option value="height">Up and down</option>
+                    </select>
                   </label>
-                  <label>Width (in)<input id="threeOpeningWidth" type="number" min="8" max="120" step="1" /></label>
-                  <label>Height (in)<input id="threeOpeningHeight" type="number" min="8" max="120" step="1" /></label>
-                  <label>Sill (in)<input id="threeOpeningSill" type="number" min="0" max="100" step="1" /></label>
-                  <label>Along wall (in)<input id="threeOpeningOffset" type="number" min="0" max="240" step="1" /></label>
                 </div>
-                <button id="threeApplyOpeningBtn" class="btn compact primary" type="button">Apply opening changes</button>
+                <div class="compact-toggle-row">
+                  <label class="tool-toggle"><input id="threeSnapToggle" type="checkbox" /> 3-inch snap</label>
+                  <label class="tool-toggle"><input id="threeWallSnapToggle" type="checkbox" checked /> Wall snap</label>
+                </div>
+                <p class="three-menu-help">Drag empty space to orbit. Pinch to zoom. Two-finger drag pans.</p>
               </div>
+            </details>
 
-              <div class="tool-action-grid three">
-                <button id="threeRotateLeftBtn" class="btn compact" type="button">↶ Rotate</button>
-                <button id="threeRotateRightBtn" class="btn compact" type="button">↷ Rotate</button>
-                <button id="threeFloorBtn" class="btn compact" type="button">To floor</button>
-                <button id="threeLowerBtn" class="btn compact" type="button">↓ 1 inch</button>
-                <button id="threeRaiseBtn" class="btn compact" type="button">↑ 1 inch</button>
-                <button id="threeDuplicateSelectedBtn" class="btn compact" type="button">Duplicate</button>
-                <button id="threeDeleteSelectedBtn" class="btn compact danger" type="button">Remove selected object</button>
+            <details id="threeSelectedMenu" class="tool-menu" data-three-menu>
+              <summary class="selected-tool-summary" aria-label="Edit selected object"><span class="viewport-tool-icon">✎</span><span id="threeSelectedSummary" class="viewport-tool-label">Edit</span><span class="tool-menu-caret">▾</span></summary>
+              <div class="tool-menu-panel wide selected-panel">
+                <div class="tool-menu-title"><span>Selected object</span><span id="threeSelectedTypeLabel" class="muted">Nothing selected</span></div>
+                <div id="threeInspectorEmpty" class="three-inspector-empty">Select furniture, a door, or a window in the 3D room.</div>
+
+                <div id="threeFurnitureInspector" class="three-inspector-fields hidden">
+                  <div class="tool-grid">
+                    <label>Name<input id="threeItemName" maxlength="40" /></label>
+                    <label>Elevation (in)<input id="threeItemElevation" type="number" min="0" max="120" step="0.5" /></label>
+                  </div>
+                  <details class="advanced-fields">
+                    <summary>Size and dimensions</summary>
+                    <div class="tool-grid measure-grid">
+                      <label>Width (in)<input id="threeItemWidth" type="number" min="1" max="240" step="0.5" /></label>
+                      <label>Depth (in)<input id="threeItemDepth" type="number" min="1" max="240" step="0.5" /></label>
+                      <label>Height (in)<input id="threeItemHeight" type="number" min="1" max="144" step="0.5" /></label>
+                    </div>
+                  </details>
+                  <button id="threeApplyFurnitureBtn" class="btn compact primary" type="button">Apply changes</button>
+                </div>
+
+                <div id="threeOpeningInspector" class="three-inspector-fields hidden">
+                  <div class="tool-grid opening-grid">
+                    <label class="wide">Name<input id="threeOpeningName" maxlength="40" /></label>
+                    <label>Type<select id="threeOpeningType"><option value="door">Door</option><option value="window">Window</option></select></label>
+                    <label>Wall<select id="threeOpeningWall"><option value="top">Top</option><option value="right">Right</option><option value="bottom">Bottom</option><option value="left">Left</option></select></label>
+                  </div>
+                  <details class="advanced-fields">
+                    <summary>Opening dimensions</summary>
+                    <div class="tool-grid opening-grid">
+                      <label>Width (in)<input id="threeOpeningWidth" type="number" min="8" max="120" step="1" /></label>
+                      <label>Height (in)<input id="threeOpeningHeight" type="number" min="8" max="120" step="1" /></label>
+                      <label>Sill (in)<input id="threeOpeningSill" type="number" min="0" max="100" step="1" /></label>
+                      <label>Along wall (in)<input id="threeOpeningOffset" type="number" min="0" max="240" step="1" /></label>
+                    </div>
+                  </details>
+                  <button id="threeApplyOpeningBtn" class="btn compact primary" type="button">Apply opening</button>
+                </div>
+
+                <div class="tool-action-grid three quick-edit-grid">
+                  <button id="threeRotateLeftBtn" class="btn compact" type="button">↶ Rotate</button>
+                  <button id="threeRotateRightBtn" class="btn compact" type="button">↷ Rotate</button>
+                  <button id="threeFloorBtn" class="btn compact" type="button">To floor</button>
+                  <button id="threeLowerBtn" class="btn compact" type="button">↓ 1 in</button>
+                  <button id="threeRaiseBtn" class="btn compact" type="button">↑ 1 in</button>
+                  <button id="threeDuplicateSelectedBtn" class="btn compact" type="button">Duplicate</button>
+                  <button id="threeDeleteSelectedBtn" class="btn compact danger" type="button">Remove selected</button>
+                </div>
               </div>
-            </div>
-          </details>
-        </div>
+            </details>
 
-        <div id="threeHost" class="three-host">
+            <button id="threeFocusBtn" class="viewport-tool" type="button" aria-label="Enter focus mode" title="Focus mode"><span class="viewport-tool-icon">⛶</span><span class="viewport-tool-label">Focus</span></button>
+            <button id="threeUiToggleBtn" class="viewport-tool" type="button" aria-label="Hide 3D controls" title="Hide controls"><span class="viewport-tool-icon">⌄</span><span class="viewport-tool-label">Hide</span></button>
+          </div>
+
+          <button id="threeUiShowBtn" class="three-ui-show hidden" type="button">Show controls</button>
           <div id="threePlacementBanner" class="three-placement-banner hidden"><span id="threePlacementText">Tap to place</span><button id="cancelThreePlacementBtn" class="btn compact" type="button">Cancel</button></div>
           <div id="threeStatus" class="three-status">Open this tab to load the 3D room.</div>
-          <div class="three-hint">Hold an object to move it · use the menus above for view, lighting, placement, and editing</div>
+          <div class="three-hint">Hold an object to move · tap Focus for a full-screen room</div>
         </div>
       </section>
 
@@ -619,7 +701,7 @@
         <div><h2 id="threeCatalogTitle" style="margin-bottom:3px">Place an object in 3D</h2><div class="small muted">Choose an item, then tap the floor, a surface, a wall, or a ceiling position.</div></div>
         <button id="closeThreeCatalogBtn" class="btn icon compact" type="button" aria-label="Close object menu">×</button>
       </div>
-      <input id="threeCatalogSearch" type="search" placeholder="Search chairs, plants, shelves…" autocomplete="off" />
+      <input id="threeCatalogSearch" type="search" placeholder="Search printer, chairs, plants, shelves…" autocomplete="off" />
       <div id="threeCatalogFilters" class="catalog-filters" aria-label="Object categories"></div>
       <div id="threeCatalogGrid" class="catalog-grid"></div>
     </section>
@@ -641,7 +723,7 @@ const $ = id => document.getElementById(id);
 const canvas = $('roomCanvas');
 const joinView = $('joinView');
 const plannerView = $('plannerView');
-const APP_VERSION = '9.0.0';
+const APP_VERSION = '12.0.0';
 const WALL_SNAP_DISTANCE = 12;
 const WALL_ROTATIONS = { top: 0, right: 270, bottom: 180, left: 90 };
 const HOLD_TO_MOVE_MS = 420;
@@ -657,6 +739,14 @@ const PRESETS = [
   { name: 'Storage console', kind: 'storage', icon: '▥', w: 60, d: 16, height: 30 },
   { name: 'Dresser', kind: 'dresser', icon: '▤', w: 36, d: 20, height: 36 },
   { name: 'Round side table', kind: 'storage', icon: '◉', w: 24, d: 24, height: 24 },
+  { name: 'Printer table', kind: 'desk', icon: '▣', w: 24, d: 24, height: 30 },
+
+  { name: 'Makeup vanity desk', kind: 'desk', icon: '✨', w: 48, d: 20, height: 58, collection: 'soft-cozy' },
+  { name: 'Rattan nightstand', kind: 'storage', icon: '▤', w: 24, d: 18, height: 25, collection: 'soft-cozy' },
+  { name: 'Clothing rack', kind: 'storage', icon: '♧', w: 42, d: 18, height: 66, collection: 'soft-cozy' },
+  { name: 'Woven laundry hamper', kind: 'storage', icon: '⌑', w: 20, d: 20, height: 28, collection: 'soft-cozy' },
+  { name: 'Arched floor mirror', kind: 'decor', icon: '◒', w: 28, d: 10, height: 68, collection: 'soft-cozy' },
+  { name: 'Canopy bed', kind: 'bed', icon: '♕', w: 60, d: 80, height: 84, collection: 'soft-cozy', autoFaceCenter: true },
 
   { name: 'Cozy chair', kind: 'chair', icon: '🪑', w: 38, d: 38, height: 36, autoFaceCenter: true },
   { name: 'Bean bag chair', kind: 'chair', icon: '●', w: 42, d: 42, height: 28, autoFaceCenter: true },
@@ -667,12 +757,33 @@ const PRESETS = [
   { name: 'Craft stool', kind: 'chair', icon: '◉', w: 18, d: 18, height: 24, autoFaceCenter: true },
   { name: 'Floor cushion', kind: 'chair', icon: '◇', w: 28, d: 28, height: 8, autoFaceCenter: true },
   { name: 'Ottoman', kind: 'chair', icon: '◼', w: 24, d: 24, height: 18, autoFaceCenter: true },
+  { name: 'Wingback reading chair', kind: 'chair', icon: '♛', w: 36, d: 38, height: 44, autoFaceCenter: true },
+  { name: 'Bouclé tub chair', kind: 'chair', icon: '◖', w: 34, d: 32, height: 31, autoFaceCenter: true },
+  { name: 'Papasan chair', kind: 'chair', icon: '◯', w: 44, d: 44, height: 38, autoFaceCenter: true },
+  { name: 'Wooden rocking chair', kind: 'chair', icon: '⌣', w: 30, d: 39, height: 43, autoFaceCenter: true },
+  { name: 'Sherpa lounge chair', kind: 'chair', icon: '◒', w: 35, d: 37, height: 34, autoFaceCenter: true },
+  { name: 'Knit floor pouf', kind: 'chair', icon: '◉', w: 24, d: 24, height: 16, autoFaceCenter: false },
+  { name: 'Curved loveseat', kind: 'sofa', icon: '🛋', w: 62, d: 36, height: 34, autoFaceCenter: true },
+
+  { name: 'Pink velvet bench', kind: 'sofa', icon: '▰', w: 48, d: 18, height: 24, autoFaceCenter: true, collection: 'soft-cozy' },
+  { name: 'Vanity stool', kind: 'chair', icon: '◉', w: 18, d: 18, height: 20, autoFaceCenter: true, collection: 'soft-cozy' },
+  { name: 'Floral reading chair', kind: 'chair', icon: '❀', w: 34, d: 36, height: 38, autoFaceCenter: true, collection: 'soft-cozy' },
 
   { name: 'Floor lamp', kind: 'light', icon: '💡', w: 18, d: 18, height: 68 },
   { name: 'Table lamp', kind: 'light', icon: '🕯', w: 12, d: 12, height: 22, surfaceItem: true },
   { name: 'Task lamp', kind: 'light', icon: '🔦', w: 10, d: 10, height: 20, surfaceItem: true },
   { name: 'Pendant light', kind: 'light', icon: '◔', w: 18, d: 18, height: 84, elevation: 0 },
   { name: 'String lights', kind: 'light', icon: '✦', w: 72, d: 3, height: 10, wallMounted: true, wall: 'top', elevation: 76 },
+  { name: 'Wall sconce', kind: 'light', icon: '◐', w: 10, d: 8, height: 16, wallMounted: true, wall: 'top', elevation: 52 },
+  { name: 'Electric fireplace', kind: 'light', icon: '🔥', w: 48, d: 14, height: 30 },
+  { name: 'Candle trio', kind: 'light', icon: '🕯', w: 12, d: 7, height: 10, surfaceItem: true },
+  { name: 'Cozy lantern', kind: 'light', icon: '🏮', w: 10, d: 10, height: 17, surfaceItem: true },
+  { name: 'Arc reading lamp', kind: 'light', icon: '⌒', w: 26, d: 26, height: 72 },
+
+  { name: 'Scalloped table lamp', kind: 'light', icon: '♢', w: 12, d: 12, height: 20, surfaceItem: true, collection: 'soft-cozy' },
+  { name: 'Mushroom lamp', kind: 'light', icon: '◠', w: 11, d: 11, height: 14, surfaceItem: true, collection: 'soft-cozy' },
+  { name: 'Fairy light curtain', kind: 'light', icon: '✧', w: 60, d: 3, height: 72, wallMounted: true, wall: 'top', elevation: 18, collection: 'soft-cozy' },
+  { name: 'Neon heart sign', kind: 'light', icon: '♡', w: 24, d: 3, height: 22, wallMounted: true, wall: 'top', elevation: 52, collection: 'soft-cozy' },
 
   { name: 'Mounted TV', kind: 'tv', icon: '▰', w: 55, d: 4, height: 32, wallMounted: true, wall: 'top', elevation: 44 },
   { name: 'Tabletop TV', kind: 'tv', icon: '📺', w: 32, d: 8, height: 23, surfaceItem: true },
@@ -681,9 +792,18 @@ const PRESETS = [
   { name: 'Thread rack', kind: 'shelf', icon: '⋮', w: 36, d: 4, height: 24, wallMounted: true, wall: 'top', elevation: 48 },
   { name: 'Inspiration board', kind: 'decor', icon: '▧', w: 42, d: 3, height: 30, wallMounted: true, wall: 'top', elevation: 46 },
   { name: 'Floating shelf', kind: 'shelf', icon: '═', w: 36, d: 8, height: 8, wallMounted: true, wall: 'top', elevation: 54 },
+  { name: 'IKEA LACK shelf 12 in', kind: 'shelf', icon: '━', w: 11.75, d: 10.25, height: 2, wallMounted: true, wall: 'top', elevation: 54 },
+  { name: 'IKEA LACK shelf 43 in', kind: 'shelf', icon: '━━━━', w: 43.25, d: 10.25, height: 2, wallMounted: true, wall: 'top', elevation: 54 },
   { name: 'Blanket ladder', kind: 'decor', icon: '╫', w: 24, d: 5, height: 66, wallMounted: true, wall: 'top', elevation: 12 },
   { name: 'Wall art', kind: 'decor', icon: '▧', w: 30, d: 3, height: 24, wallMounted: true, wall: 'top', elevation: 48 },
   { name: 'Wall mirror', kind: 'decor', icon: '◫', w: 24, d: 3, height: 36, wallMounted: true, wall: 'top', elevation: 38 },
+  { name: 'Macramé wall hanging', kind: 'decor', icon: '⋏', w: 32, d: 3, height: 42, wallMounted: true, wall: 'top', elevation: 42 },
+  { name: 'Soft curtain pair', kind: 'decor', icon: '▥', w: 60, d: 5, height: 84, wallMounted: true, wall: 'left', elevation: 8 },
+  { name: 'Woven wall tapestry', kind: 'decor', icon: '▧', w: 42, d: 3, height: 52, wallMounted: true, wall: 'top', elevation: 32 },
+
+  { name: 'Photo collage grid', kind: 'decor', icon: '▦', w: 36, d: 3, height: 30, wallMounted: true, wall: 'top', elevation: 46, collection: 'soft-cozy' },
+  { name: 'Wavy wall mirror', kind: 'decor', icon: '〰', w: 24, d: 3, height: 40, wallMounted: true, wall: 'top', elevation: 38, collection: 'soft-cozy' },
+  { name: 'Bow wall hooks', kind: 'decor', icon: '⋈', w: 24, d: 5, height: 10, wallMounted: true, wall: 'top', elevation: 48, collection: 'soft-cozy' },
 
   { name: 'Floor plant', kind: 'decor', icon: '🪴', w: 20, d: 20, height: 34 },
   { name: 'Tall plant', kind: 'decor', icon: '🌿', w: 24, d: 24, height: 60 },
@@ -692,6 +812,7 @@ const PRESETS = [
   { name: 'Ceiling pothos', kind: 'decor', icon: '☘', w: 18, d: 18, height: 32, ceilingMounted: true },
   { name: 'Ceiling fern', kind: 'decor', icon: '🌿', w: 22, d: 22, height: 36, ceilingMounted: true },
 
+  { name: 'Bambu Lab P1S 3D printer', kind: 'other', icon: '🖨', w: 15.31, d: 15.31, height: 18.03, surfaceItem: true },
   { name: 'Monitor', kind: 'other', icon: '🖥', w: 24, d: 8, height: 18, surfaceItem: true },
   { name: 'Laptop', kind: 'other', icon: '⌨', w: 14, d: 10, height: 7, surfaceItem: true },
   { name: 'Sewing machine', kind: 'other', icon: '🧵', w: 18, d: 9, height: 13, surfaceItem: true },
@@ -706,14 +827,36 @@ const PRESETS = [
   { name: 'Photo frame', kind: 'decor', icon: '▣', w: 9, d: 4, height: 11, surfaceItem: true },
   { name: 'Desk clock', kind: 'decor', icon: '◷', w: 8, d: 4, height: 8, surfaceItem: true },
   { name: 'Storage basket', kind: 'storage', icon: '▢', w: 16, d: 12, height: 10, surfaceItem: true },
+  { name: 'Throw pillow', kind: 'decor', icon: '◇', w: 18, d: 18, height: 7, surfaceItem: true },
+  { name: 'Chunky knit throw', kind: 'decor', icon: '≋', w: 28, d: 20, height: 4, surfaceItem: true },
+  { name: 'Aroma diffuser', kind: 'decor', icon: '♨', w: 7, d: 7, height: 10, surfaceItem: true },
+  { name: 'Tea tray', kind: 'decor', icon: '☕', w: 16, d: 12, height: 5, surfaceItem: true },
+  { name: 'Record player', kind: 'other', icon: '◉', w: 18, d: 15, height: 7, surfaceItem: true },
+  { name: 'Book nook lamp', kind: 'light', icon: '✧', w: 8, d: 8, height: 13, surfaceItem: true },
+
+  { name: 'Flower bouquet vase', kind: 'decor', icon: '💐', w: 10, d: 10, height: 18, surfaceItem: true, collection: 'soft-cozy' },
+  { name: 'Perfume tray', kind: 'decor', icon: '♢', w: 14, d: 9, height: 7, surfaceItem: true, collection: 'soft-cozy' },
+  { name: 'Jewelry tree', kind: 'decor', icon: '♧', w: 10, d: 8, height: 16, surfaceItem: true, collection: 'soft-cozy' },
+  { name: 'Makeup organizer', kind: 'storage', icon: '▥', w: 14, d: 9, height: 8, surfaceItem: true, collection: 'soft-cozy' },
+  { name: 'Skincare bottles', kind: 'decor', icon: '♙', w: 11, d: 7, height: 10, surfaceItem: true, collection: 'soft-cozy' },
+  { name: 'Ceramic trinket dish', kind: 'decor', icon: '◡', w: 7, d: 7, height: 2, surfaceItem: true, collection: 'soft-cozy' },
+  { name: 'Plush teddy bear', kind: 'decor', icon: '🧸', w: 12, d: 10, height: 16, surfaceItem: true, collection: 'soft-cozy' },
+  { name: 'Heart cushion', kind: 'decor', icon: '♥', w: 18, d: 16, height: 7, surfaceItem: true, collection: 'soft-cozy' },
+  { name: 'Bow pillow', kind: 'decor', icon: '⋈', w: 20, d: 14, height: 7, surfaceItem: true, collection: 'soft-cozy' },
 
   { name: 'Rolling cart', kind: 'storage', icon: '▣', w: 16, d: 12, height: 32 },
+  { name: 'Magazine rack', kind: 'storage', icon: '▱', w: 18, d: 10, height: 20 },
+  { name: 'Cozy cat bed', kind: 'decor', icon: '◡', w: 28, d: 24, height: 10 },
+  { name: 'Blanket basket', kind: 'storage', icon: '⌑', w: 22, d: 18, height: 24 },
   { name: 'Woven floor basket', kind: 'storage', icon: '◡', w: 22, d: 22, height: 20 },
   { name: 'TV stand', kind: 'tv', icon: '▰', w: 48, d: 16, height: 24 },
   { name: 'Vintage floral rug', kind: 'decor', icon: '▭', w: 84, d: 60, height: 0.16, rugStyle: 'floral' },
   { name: 'Braided oval rug', kind: 'decor', icon: '⬭', w: 72, d: 48, height: 0.14, rugStyle: 'braided' },
   { name: 'Checker craft rug', kind: 'decor', icon: '▦', w: 72, d: 48, height: 0.14, rugStyle: 'checker' },
   { name: 'Neutral area rug', kind: 'decor', icon: '▭', w: 72, d: 48, height: 0.12, rugStyle: 'woven' },
+
+  { name: 'Blush floral rug', kind: 'decor', icon: '❀', w: 72, d: 48, height: 0.12, rugStyle: 'blushfloral', collection: 'soft-cozy' },
+  { name: 'Cloud faux-fur rug', kind: 'decor', icon: '☁', w: 60, d: 42, height: 0.10, rugStyle: 'fauxfur', collection: 'soft-cozy' },
   { name: 'Bed', kind: 'bed', icon: '🛏', w: 60, d: 80, height: 24 },
   { name: 'Custom', kind: 'custom', icon: '+', w: 36, d: 24, height: 30 }
 ];
@@ -765,7 +908,7 @@ function photoOpenings() {
 
 function freshState() {
   return {
-    version: 8,
+    version: 12,
     meta: { width: 150, depth: 126, wallHeight: 96, snap: true, threeSnap: false, wallSnap: true, lighting: 'day', rev: { n: 0, a: '' } },
     furniture: {},
     openings: photoOpenings(),
@@ -806,7 +949,7 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function storageKey() { return `roomrelay:v8:${currentCode}`; }
+function storageKey() { return `roomrelay:v12:${currentCode}`; }
 
 function safeGet(key) {
   try { return localStorage.getItem(key); } catch (_) { return null; }
@@ -838,7 +981,7 @@ function defaultHeight(name = '') {
 
 function isSurfaceItemName(name = '') {
   const text = name.toLowerCase();
-  return ['table lamp', 'task lamp', 'desk plant', 'succulent', 'tabletop tv', 'monitor', 'laptop', 'sewing machine', 'cutting mat', 'yarn bowl', 'fabric stack', 'mug', 'pen cup', 'organizer', 'books', 'vase', 'photo frame', 'desk clock', 'basket'].some(token => text.includes(token));
+  return ['table lamp', 'task lamp', 'desk plant', 'succulent', 'tabletop tv', 'p1s', '3d printer', 'monitor', 'laptop', 'sewing machine', 'cutting mat', 'yarn bowl', 'fabric stack', 'mug', 'pen cup', 'organizer', 'books', 'vase', 'photo frame', 'desk clock', 'basket'].some(token => text.includes(token));
 }
 
 function isWallMountedName(name = '') {
@@ -862,7 +1005,7 @@ function defaultWallElevation(name = '') {
 
 function isSurfaceHost(item) {
   const text = String(item?.name || '').toLowerCase();
-  const namedSurface = ['craft island', 'work table', 'worktable', 'tv stand', 'storage console', 'dresser', 'round side table', 'cube shelf'].some(token => text.includes(token));
+  const namedSurface = ['craft island', 'work table', 'worktable', 'printer table', 'tv stand', 'storage console', 'dresser', 'round side table', 'cube shelf'].some(token => text.includes(token));
   return Boolean(item && !item.deleted && !item.wallMounted && !item.ceilingMounted && (item.kind === 'desk' || namedSurface));
 }
 
@@ -938,7 +1081,7 @@ function saveLocal() {
 
 function loadLocal() {
   try {
-    const keys = [storageKey(), `roomrelay:v7:${currentCode}`, `roomrelay:v6:${currentCode}`, `roomrelay:v5:${currentCode}`, `roomrelay:v4:${currentCode}`, `roomrelay:v3:${currentCode}`, `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
+    const keys = [storageKey(), `roomrelay:v8:${currentCode}`, `roomrelay:v7:${currentCode}`, `roomrelay:v6:${currentCode}`, `roomrelay:v5:${currentCode}`, `roomrelay:v4:${currentCode}`, `roomrelay:v3:${currentCode}`, `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
     for (const key of keys) {
       const stored = safeGet(key);
       if (stored) {
@@ -1205,7 +1348,7 @@ function threeCatalogCategory(preset) {
 
 function renderThreeCatalog() {
   const filters = [
-    ['all', 'All'], ['furniture', 'Furniture'], ['seating', 'Seating'],
+    ['all', 'All'], ['soft', 'Soft cozy'], ['furniture', 'Furniture'], ['seating', 'Seating'],
     ['wall', 'Wall items'], ['ceiling', 'Ceiling'], ['desktop', 'Desk objects'], ['decor', 'Decor + lights']
   ];
   const filterHost = $('threeCatalogFilters');
@@ -1214,7 +1357,7 @@ function renderThreeCatalog() {
   }
   const query = String($('threeCatalogSearch')?.value || '').trim().toLowerCase();
   const matches = PRESETS.filter(preset => preset.kind !== 'custom')
-    .filter(preset => threeCatalogFilter === 'all' || threeCatalogCategory(preset) === threeCatalogFilter)
+    .filter(preset => threeCatalogFilter === 'all' || (threeCatalogFilter === 'soft' ? preset.collection === 'soft-cozy' : threeCatalogCategory(preset) === threeCatalogFilter))
     .filter(preset => !query || `${preset.name} ${preset.kind} ${threeCatalogCategory(preset)}`.toLowerCase().includes(query));
   const grid = $('threeCatalogGrid');
   if (!grid) return;
@@ -1709,7 +1852,7 @@ function syncThreeCommandbar() {
   const opening = selected?.type === 'opening' ? selected.data : null;
   const hasSelection = Boolean(selected);
 
-  $('threeSelectedSummary').textContent = hasSelection ? selected.data.name : 'No selection';
+  $('threeSelectedSummary').textContent = hasSelection ? selected.data.name : 'Edit';
   $('threeSelectedTypeLabel').textContent = furniture ? 'Furniture' : opening ? (opening.type === 'window' ? 'Window' : 'Door') : 'Nothing selected';
   $('threeInspectorEmpty').classList.toggle('hidden', hasSelection);
   $('threeFurnitureInspector').classList.toggle('hidden', !furniture);
@@ -2117,6 +2260,15 @@ async function shareRoom() {
   copyShareLink();
 }
 
+function fitThreeHostToViewport() {
+  const host = $('threeHost');
+  const panel = $('threeTab');
+  if (!host || !panel || panel.classList.contains('hidden') || panel.classList.contains('focus-mode')) return;
+  const top = host.getBoundingClientRect().top;
+  const available = Math.max(440, window.innerHeight - Math.max(0, top) - 8);
+  host.style.height = `${available}px`;
+}
+
 function showTab(name) {
   const leavingThree = currentTab === 'three' && name !== 'three';
   currentTab = name;
@@ -2125,6 +2277,8 @@ function showTab(name) {
   $('threeTab').classList.toggle('hidden', name !== 'three');
   $('ideasTab').classList.toggle('hidden', name !== 'ideas');
   if (name === 'three') {
+    requestAnimationFrame(() => { fitThreeHostToViewport(); resize3D(); });
+    setTimeout(() => { fitThreeHostToViewport(); resize3D(); }, 180);
     init3D();
     clearInterval(presenceTimer);
     presenceTimer = setInterval(() => send3DPresence(true), 3000);
@@ -2768,7 +2922,36 @@ function createRugTexture(THREE, item) {
     else ctx.rect(x, y, w, h);
   };
 
-  if (style.includes('braided')) {
+  if (style.includes('fauxfur')) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    const blobs = [[0,0,250,165],[-190,-30,135,115],[185,-45,145,120],[-120,115,150,105],[125,110,160,105]];
+    for (const [x,y,rx,ry] of blobs) {
+      const gradient = ctx.createRadialGradient(x-rx*.18,y-ry*.20,10,x,y,Math.max(rx,ry));
+      gradient.addColorStop(0,'rgba(255,248,246,.98)'); gradient.addColorStop(.62,'rgba(241,220,222,.96)'); gradient.addColorStop(1,'rgba(216,184,190,.20)');
+      ctx.fillStyle=gradient; ctx.beginPath(); ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha=.34;
+    for (let i=0;i<2600;i++) {
+      const a=Math.random()*Math.PI*2, r=Math.sqrt(Math.random());
+      const x=Math.cos(a)*canvas.width*.43*r, y=Math.sin(a)*canvas.height*.40*r;
+      ctx.strokeStyle=i%3?'#fff8f5':'#caaeb5'; ctx.lineWidth=.7+Math.random()*1.4;
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+(Math.random()-.5)*8,y+(Math.random()-.5)*8); ctx.stroke();
+    }
+    ctx.restore();
+  } else if (style.includes('blush')) {
+    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 26);
+    ctx.fillStyle = '#ead4d8'; ctx.fill();
+    ctx.strokeStyle = '#b98291'; ctx.lineWidth = 18; ctx.strokeRect(22,22,canvas.width-44,canvas.height-44);
+    ctx.strokeStyle = '#d5aeb5'; ctx.lineWidth = 6; ctx.strokeRect(48,48,canvas.width-96,canvas.height-96);
+    const flowers=[[120,125,34],[290,345,42],[500,145,40],[650,340,36],[390,250,30]];
+    for (const [x,y,r] of flowers) {
+      for (let i=0;i<6;i++) { const a=i*Math.PI/3; ctx.fillStyle=i%2?'#f8e9e8':'#c98292'; ctx.beginPath(); ctx.ellipse(x+Math.cos(a)*r*.62,y+Math.sin(a)*r*.62,r*.52,r*.26,a,0,Math.PI*2); ctx.fill(); }
+      ctx.fillStyle='#d7ad63'; ctx.beginPath(); ctx.arc(x,y,r*.23,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='#7d9a78'; ctx.lineWidth=7; ctx.beginPath(); ctx.moveTo(x,y+r*.4); ctx.quadraticCurveTo(x-r*.8,y+r*1.3,x-r*.45,y+r*2); ctx.stroke();
+    }
+  } else if (style.includes('braided')) {
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.scale(1, .76);
@@ -2857,6 +3040,88 @@ function createRugTexture(THREE, item) {
   return texture;
 }
 
+function createFabricTexture(THREE, style = 'woven', base = '#c7b7a7', accent = '#9e8d7e') {
+  const canvas = document.createElement('canvas');
+  canvas.width = 192;
+  canvas.height = 192;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  let seed = 2166136261;
+  for (const ch of `${style}:${base}:${accent}`) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619) >>> 0;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  if (style === 'boucle' || style === 'sherpa') {
+    ctx.globalAlpha = .72;
+    for (let i = 0; i < 2100; i++) {
+      const x = random() * canvas.width;
+      const y = random() * canvas.height;
+      const r = .6 + random() * 2.1;
+      ctx.strokeStyle = i % 3 ? accent : '#f4eee5';
+      ctx.lineWidth = .55 + random() * .7;
+      ctx.beginPath();
+      ctx.arc(x, y, r, random() * Math.PI, random() * Math.PI + Math.PI * (1.0 + random()));
+      ctx.stroke();
+    }
+  } else if (style === 'velvet') {
+    ctx.globalAlpha = .24;
+    for (let x = 0; x < canvas.width; x += 2) {
+      ctx.strokeStyle = x % 6 ? '#ffffff' : accent;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + Math.sin(x) * 1.2, canvas.height);
+      ctx.stroke();
+    }
+    for (let i = 0; i < 550; i++) {
+      ctx.fillStyle = random() > .5 ? '#ffffff' : accent;
+      ctx.fillRect(random() * canvas.width, random() * canvas.height, .6, 2 + random() * 5);
+    }
+  } else if (style === 'knit') {
+    ctx.globalAlpha = .58;
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 3.2;
+    for (let y = -12; y < canvas.height + 12; y += 12) {
+      for (let x = -6; x < canvas.width + 12; x += 12) {
+        ctx.beginPath();
+        ctx.moveTo(x, y + 3);
+        ctx.bezierCurveTo(x + 2, y - 2, x + 8, y - 2, x + 10, y + 3);
+        ctx.bezierCurveTo(x + 8, y + 9, x + 2, y + 9, x, y + 3);
+        ctx.stroke();
+      }
+    }
+  } else {
+    ctx.globalAlpha = .28;
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = .8;
+    for (let y = 0; y < canvas.height; y += 4) {
+      ctx.beginPath();
+      ctx.moveTo(0, y + (y % 8 ? 1 : 0));
+      ctx.lineTo(canvas.width, y);
+      ctx.stroke();
+    }
+    for (let x = 0; x < canvas.width; x += 4) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + (x % 8 ? 1 : 0), canvas.height);
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = .13;
+  for (let i = 0; i < 1000; i++) {
+    ctx.fillStyle = random() > .5 ? '#ffffff' : '#201b18';
+    ctx.fillRect(random() * canvas.width, random() * canvas.height, .75, .75);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(2.2, 2.2);
+  texture.anisotropy = Math.min(8, threeRuntime?.renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+  return texture;
+}
+
 function createFurnitureModel(item) {
   const { THREE } = threeRuntime;
   const group = new THREE.Group();
@@ -2931,9 +3196,67 @@ function createFurnitureModel(item) {
     light.position.set(x, y, z);
     group.add(light);
   };
+  const addTube = (points, radius, material, tubularSegments = 30, radialSegments = 10, closed = false) => {
+    const curve = new THREE.CatmullRomCurve3(points.map(point => new THREE.Vector3(...point)));
+    const mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, tubularSegments, Math.max(.018, radius), radialSegments, closed), material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData.itemId = item.id;
+    group.add(mesh);
+    return mesh;
+  };
+  const addLathe = (profile, material, segments = 32, x = 0, y = 0, z = 0) => {
+    const geometry = new THREE.LatheGeometry(profile.map(([radius, py]) => new THREE.Vector2(Math.max(.005, radius), py)), segments);
+    geometry.computeVertexNormals();
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData.itemId = item.id;
+    group.add(mesh);
+    return mesh;
+  };
+  const addExtrudedPanel = (points, depth, material, x = 0, y = 0, z = 0, bevel = .035) => {
+    const shape = new THREE.Shape();
+    points.forEach(([px, py], index) => index ? shape.lineTo(px, py) : shape.moveTo(px, py));
+    shape.closePath();
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+      depth: Math.max(.035, depth), bevelEnabled: true, bevelSegments: 3,
+      steps: 1, bevelSize: Math.min(bevel, depth * .25), bevelThickness: Math.min(bevel, depth * .25)
+    });
+    geometry.center();
+    geometry.computeVertexNormals();
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData.itemId = item.id;
+    group.add(mesh);
+    return mesh;
+  };
+  const makeFabric = (style, base, accent, roughness = .96) => new THREE.MeshStandardMaterial({
+    map: createFabricTexture(THREE, style, base, accent), color: 0xffffff, roughness, metalness: 0
+  });
 
   if (item.kind === 'bed') {
     const frameH = Math.min(.45, h * .26);
+    if (name.includes('canopy')) {
+      const mattressTop = Math.min(2.2, h * .34);
+      addBox(w, .28, d, new THREE.MeshStandardMaterial({ color: 0xb58a6a, roughness: .76 }), 0, .14, 0);
+      addBox(w * .95, .62, d * .92, linenMaterial, 0, .59, 0);
+      addBox(w * .93, .08, d * .90, makeFabric('woven','#e7d4d7','#c79da7'), 0, .94, .02);
+      for (const x of [-w*.46,w*.46]) for (const z of [-d*.46,d*.46]) addBox(.09,h,.09,woodMaterial,x,h/2,z);
+      addBox(w*.94,.08,.08,woodMaterial,0,h-.04,-d*.46); addBox(w*.94,.08,.08,woodMaterial,0,h-.04,d*.46);
+      addBox(.08,.08,d*.92,woodMaterial,-w*.46,h-.04,0); addBox(.08,.08,d*.92,woodMaterial,w*.46,h-.04,0);
+      const sheer = new THREE.MeshStandardMaterial({ color:0xf3dde2, transparent:true, opacity:.30, roughness:1, side:THREE.DoubleSide });
+      for (const side of [-1,1]) {
+        const panel=addBox(w*.28,h*.82,.025,sheer,side*w*.31,h*.56,-d*.47); panel.rotation.z=side*.035;
+        const tie=addCylinder(.025,.025,.18,new THREE.MeshStandardMaterial({color:0xc991a3,roughness:.8}),side*w*.31,h*.46,-d*.49,10); tie.rotation.z=Math.PI/2;
+      }
+      addScaledSphere(w*.22,.11,d*.13,makeFabric('velvet','#c98998','#8d5966'),-w*.23,1.13,-d*.31,22);
+      addScaledSphere(w*.22,.11,d*.13,makeFabric('velvet','#d5a4ad','#966d75'),w*.23,1.13,-d*.31,22);
+      return group;
+    }
     addBox(w, frameH, d, woodMaterial, 0, frameH / 2, 0);
     const mattressH = Math.max(.32, Math.min(.72, h - frameH));
     addBox(w * .96, mattressH, d * .94, linenMaterial, 0, frameH + mattressH / 2, .02);
@@ -2944,6 +3267,29 @@ function createFurnitureModel(item) {
     addBox(pillowW, .16, pillowD, lightMaterial,  w * .23, frameH + mattressH + .12, -d * .34);
     addBox(w, Math.min(.9, h * .38), .14, woodMaterial, 0, Math.min(.9, h * .38) / 2 + frameH, -d / 2 + .07);
   } else if (item.kind === 'sofa') {
+    if (name.includes('pink velvet bench')) {
+      const pinkVelvet=makeFabric('velvet','#c98598','#854f60',.90);
+      const seatH=Math.max(.36,h*.54);
+      addScaledSphere(w*.47,.16,d*.42,pinkVelvet,0,seatH,0,34);
+      addBox(w*.94,.10,d*.86,new THREE.MeshStandardMaterial({color:0xc49b65,roughness:.55,metalness:.16}),0,seatH-.18,0);
+      for (const x of [-w*.39,w*.39]) for (const z of [-d*.32,d*.32]) { const leg=addCylinder(.045,.065,seatH*.72,new THREE.MeshStandardMaterial({color:0xc5a25f,roughness:.38,metalness:.48}),x,seatH*.36,z,14); leg.rotation.z=x>0?-.05:.05; }
+      for (let i=-2;i<=2;i++) { addSphere(.025,new THREE.MeshStandardMaterial({color:0xd6b46b,metalness:.55,roughness:.32}),i*w*.16,seatH+.04,d*.35); }
+    } else if (name.includes('curved loveseat')) {
+      const sofaFabric = makeFabric('boucle', '#d9c8b8', '#b9a99a');
+      const baseH = Math.max(.28, h * .24);
+      addScaledSphere(w * .48, baseH * .65, d * .42, sofaFabric, 0, baseH * .58, .04, 34);
+      addScaledSphere(w * .42, .18, d * .30, linenMaterial, 0, baseH + .13, d * .08, 30);
+      const backCurve = [
+        [-w * .42, baseH + .08, -d * .23], [-w * .32, h * .73, -d * .34],
+        [0, h * .88, -d * .40], [w * .32, h * .73, -d * .34], [w * .42, baseH + .08, -d * .23]
+      ];
+      addTube(backCurve, Math.max(.11, h * .14), sofaFabric, 44, 14);
+      addScaledSphere(w * .13, h * .24, d * .32, sofaFabric, -w * .43, h * .40, .01, 28);
+      addScaledSphere(w * .13, h * .24, d * .32, sofaFabric,  w * .43, h * .40, .01, 28);
+      for (const x of [-w * .33, w * .33]) for (const z of [-d * .23, d * .22]) addCylinder(.055, .075, h * .18, woodMaterial, x, h * .09, z, 16);
+      addScaledSphere(w * .13, .11, d * .16, accentMaterial, -w * .20, baseH + .35, d * .04, 20);
+      addScaledSphere(w * .13, .11, d * .16, new THREE.MeshStandardMaterial({ color: 0xc59283, roughness: .94 }), w * .20, baseH + .35, d * .04, 20);
+    } else {
     const seatH = Math.max(.32, Math.min(.5, h * .32));
     const armW = Math.max(.18, Math.min(.38, w * .12));
     const backH = Math.max(.65, h - seatH + .18);
@@ -2959,17 +3305,49 @@ function createFurnitureModel(item) {
       addBox((w - armW * 2.0) / cushionCount - .05, .34, .16, accentMaterial, x, seatH + .42, -.06);
     }
     if (name.includes('daybed')) addBox(w * .92, .08, d * .9, accentMaterial, 0, seatH + .28, 0);
+    }
   } else if (item.kind === 'desk') {
-    const topH = Math.min(.2, Math.max(.12, h * .08));
-    addBox(w, topH, d, new THREE.MeshStandardMaterial({ color: 0xd6b58b, roughness: .72 }), 0, h - topH / 2, 0);
-    const leg = Math.min(.16, Math.max(.08, Math.min(w, d) * .08));
-    const legH = Math.max(.2, h - topH);
-    for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, legH, leg, lightMaterial, x, legH / 2, z);
-    if (w >= 5.5) {
-      addBox(w * .18, legH * .82, d * .82, lightMaterial, -w * .36, legH * .41, 0);
-      addBox(w * .18, legH * .82, d * .82, lightMaterial,  w * .36, legH * .41, 0);
-    } else if (w >= 4.5) {
-      addBox(w * .18, legH * .82, d * .82, lightMaterial, -w * .32, legH * .41, 0);
+    if (name.includes('makeup vanity')) {
+      const blushWood=new THREE.MeshStandardMaterial({color:0xe8d8d2,roughness:.76});
+      const gold=new THREE.MeshStandardMaterial({color:0xc7a35d,roughness:.34,metalness:.58});
+      const deskTop=Math.min(2.55,h*.54);
+      addBox(w,.16,d,blushWood,0,deskTop,0);
+      for (const side of [-1,1]) {
+        addBox(w*.22,deskTop-.12,d*.88,blushWood,side*w*.36,(deskTop-.12)/2,0);
+        for (let r=0;r<3;r++) { addBox(w*.18,.025,.04,gold,side*w*.36,deskTop*(.20+r*.25),d*.46); }
+      }
+      addBox(w*.34,.10,d*.76,blushWood,0,.05,0);
+      const mirrorH=Math.max(1.8,h-deskTop-.20);
+      addScaledSphere(w*.28,mirrorH*.50,.055,new THREE.MeshStandardMaterial({color:0xbdd2d8,roughness:.10,metalness:.46}),0,deskTop+mirrorH*.48,-d*.43,34);
+      const frame=new THREE.Mesh(new THREE.TorusGeometry(Math.min(w*.29,mirrorH*.52),.035,12,52),gold); frame.scale.y=mirrorH/Math.max(.01,w)*.88; frame.position.set(0,deskTop+mirrorH*.48,-d*.40); frame.castShadow=true; frame.userData.itemId=item.id; group.add(frame);
+      const bulbs=10; for (let i=0;i<bulbs;i++) { const a=Math.PI*.15+i*(Math.PI*1.70/(bulbs-1)); const bx=Math.cos(a)*w*.29, by=deskTop+mirrorH*.48+Math.sin(a)*mirrorH*.48; addSphere(.045,glowMaterial,bx,by,-d*.34); addPointGlow(bx,by,-d*.30,.22,.8); }
+      addBox(w*.24,.035,d*.32,gold,0,deskTop+.03,d*.18);
+    } else if (name.includes('printer table')) {
+      const topMaterial = new THREE.MeshStandardMaterial({ color: 0xd8c2a4, roughness: .74 });
+      const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x4f555b, roughness: .48, metalness: .42 });
+      const topH = Math.max(.12, Math.min(.22, h * .07));
+      addBox(w, topH, d, topMaterial, 0, h - topH / 2, 0);
+      const leg = Math.max(.10, Math.min(.16, Math.min(w, d) * .075));
+      const legH = h - topH;
+      for (const x of [-w / 2 + leg * 1.5, w / 2 - leg * 1.5]) for (const z of [-d / 2 + leg * 1.5, d / 2 - leg * 1.5]) addBox(leg, legH, leg, frameMaterial, x, legH / 2, z);
+      addBox(w * .82, .08, d * .82, frameMaterial, 0, h * .24, 0);
+      addBox(w * .74, .10, d * .74, lightMaterial, 0, h * .29, 0);
+      addBox(w * .78, .07, .07, frameMaterial, 0, h * .54, -d * .39);
+      addBox(.07, h * .40, .07, frameMaterial, -w * .39, h * .49, -d * .39);
+      addBox(.07, h * .40, .07, frameMaterial,  w * .39, h * .49, -d * .39);
+      for (const x of [-w / 2 + leg * 1.5, w / 2 - leg * 1.5]) for (const z of [-d / 2 + leg * 1.5, d / 2 - leg * 1.5]) addCylinder(.055, .055, .05, darkMaterial, x, .025, z, 12);
+    } else {
+      const topH = Math.min(.2, Math.max(.12, h * .08));
+      addBox(w, topH, d, new THREE.MeshStandardMaterial({ color: 0xd6b58b, roughness: .72 }), 0, h - topH / 2, 0);
+      const leg = Math.min(.16, Math.max(.08, Math.min(w, d) * .08));
+      const legH = Math.max(.2, h - topH);
+      for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, legH, leg, lightMaterial, x, legH / 2, z);
+      if (w >= 5.5) {
+        addBox(w * .18, legH * .82, d * .82, lightMaterial, -w * .36, legH * .41, 0);
+        addBox(w * .18, legH * .82, d * .82, lightMaterial,  w * .36, legH * .41, 0);
+      } else if (w >= 4.5) {
+        addBox(w * .18, legH * .82, d * .82, lightMaterial, -w * .32, legH * .41, 0);
+      }
     }
   } else if (item.kind === 'dresser') {
     addBox(w, h, d, woodMaterial, 0, h / 2, 0);
@@ -2980,7 +3358,39 @@ function createFurnitureModel(item) {
       addBox(w * .18, .045, .055, metalMaterial,  w * .16, h * (i + .5) / drawers, d / 2 + .055);
     }
   } else if (item.kind === 'storage') {
-    if (name.includes('round side table')) {
+    if (name.includes('rattan nightstand')) {
+      const cane=new THREE.MeshStandardMaterial({color:0xc69b67,roughness:.88});
+      const frame=new THREE.MeshStandardMaterial({color:0xa9784e,roughness:.72});
+      addBox(w,.12,d,frame,0,h-.06,0);
+      addBox(w*.92,h*.76,d*.90,frame,0,h*.43,0);
+      addBox(w*.80,h*.58,d*.035,cane,0,h*.47,d*.46);
+      for (let x=-3;x<=3;x++) addBox(.018,h*.52,.025,lightMaterial,x*w*.10,h*.47,d*.49);
+      for (let y=0;y<5;y++) addBox(w*.70,.018,.025,lightMaterial,0,h*(.25+y*.11),d*.49);
+      addCylinder(.035,.045,.08,darkMaterial,0,h*.47,d*.52,12).rotation.x=Math.PI/2;
+      for (const x of [-w*.36,w*.36]) for (const z of [-d*.34,d*.34]) addCylinder(.05,.07,h*.16,frame,x,h*.08,z,12);
+    } else if (name.includes('clothing rack')) {
+      const brass=new THREE.MeshStandardMaterial({color:0xb89454,roughness:.38,metalness:.48});
+      for (const side of [-1,1]) addTube([[side*w*.42,.05,-d*.30],[side*w*.42,h*.92,-d*.30],[side*w*.42,h*.92,d*.30],[side*w*.42,.05,d*.30]],.045,brass,24,8);
+      addCylinder(.045,.045,w*.84,brass,0,h*.88,0,16).rotation.z=Math.PI/2;
+      addBox(w*.86,.10,d*.76,new THREE.MeshStandardMaterial({color:0xcfae84,roughness:.76}),0,h*.10,0);
+      const dressColors=[0xd3a1ad,0xe7d8c5,0xa9bcae,0xb6a4c7,0xc98f83];
+      for (let i=0;i<5;i++) {
+        const x=-w*.32+i*w*.16; addTube([[x,h*.86,0],[x-.08,h*.76,0],[x+.08,h*.76,0],[x,h*.86,0]],.018,darkMaterial,12,6);
+        const cloth=addExtrudedPanel([[-.09,0],[.09,0],[.15,-h*.34],[-.15,-h*.34]],.035,new THREE.MeshStandardMaterial({color:dressColors[i],roughness:.94}),x,h*.75,.02,.015); cloth.rotation.z=(i-2)*.015;
+      }
+    } else if (name.includes('laundry hamper')) {
+      const weave=new THREE.MeshStandardMaterial({color:0xb98d63,roughness:.96});
+      addLathe([[.02,0],[w*.38,.02],[w*.46,h*.16],[w*.42,h*.90],[w*.34,h]],weave,42);
+      for (let r=0;r<8;r++) addCylinder(w*(.39-r*.002),w*(.43-r*.002),.026,new THREE.MeshStandardMaterial({color:r%2?0xd6b58e:0x947052,roughness:1}),0,h*(.10+r*.105),0,34);
+      addScaledSphere(w*.33,h*.11,d*.32,makeFabric('woven','#eadde0','#bf9aa4'),0,h*.94,0,24);
+      addTube([[-w*.22,h*.93,0],[0,h*1.08,0],[w*.22,h*.93,0]],.035,darkMaterial,18,8);
+    } else if (name.includes('makeup organizer')) {
+      const acrylic=new THREE.MeshStandardMaterial({color:0xe7d7df,transparent:true,opacity:.58,roughness:.16,metalness:.04});
+      addBox(w,.08,d,acrylic,0,.04,0);
+      for (let i=0;i<3;i++) addBox(w*.28,h*.72,d*.90,acrylic,-w*.32+i*w*.32,h*.36,0);
+      const colors=[0xc97d8d,0xe1b28f,0xa987a9,0xd8c7b0,0x8fa8a0];
+      for (let i=0;i<7;i++) { const x=-w*.38+(i%4)*w*.25, z=-d*.22+Math.floor(i/4)*d*.35; addCylinder(.035,.05,h*(.36+(i%3)*.12),new THREE.MeshStandardMaterial({color:colors[i%colors.length],roughness:.62}),x,h*(.18+(i%3)*.06),z,14); }
+    } else if (name.includes('round side table')) {
       addCylinder(w * .48, w * .48, .16, new THREE.MeshStandardMaterial({ color: 0xc8a174, roughness: .68 }), 0, h - .08, 0, 36);
       addCylinder(.08, .10, Math.max(.2, h - .18), woodMaterial, 0, (h - .18) / 2, 0, 18);
       for (let i = 0; i < 3; i++) {
@@ -3043,6 +3453,25 @@ function createFurnitureModel(item) {
         addBox(cellW * .72, cellH * .58, d * .70, binMaterial, cx, cy, d * .08);
         addBox(cellW * .22, .035, .04, darkMaterial, cx, cy + cellH * .08, d * .45);
       }
+    } else if (name.includes('magazine rack')) {
+      const rackMaterial = new THREE.MeshStandardMaterial({ color: 0x9d714b, roughness: .78 });
+      for (const side of [-1, 1]) addTube([[side*w*.42,.05,-d*.36],[side*w*.43,h*.88,-d*.22],[side*w*.42,.05,d*.36]], .045, rackMaterial, 24, 8);
+      addBox(w*.84,.06,d*.72,rackMaterial,0,.08,0);
+      const paperColors = [0xd8c9b1,0xb5c3c0,0xc99d8d,0x9da7b5];
+      for (let i=0;i<5;i++) {
+        const magazine = addBox(w*.68,h*.55,.025,new THREE.MeshStandardMaterial({color:paperColors[i%paperColors.length],roughness:.9}),0,h*.34,-d*.24+i*d*.12);
+        magazine.rotation.x = -.18 + i*.08;
+      }
+      addTube([[-w*.36,h*.88,-d*.22],[0,h*.98,-d*.24],[w*.36,h*.88,-d*.22]],.04,rackMaterial,20,8);
+    } else if (name.includes('blanket basket')) {
+      const basketMaterial = new THREE.MeshStandardMaterial({ color: 0xa77a50, roughness: .94 });
+      addLathe([[.02,0],[w*.38,.02],[w*.44,h*.18],[w*.40,h*.92],[w*.36,h]],basketMaterial,42);
+      for (let i=0;i<10;i++) {
+        const angle=i*Math.PI*2/10;
+        addTube([[Math.sin(angle)*w*.38,.06,Math.cos(angle)*d*.38],[Math.sin(angle)*w*.40,h*.46,Math.cos(angle)*d*.40],[Math.sin(angle)*w*.36,h*.94,Math.cos(angle)*d*.36]],.018,darkMaterial,16,6);
+      }
+      addScaledSphere(w*.29,h*.20,d*.27,makeFabric('knit','#c79f84','#7e624e'),-w*.08,h*.90,.02,26);
+      addScaledSphere(w*.25,h*.17,d*.24,makeFabric('woven','#8fa497','#5e776a'),w*.12,h*.82,-d*.05,24);
     } else if (name.includes('rolling cart')) {
       const post = .06;
       for (const x of [-w / 2 + post, w / 2 - post]) for (const z of [-d / 2 + post, d / 2 - post]) addBox(post, h - .12, post, metalMaterial, x, (h - .12) / 2 + .06, z);
@@ -3088,41 +3517,147 @@ function createFurnitureModel(item) {
       addBox(w * .75, screenH * .82, screenD + .015, new THREE.MeshStandardMaterial({ color: 0x12171e, roughness: .25, metalness: .2 }), 0, standH + screenH / 2, screenD * .12);
     }
   } else if (item.kind === 'chair') {
-    // Every chair is modeled with its back toward local -Z and its front toward +Z.
-    // That matches the app's rotation and wall-facing calculations.
-    if (name.includes('bean bag')) {
-      const beanMaterial = new THREE.MeshStandardMaterial({ color: 0xb78f82, roughness: .98 });
-      const bag = addScaledSphere(w * .47, h * .46, d * .47, beanMaterial, 0, h * .46, 0, 32);
-      bag.rotation.y = .18;
-      addScaledSphere(w * .20, h * .10, d * .20, new THREE.MeshStandardMaterial({ color: 0x8f6e67, roughness: .98 }), 0, h * .80, -d * .04, 24);
-      for (let i = 0; i < 7; i++) {
-        const seam = addBox(.018, h * .58, .018, darkMaterial, Math.sin(i * .9) * w * .22, h * .47, Math.cos(i * .9) * d * .22);
-        seam.rotation.z = (i - 3) * .08;
+    // High-detail procedural chair models. Every chair faces local +Z.
+    const wovenGreen = makeFabric('woven', '#9db7a8', '#6f897b');
+    const warmVelvet = makeFabric('velvet', '#b77d70', '#754f49', .91);
+    const oatmealBoucle = makeFabric('boucle', '#e4d8ca', '#b8a999');
+    const creamSherpa = makeFabric('sherpa', '#eee5da', '#c7b9aa');
+    const knitMaterial = makeFabric('knit', '#b89479', '#785c49');
+    const caneMaterial = new THREE.MeshStandardMaterial({ color: 0xb98a55, roughness: .78, metalness: 0 });
+
+    if (name.includes('vanity stool')) {
+      const blush=makeFabric('velvet','#d99aaa','#8d5968',.90);
+      addScaledSphere(w*.44,h*.20,d*.44,blush,0,h*.70,0,30);
+      addCylinder(w*.36,w*.38,.10,new THREE.MeshStandardMaterial({color:0xc9a45f,roughness:.34,metalness:.55}),0,h*.48,0,28);
+      addCylinder(.055,.075,h*.46,new THREE.MeshStandardMaterial({color:0xc9a45f,roughness:.34,metalness:.55}),0,h*.23,0,16);
+      for (let i=0;i<4;i++) { const a=i*Math.PI/2; const foot=addBox(w*.34,.045,.055,darkMaterial,Math.cos(a)*w*.18,.04,Math.sin(a)*d*.18); foot.rotation.y=-a; addCylinder(.035,.045,.06,darkMaterial,Math.cos(a)*w*.33,.03,Math.sin(a)*d*.33,10); }
+      for (let i=0;i<6;i++) { const a=i*Math.PI*2/6; addSphere(.018,new THREE.MeshStandardMaterial({color:0xe0bd77,metalness:.55,roughness:.32}),Math.cos(a)*w*.22,h*.72,Math.sin(a)*d*.22); }
+    } else if (name.includes('floral reading')) {
+      const floral=makeFabric('woven','#e4c9cf','#a66f7c');
+      const seatY=h*.36; addScaledSphere(w*.38,.15,d*.34,floral,0,seatY,d*.03,32);
+      const back=addScaledSphere(w*.39,h*.34,.14,floral,0,h*.67,-d*.34,32); back.rotation.x=-.11;
+      for (const side of [-1,1]) addScaledSphere(.12,h*.17,d*.30,floral,side*w*.40,h*.43,.01,24);
+      const leafMat=new THREE.MeshStandardMaterial({color:0x728c74,roughness:.88}); const roseMat=new THREE.MeshStandardMaterial({color:0xc77d8d,roughness:.90});
+      for (const [x,y] of [[-.18,.60],[.16,.72],[0,.50]]) { addSphere(.06,roseMat,x*w,y*h,-d*.20); addScaledSphere(.07,.025,.13,leafMat,x*w+.08,y*h-.04,-d*.19,12); }
+      for (const x of [-w*.28,w*.28]) for (const z of [-d*.24,d*.22]) addCylinder(.045,.065,h*.20,woodMaterial,x,h*.10,z,14);
+    } else if (name.includes('bean bag')) {
+      const beanMaterial = makeFabric('velvet', '#aa756e', '#714b48');
+      const profile = [
+        [.02, 0], [w * .30, h * .05], [w * .47, h * .25], [w * .48, h * .47],
+        [w * .39, h * .68], [w * .22, h * .86], [w * .09, h * .94], [.02, h * .89]
+      ];
+      const bag = addLathe(profile, beanMaterial, 48);
+      bag.scale.z = Math.max(.72, d / Math.max(.01, w));
+      addScaledSphere(w * .21, h * .085, d * .20, new THREE.MeshStandardMaterial({ color: 0x79534f, roughness: .96 }), 0, h * .84, -d * .03, 28);
+      for (let i = 0; i < 8; i++) {
+        const angle = i * Math.PI * 2 / 8;
+        addTube([[0, h * .90, 0], [Math.sin(angle) * w * .28, h * .58, Math.cos(angle) * d * .28], [Math.sin(angle) * w * .43, h * .25, Math.cos(angle) * d * .43]], .012, darkMaterial, 18, 6);
       }
-    } else if (name.includes('cozy chair')) {
-      const cozyMaterial = new THREE.MeshStandardMaterial({ color: 0xc8aa91, roughness: .96 });
-      const seatY = h * .35;
-      addScaledSphere(w * .43, h * .18, d * .38, cozyMaterial, 0, seatY, d * .05, 28);
-      const back = addScaledSphere(w * .44, h * .42, d * .16, cozyMaterial, 0, h * .62, -d * .34, 28);
-      back.rotation.x = -.10;
-      addScaledSphere(w * .14, h * .24, d * .34, cozyMaterial, -w * .39, h * .42, 0, 24);
-      addScaledSphere(w * .14, h * .24, d * .34, cozyMaterial,  w * .39, h * .42, 0, 24);
-      addScaledSphere(w * .30, h * .09, d * .24, linenMaterial, 0, seatY + h * .12, d * .08, 24);
-      addScaledSphere(w * .25, h * .13, d * .09, accentMaterial, 0, h * .64, -d * .16, 24);
-      for (const x of [-w * .29, w * .29]) for (const z of [-d * .25, d * .23]) addBox(.09, h * .20, .09, woodMaterial, x, h * .10, z);
+    } else if (name.includes('wingback') || name.includes('cozy chair')) {
+      const chairFabric = name.includes('wingback') ? warmVelvet : oatmealBoucle;
+      const seatY = h * .34;
+      const seat = addScaledSphere(w * .36, h * .12, d * .31, chairFabric, 0, seatY, d * .06, 34);
+      seat.rotation.x = -.03;
+      const backPoints = [
+        [-w * .31, -h * .34], [-w * .42, h * .05], [-w * .45, h * .34],
+        [-w * .28, h * .48], [0, h * .53], [w * .28, h * .48],
+        [w * .45, h * .34], [w * .42, h * .05], [w * .31, -h * .34]
+      ];
+      const back = addExtrudedPanel(backPoints, Math.max(.14, d * .18), chairFabric, 0, h * .64, -d * .34, .05);
+      back.rotation.x = -.08;
+      for (const side of [-1, 1]) {
+        const arm = addScaledSphere(w * .13, h * .16, d * .30, chairFabric, side * w * .38, h * .42, d * .03, 30);
+        arm.rotation.z = side * -.06;
+        addScaledSphere(w * .09, h * .24, d * .13, chairFabric, side * w * .37, h * .64, -d * .25, 26);
+      }
+      addScaledSphere(w * .24, h * .09, d * .19, linenMaterial, 0, seatY + h * .13, d * .10, 26);
+      addScaledSphere(w * .20, h * .13, d * .08, accentMaterial, 0, h * .63, -d * .16, 24);
+      for (const x of [-w * .28, w * .28]) for (const z of [-d * .22, d * .20]) {
+        const leg = addCylinder(.045, .065, h * .20, woodMaterial, x, h * .10, z, 14);
+        leg.rotation.x = z > 0 ? -.09 : .09;
+        leg.rotation.z = x > 0 ? -.05 : .05;
+      }
+    } else if (name.includes('bouclé') || name.includes('tub chair')) {
+      const seatY = h * .34;
+      addCylinder(w * .34, w * .39, h * .17, darkMaterial, 0, h * .11, 0, 32);
+      addScaledSphere(w * .36, h * .12, d * .34, oatmealBoucle, 0, seatY, d * .04, 34);
+      const shellRadius = Math.min(w, d) * .34;
+      const shell = new THREE.Mesh(new THREE.TorusGeometry(shellRadius, Math.max(.12, w * .12), 18, 64, Math.PI * 1.42), oatmealBoucle);
+      shell.rotation.x = Math.PI / 2;
+      shell.rotation.z = Math.PI * .79;
+      shell.position.set(0, h * .55, -d * .03);
+      shell.scale.y = .84;
+      shell.castShadow = true;
+      shell.receiveShadow = true;
+      shell.userData.itemId = item.id;
+      group.add(shell);
+      addScaledSphere(w * .20, h * .09, d * .16, accentMaterial, 0, seatY + h * .13, d * .08, 24);
+      addCylinder(.07, .09, h * .17, woodMaterial, 0, h * .085, 0, 18);
+      addCylinder(w * .22, w * .26, .06, darkMaterial, 0, .03, 0, 30);
+    } else if (name.includes('papasan')) {
+      const cushionMaterial = makeFabric('velvet', '#c99a86', '#8f675a');
+      const bowlGeometry = new THREE.SphereGeometry(1, 42, 24, 0, Math.PI * 2, 0, Math.PI * .56);
+      const bowl = new THREE.Mesh(bowlGeometry, caneMaterial);
+      bowl.scale.set(w * .46, h * .28, d * .46);
+      bowl.rotation.x = Math.PI;
+      bowl.position.y = h * .56;
+      bowl.castShadow = true;
+      bowl.receiveShadow = true;
+      bowl.userData.itemId = item.id;
+      group.add(bowl);
+      for (let i = 0; i < 10; i++) {
+        const angle = i * Math.PI * 2 / 10;
+        addTube([[0, h * .45, 0], [Math.sin(angle) * w * .30, h * .48, Math.cos(angle) * d * .30], [Math.sin(angle) * w * .44, h * .68, Math.cos(angle) * d * .44]], .025, caneMaterial, 20, 7);
+      }
+      addScaledSphere(w * .40, h * .19, d * .40, cushionMaterial, 0, h * .58, d * .03, 38);
+      addScaledSphere(w * .25, h * .10, d * .12, linenMaterial, 0, h * .70, d * .18, 28);
+      addCylinder(w * .25, w * .32, h * .32, caneMaterial, 0, h * .16, 0, 32);
+      addCylinder(w * .34, w * .38, .07, caneMaterial, 0, .035, 0, 32);
+    } else if (name.includes('rocking')) {
+      const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x8d623e, roughness: .66 });
+      const seatY = h * .43;
+      for (const side of [-1, 1]) {
+        const x = side * w * .37;
+        addTube([[x, .10, -d * .43], [x, .03, -d * .15], [x, .05, d * .18], [x, .13, d * .44]], .055, frameMaterial, 34, 10);
+        addTube([[x, .12, -d * .24], [x, seatY * .62, -d * .18], [x, seatY, -d * .05]], .055, frameMaterial, 22, 10);
+        addTube([[x, .12, d * .24], [x, seatY * .64, d * .18], [x, seatY, d * .08]], .055, frameMaterial, 22, 10);
+        addTube([[x, seatY, -d * .08], [x, h * .70, -d * .31], [x, h * .93, -d * .36]], .055, frameMaterial, 26, 10);
+        addTube([[x, seatY + h * .02, d * .06], [side * w * .46, seatY + h * .10, d * .03]], .045, frameMaterial, 12, 8);
+      }
+      addBox(w * .72, .12, d * .60, frameMaterial, 0, seatY, d * .02);
+      addScaledSphere(w * .34, .11, d * .27, wovenGreen, 0, seatY + .13, d * .04, 28);
+      for (let i = -2; i <= 2; i++) addBox(w * .12, h * .43, .055, frameMaterial, i * w * .145, seatY + h * .25, -d * .34);
+      addBox(w * .74, .07, .08, frameMaterial, 0, h * .91, -d * .35);
+      addScaledSphere(w * .24, .10, d * .10, accentMaterial, 0, seatY + h * .38, -d * .20, 22);
+    } else if (name.includes('sherpa')) {
+      const seatY = h * .36;
+      const base = addScaledSphere(w * .42, h * .14, d * .38, creamSherpa, 0, seatY, d * .05, 36);
+      base.rotation.x = -.04;
+      const back = addScaledSphere(w * .41, h * .34, d * .13, creamSherpa, 0, h * .63, -d * .34, 36);
+      back.rotation.x = -.14;
+      for (const side of [-1, 1]) addScaledSphere(w * .14, h * .18, d * .30, creamSherpa, side * w * .39, h * .43, 0, 30);
+      for (const x of [-w * .30, w * .30]) for (const z of [-d * .22, d * .22]) addCylinder(.05, .065, h * .18, woodMaterial, x, h * .09, z, 14);
+      addScaledSphere(w * .17, .10, d * .15, new THREE.MeshStandardMaterial({ color: 0xc59677, roughness: .94 }), 0, seatY + .16, d * .10, 22);
+    } else if (name.includes('knit floor pouf')) {
+      const profile = [[.02, 0], [w * .35, h * .03], [w * .48, h * .28], [w * .45, h * .72], [w * .29, h * .96], [.02, h]];
+      addLathe(profile, knitMaterial, 48);
+      for (let i = 0; i < 8; i++) {
+        const angle = i * Math.PI * 2 / 8;
+        addTube([[0, h * .96, 0], [Math.sin(angle) * w * .29, h * .72, Math.cos(angle) * d * .29], [Math.sin(angle) * w * .44, h * .30, Math.cos(angle) * d * .44]], .014, new THREE.MeshStandardMaterial({ color: 0x6d5040, roughness: 1 }), 18, 6);
+      }
     } else if (name.includes('floor cushion')) {
-      const cushion = addScaledSphere(w * .48, h * .42, d * .48, fabricMaterial, 0, h * .42, 0, 28);
+      const cushion = addScaledSphere(w * .48, h * .42, d * .48, makeFabric('knit', '#c9a98f', '#806552'), 0, h * .42, 0, 32);
       cushion.scale.y = Math.max(.10, h * .38);
-      addScaledSphere(w * .10, h * .04, d * .10, accentMaterial, 0, h * .76, 0, 18);
-      for (let i = 0; i < 4; i++) {
-        const angle = i * Math.PI / 2;
-        const tuft = addSphere(.035, darkMaterial, Math.cos(angle) * w * .22, h * .64, Math.sin(angle) * d * .22);
-        tuft.scale.y = .45;
+      addScaledSphere(w * .10, h * .04, d * .10, accentMaterial, 0, h * .76, 0, 20);
+      for (let i = 0; i < 8; i++) {
+        const angle = i * Math.PI / 4;
+        const tuft = addSphere(.028, darkMaterial, Math.cos(angle) * w * .25, h * .62, Math.sin(angle) * d * .25);
+        tuft.scale.y = .4;
       }
     } else if (name.includes('ottoman') || name.includes('stool')) {
       const round = name.includes('stool');
       if (round) {
-        addCylinder(w * .42, w * .46, Math.max(.18, h * .28), fabricMaterial, 0, h * .72, 0, 28);
+        addCylinder(w * .42, w * .46, Math.max(.18, h * .28), wovenGreen, 0, h * .72, 0, 32);
         addCylinder(.06, .07, h * .66, metalMaterial, 0, h * .36, 0, 18);
         addCylinder(w * .30, w * .34, .08, darkMaterial, 0, .04, 0, 28);
         for (let i = 0; i < 5; i++) {
@@ -3132,59 +3667,56 @@ function createFurnitureModel(item) {
           addCylinder(.045, .045, .05, darkMaterial, Math.cos(angle) * w * .27, .035, Math.sin(angle) * d * .27, 12);
         }
       } else {
-        addScaledSphere(w * .47, h * .23, d * .47, fabricMaterial, 0, h * .34, 0, 24);
+        addScaledSphere(w * .47, h * .23, d * .47, oatmealBoucle, 0, h * .34, 0, 28);
         addBox(w * .84, .10, d * .84, accentMaterial, 0, h * .53, 0);
         const leg = Math.min(.12, w * .1, d * .1);
         for (const x of [-w / 2 + leg * 1.4, w / 2 - leg * 1.4]) for (const z of [-d / 2 + leg * 1.4, d / 2 - leg * 1.4]) addBox(leg, Math.max(.14, h * .22), leg, woodMaterial, x, Math.max(.14, h * .22) / 2, z);
       }
     } else if (name.includes('office') || name.includes('swivel')) {
-      const seatY = Math.min(1.65, h * .46);
-      addScaledSphere(w * .42, .16, d * .36, fabricMaterial, 0, seatY, d * .02, 24);
-      const back = addScaledSphere(w * .39, Math.max(.46, (h - seatY) * .48), .10, fabricMaterial, 0, seatY + (h - seatY) * .43, -d * .35, 24);
-      back.rotation.x = -.08;
-      addCylinder(.055, .065, seatY - .12, metalMaterial, 0, (seatY - .12) / 2, 0, 18);
+      const seatY = Math.min(1.65, h * .45);
+      const seat = addScaledSphere(w * .41, .15, d * .35, makeFabric('woven', '#49545e', '#27313a'), 0, seatY, d * .04, 32);
+      seat.rotation.x = -.04;
+      const backPoints = [[-w*.34,-h*.24],[-w*.39,0],[-w*.34,h*.30],[0,h*.39],[w*.34,h*.30],[w*.39,0],[w*.34,-h*.24]];
+      const back = addExtrudedPanel(backPoints, .10, makeFabric('woven', '#4d5a64', '#29333c'), 0, seatY + (h-seatY)*.43, -d*.35, .025);
+      back.rotation.x = -.10;
+      addCylinder(.055, .065, seatY - .12, metalMaterial, 0, (seatY - .12) / 2, 0, 20);
       addCylinder(.13, .13, .10, darkMaterial, 0, seatY * .31, 0, 20);
       for (let i = 0; i < 5; i++) {
         const angle = i * Math.PI * 2 / 5;
         const x = Math.sin(angle) * w * .31;
         const z = Math.cos(angle) * d * .31;
-        const spoke = addBox(w * .31, .045, .055, metalMaterial, x / 2, .14, z / 2);
-        spoke.rotation.y = angle;
-        addCylinder(.055, .055, .05, darkMaterial, x, .035, z, 12);
+        addTube([[0,.13,0],[x*.65,.11,z*.65],[x,.07,z]], .035, metalMaterial, 12, 7);
+        const wheel = addCylinder(.052, .052, .045, darkMaterial, x, .035, z, 14);
+        wheel.rotation.z = Math.PI / 2;
       }
-      for (const x of [-w * .40, w * .40]) {
-        addBox(.065, .42, .065, metalMaterial, x, seatY + .13, 0);
-        addBox(.22, .07, d * .34, fabricMaterial, x, seatY + .35, d * .02);
+      for (const side of [-1,1]) {
+        addTube([[side*w*.30,seatY*.72,0],[side*w*.38,seatY*.90,0],[side*w*.40,seatY+h*.07,d*.04]], .035, metalMaterial, 14, 7);
+        addScaledSphere(w*.11,.035,d*.18,darkMaterial,side*w*.40,seatY+h*.09,d*.05,16);
       }
-    } else if (name.includes('lounge')) {
-      const seatY = .60;
-      addScaledSphere(w * .44, .18, d * .35, fabricMaterial, 0, seatY, d * .06, 26);
-      const back = addScaledSphere(w * .43, h * .34, .13, fabricMaterial, 0, seatY + h * .31, -d * .34, 26);
-      back.rotation.x = -.17;
-      addScaledSphere(.13, seatY * .42, d * .33, fabricMaterial, -w * .43, seatY * .66, .02, 22);
-      addScaledSphere(.13, seatY * .42, d * .33, fabricMaterial,  w * .43, seatY * .66, .02, 22);
-      for (const x of [-w * .34, w * .34]) for (const z of [-d * .22, d * .24]) addBox(.08, seatY, .08, woodMaterial, x, seatY / 2, z);
-      addScaledSphere(w * .22, .10, d * .18, accentMaterial, 0, seatY + .22, d * .08, 20);
+      addScaledSphere(w*.18,.06,d*.10,accentMaterial,0,seatY+(h-seatY)*.40,-d*.26,20);
     } else if (name.includes('dining')) {
       const seatY = Math.min(h * .45, 1.55);
-      addBox(w * .90, .15, d * .84, woodMaterial, 0, seatY, .02);
-      addBox(w * .82, .08, d * .74, fabricMaterial, 0, seatY + .11, .05);
+      addScaledSphere(w * .43, .10, d * .38, wovenGreen, 0, seatY, .02, 26);
       const leg = Math.min(.09, w * .075, d * .075);
-      for (const x of [-w * .38, w * .38]) for (const z of [-d * .34, d * .34]) addBox(leg, seatY, leg, woodMaterial, x, seatY / 2, z);
-      addBox(.09, h - seatY, .09, woodMaterial, -w * .38, seatY + (h - seatY) / 2, -d * .37);
-      addBox(.09, h - seatY, .09, woodMaterial,  w * .38, seatY + (h - seatY) / 2, -d * .37);
-      for (let i = -1; i <= 1; i++) addBox(w * .18, h * .42, .07, woodMaterial, i * w * .25, seatY + h * .21, -d * .37);
-      addBox(w * .82, .10, .09, woodMaterial, 0, h * .92, -d * .37);
+      for (const x of [-w * .38, w * .38]) for (const z of [-d * .34, d * .34]) {
+        const chairLeg = addCylinder(leg * .7, leg, seatY, woodMaterial, x, seatY / 2, z, 12);
+        chairLeg.rotation.z = x > 0 ? -.035 : .035;
+        chairLeg.rotation.x = z > 0 ? -.035 : .035;
+      }
+      for (const side of [-1,1]) addTube([[side*w*.38,seatY,-d*.34],[side*w*.38,h*.70,-d*.37],[side*w*.32,h*.94,-d*.34]], .045, woodMaterial, 20, 8);
+      for (let i = -2; i <= 2; i++) addTube([[i*w*.14,seatY+h*.04,-d*.35],[i*w*.13,h*.90,-d*.35]], .026, caneMaterial, 12, 7);
+      addTube([[-w*.34,h*.92,-d*.34],[0,h*.98,-d*.35],[w*.34,h*.92,-d*.34]], .045, woodMaterial, 20, 8);
     } else {
+      const chairFabric = name.includes('lounge') ? warmVelvet : wovenGreen;
       const seatY = Math.min(h * .43, 1.48);
-      addScaledSphere(w * .43, .17, d * .38, fabricMaterial, 0, seatY, d * .05, 24);
-      const back = addScaledSphere(w * .42, Math.max(.38, (h - seatY) * .45), .12, fabricMaterial, 0, seatY + (h - seatY) * .43, -d * .36, 24);
-      back.rotation.x = -.08;
-      addScaledSphere(.12, seatY * .36, d * .33, fabricMaterial, -w * .43, seatY * .69, .02, 20);
-      addScaledSphere(.12, seatY * .36, d * .33, fabricMaterial,  w * .43, seatY * .69, .02, 20);
+      const seat = addScaledSphere(w * .42, .16, d * .36, chairFabric, 0, seatY, d * .05, 32);
+      seat.rotation.x = -.04;
+      const back = addScaledSphere(w * .41, Math.max(.38, (h - seatY) * .44), .12, chairFabric, 0, seatY + (h - seatY) * .43, -d * .35, 32);
+      back.rotation.x = name.includes('lounge') ? -.18 : -.10;
+      for (const side of [-1, 1]) addScaledSphere(.12, seatY * .36, d * .31, chairFabric, side * w * .42, seatY * .69, .02, 24);
       const leg = Math.min(.10, w * .08, d * .08);
-      for (const x of [-w * .34, w * .34]) for (const z of [-d * .26, d * .24]) addBox(leg, seatY * .78, leg, woodMaterial, x, seatY * .39, z);
-      addScaledSphere(w * .24, .09, d * .18, accentMaterial, 0, seatY + .18, d * .07, 20);
+      for (const x of [-w * .34, w * .34]) for (const z of [-d * .26, d * .24]) addCylinder(leg * .75, leg, seatY * .78, woodMaterial, x, seatY * .39, z, 12);
+      addScaledSphere(w * .22, .09, d * .17, accentMaterial, 0, seatY + .18, d * .07, 22);
     }
   } else if (item.kind === 'shelf') {
     if (name.includes('thread rack')) {
@@ -3209,6 +3741,16 @@ function createFurnitureModel(item) {
       addBox(w * .28, .18, .18, accentMaterial, -w * .20, h * .60, .11);
       addBox(w * .22, .18, .18, lightMaterial,  w * .18, h * .54, .11);
       addBox(w * .16, .24, .14, metalMaterial, w * .34, h * .72, .10);
+    } else if (name.includes('ikea lack')) {
+      const shelfMaterial = new THREE.MeshStandardMaterial({ color: 0xf4f2ec, roughness: .72 });
+      const edgeMaterial = new THREE.MeshStandardMaterial({ color: 0xd7d3ca, roughness: .78 });
+      const slabH = Math.max(.11, Math.min(.18, h));
+      addBox(w, slabH, d, shelfMaterial, 0, slabH / 2, 0);
+      addBox(w * .98, .025, d * .96, edgeMaterial, 0, slabH + .012, 0);
+      // Hidden wall plate keeps the silhouette floating while still showing mounting depth.
+      addBox(w * .72, slabH * .44, .055, metalMaterial, 0, slabH * .45, -d / 2 + .025);
+      addBox(.055, slabH * .58, d * .58, edgeMaterial, -w / 2 + .028, slabH * .50, 0);
+      addBox(.055, slabH * .58, d * .58, edgeMaterial,  w / 2 - .028, slabH * .50, 0);
     } else {
       addBox(w, .12, d, woodMaterial, 0, .06, 0);
       addBox(.08, .38, .08, metalMaterial, -w * .25, -.15, 0);
@@ -3219,7 +3761,83 @@ function createFurnitureModel(item) {
       addCylinder(.09, .12, .16, woodMaterial, w * .32, .08, 0, 14);
     }
   } else if (item.kind === 'light') {
-    if (name.includes('string lights')) {
+    if (name.includes('scalloped table lamp')) {
+      const ceramic=new THREE.MeshStandardMaterial({color:0xe7b9c4,roughness:.72});
+      addLathe([[.02,0],[w*.22,.02],[w*.28,h*.18],[w*.20,h*.40],[w*.12,h*.48],[.04,h*.50]],ceramic,34);
+      addCylinder(.035,.035,h*.20,new THREE.MeshStandardMaterial({color:0xc5a25f,metalness:.45,roughness:.35}),0,h*.58,0,14);
+      const shadeMat=makeFabric('woven','#f5e7e0','#d2a6ad');
+      const shade=addCylinder(w*.30,w*.44,h*.38,shadeMat,0,h*.80,0,30);
+      for (let i=0;i<12;i++) { const a=i*Math.PI*2/12; addSphere(.025,new THREE.MeshStandardMaterial({color:0xd69bac,roughness:.8}),Math.cos(a)*w*.39,h*.61,Math.sin(a)*d*.39); }
+      addSphere(.055,glowMaterial,0,h*.68,0); addPointGlow(0,h*.68,.04,1.1,2.8);
+    } else if (name.includes('mushroom lamp')) {
+      const baseMat=new THREE.MeshStandardMaterial({color:0xf1d8d2,roughness:.55});
+      addCylinder(w*.18,w*.24,h*.52,baseMat,0,h*.26,0,30);
+      const cap=addScaledSphere(w*.46,h*.24,d*.46,new THREE.MeshStandardMaterial({color:0xe59aaa,roughness:.44,emissive:0x5e1f2d,emissiveIntensity:.12}),0,h*.65,0,34); cap.scale.y=.60;
+      addSphere(.06,glowMaterial,0,h*.57,0); addPointGlow(0,h*.57,.04,1.4,3.4);
+    } else if (name.includes('fairy light curtain')) {
+      addBox(w*.96,.025,.025,darkMaterial,0,h*.96,0);
+      const strands=10; for (let i=0;i<strands;i++) { const x=-w*.44+i*w*.88/(strands-1); addBox(.012,h*.85,.012,darkMaterial,x,h*.51,0); for (let j=0;j<7;j++) { const y=h*(.14+j*.115+(i%2)*.025); addSphere(.038,glowMaterial,x,y,.02); addPointGlow(x,y,.04,.18,.9); } }
+    } else if (name.includes('neon heart')) {
+      const neon=new THREE.MeshStandardMaterial({color:0xff9fbd,emissive:0xff4f8b,emissiveIntensity:2.0,roughness:.25});
+      const pts=[]; for (let i=0;i<=48;i++) { const t=i/48*Math.PI*2; const x=16*Math.pow(Math.sin(t),3); const y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t); pts.push([x/32*w,y/32*h+h*.48,0]); }
+      addTube(pts,.045,neon,64,10); addBox(w*.92,h*.90,.035,new THREE.MeshStandardMaterial({color:0x5c4050,transparent:true,opacity:.18,roughness:.5}),0,h*.5,-.04); addPointGlow(0,h*.52,.10,2.2,4.5);
+    } else if (name.includes('electric fireplace')) {
+      const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x3f4245, roughness: .62, metalness: .12 });
+      const stoneMaterial = new THREE.MeshStandardMaterial({ color: 0xb8a890, roughness: .92 });
+      addBox(w,h,d,bodyMaterial,0,h/2,0);
+      addBox(w*.92,h*.82,d*.82,stoneMaterial,0,h*.47,d*.06);
+      addBox(w*.76,h*.53,d*.88,new THREE.MeshStandardMaterial({color:0x151719,roughness:.25}),0,h*.43,d*.11);
+      addBox(w*.66,.06,d*.58,darkMaterial,0,h*.20,d*.18);
+      for (let i=0;i<6;i++) {
+        const x=-w*.27+i*w*.108;
+        const log=addCylinder(.055,.075,w*.13,new THREE.MeshStandardMaterial({color:i%2?0x7a4f32:0x91613c,roughness:.9}),x,h*.22,d*.18,12);
+        log.rotation.z=Math.PI/2;
+      }
+      for (let i=0;i<7;i++) {
+        const flame=addScaledSphere(.055,.16,.035,new THREE.MeshStandardMaterial({color:i%2?0xffb347:0xffd470,emissive:i%2?0xff5d18:0xffa52b,emissiveIntensity:1.5,transparent:true,opacity:.82}),-w*.26+i*w*.087,h*.36+(i%3)*.035,d*.26,16);
+        flame.rotation.z=(i-3)*.08;
+      }
+      addPointGlow(0,h*.42,d*.34,3.0,5.5);
+      addBox(w*.84,.12,d*.90,woodMaterial,0,h+.06,0);
+    } else if (name.includes('wall sconce')) {
+      addBox(w*.24,h*.50,Math.max(.08,d*.30),metalMaterial,0,h*.38,-d*.28);
+      addTube([[0,h*.42,-d*.18],[0,h*.56,0],[0,h*.57,d*.18]],.035,metalMaterial,18,8);
+      const shade=addCylinder(w*.30,w*.18,h*.36,linenMaterial,0,h*.68,d*.20,24);
+      shade.rotation.x=Math.PI/2;
+      addSphere(.06,glowMaterial,0,h*.59,d*.18);
+      addPointGlow(0,h*.60,d*.30,1.4,3.2);
+    } else if (name.includes('candle trio')) {
+      const heights=[h*.62,h*.90,h*.72];
+      const xs=[-w*.26,0,w*.25];
+      for (let i=0;i<3;i++) {
+        addCylinder(w*.12,w*.13,heights[i]*.72,new THREE.MeshStandardMaterial({color:i===1?0xe7d9c5:0xd8c7ac,roughness:.9}),xs[i],heights[i]*.36,0,24);
+        const flame=addScaledSphere(.035,heights[i]*.10,.025,new THREE.MeshStandardMaterial({color:0xffd875,emissive:0xff8a22,emissiveIntensity:1.7}),xs[i],heights[i]*.82,0,14);
+        flame.rotation.z=i===1?.08:-.06;
+        addPointGlow(xs[i],heights[i]*.82,.06,.45,1.6);
+      }
+      addBox(w*.92,.035,d*.86,woodMaterial,0,.018,0);
+    } else if (name.includes('cozy lantern')) {
+      const frameMat=new THREE.MeshStandardMaterial({color:0x66564a,roughness:.55,metalness:.28});
+      addBox(w*.78,.08,d*.78,frameMat,0,.04,0);
+      addBox(w*.62,h*.72,d*.62,new THREE.MeshStandardMaterial({color:0xdeb76e,emissive:0xffa638,emissiveIntensity:.55,transparent:true,opacity:.34}),0,h*.42,0);
+      for (const x of [-w*.36,w*.36]) for (const z of [-d*.36,d*.36]) addBox(.035,h*.78,.035,frameMat,x,h*.43,z);
+      addBox(w*.78,.08,d*.78,frameMat,0,h*.82,0);
+      addTube([[-w*.18,h*.84,0],[0,h*1.08,0],[w*.18,h*.84,0]],.035,frameMat,18,8);
+      addPointGlow(0,h*.44,0,1.1,2.7);
+    } else if (name.includes('arc reading lamp')) {
+      addCylinder(w*.22,w*.28,.08,darkMaterial,0,.04,0,28);
+      addTube([[0,.08,0],[0,h*.45,0],[w*.16,h*.82,0],[w*.30,h*.95,d*.02]],.045,metalMaterial,36,10);
+      const shade=addCylinder(w*.14,w*.24,h*.20,new THREE.MeshStandardMaterial({color:0xb48d67,roughness:.68}),w*.30,h*.82,d*.02,24);
+      shade.rotation.z=-.65;
+      addSphere(.055,glowMaterial,w*.28,h*.79,d*.03);
+      addPointGlow(w*.28,h*.78,d*.06,1.8,4.2);
+    } else if (name.includes('book nook lamp')) {
+      addBox(w*.76,.05,d*.70,woodMaterial,0,.025,0);
+      addCylinder(.035,.045,h*.56,metalMaterial,0,h*.29,0,14);
+      addScaledSphere(w*.24,h*.22,d*.22,linenMaterial,0,h*.73,0,24);
+      addSphere(.045,glowMaterial,0,h*.67,0);
+      addPointGlow(0,h*.67,.04,.8,2.2);
+    } else if (name.includes('string lights')) {
       const cable = addBox(w * .94, .025, .025, darkMaterial, 0, h * .72, 0);
       cable.rotation.z = -.04;
       const bulbs = Math.max(7, Math.min(14, Math.round(w / .45)));
@@ -3260,7 +3878,46 @@ function createFurnitureModel(item) {
       addPointGlow(0, Math.max(4.2, h * .78) + .18, 0, 1.8, 4.2);
     }
   } else if (item.kind === 'decor') {
-    if (name.includes('rug')) {
+    if (name.includes('arched floor mirror')) {
+      const gold=new THREE.MeshStandardMaterial({color:0xc6a15b,roughness:.34,metalness:.55});
+      const glass=new THREE.MeshStandardMaterial({color:0xbfd5dc,roughness:.08,metalness:.48});
+      addBox(w*.84,h*.72,.08,glass,0,h*.40,0); addScaledSphere(w*.42,h*.22,.045,glass,0,h*.78,0,34);
+      addBox(w*.92,.08,.12,gold,0,.08,0); addBox(.08,h*.72,.12,gold,-w*.46,h*.40,0); addBox(.08,h*.72,.12,gold,w*.46,h*.40,0);
+      const arch=new THREE.Mesh(new THREE.TorusGeometry(w*.42,.045,12,42,Math.PI),gold); arch.rotation.z=Math.PI; arch.position.set(0,h*.78,.02); arch.scale.y=1.25; arch.castShadow=true; arch.userData.itemId=item.id; group.add(arch);
+      for (const side of [-1,1]) addTube([[side*w*.32,.02,-d*.15],[side*w*.36,h*.42,-d*.12],[side*w*.30,h*.16,d*.28]],.035,darkMaterial,18,8);
+    } else if (name.includes('photo collage')) {
+      const wire=new THREE.MeshStandardMaterial({color:0xb9935a,roughness:.35,metalness:.55});
+      addBox(w,.035,.035,wire,0,h*.94,0); for (let r=0;r<3;r++) addBox(w*.94,.018,.025,wire,0,h*(.22+r*.28),0);
+      const colors=[0xcaa0a8,0xd7c5ae,0x9eb4aa,0xb8a8c7,0xd9a480,0x91a7bf];
+      for (let r=0;r<3;r++) for (let c=0;c<4;c++) { const px=-w*.36+c*w*.24, py=h*(.22+r*.28); const photo=addBox(w*.17,h*.18,.025,new THREE.MeshStandardMaterial({color:colors[(r*4+c)%colors.length],roughness:.82}),px,py,.03); photo.rotation.z=((r+c)%2?-.035:.04); addBox(.025,.07,.025,wire,px,py+h*.12,.05); }
+    } else if (name.includes('wavy wall mirror')) {
+      const frameMat=new THREE.MeshStandardMaterial({color:0xe5b7c2,roughness:.60}); const glass=new THREE.MeshStandardMaterial({color:0xbfd5dc,roughness:.08,metalness:.48});
+      const pts=[]; for (let i=0;i<12;i++) { const y=h*(.08+i/11*.84); const edge=w*(.38+.05*Math.sin(i*1.6)); pts.push([-edge,y]); } for (let i=11;i>=0;i--) { const y=h*(.08+i/11*.84); const edge=w*(.38+.05*Math.sin(i*1.6+.8)); pts.push([edge,y]); }
+      addExtrudedPanel(pts,.06,frameMat,0,0,0,.025); addBox(w*.70,h*.74,.065,glass,0,h*.50,.04);
+    } else if (name.includes('bow wall hooks')) {
+      const blush=makeFabric('velvet','#d89aaa','#905c69'); addBox(w*.90,.08,d*.35,new THREE.MeshStandardMaterial({color:0xe9d7d1,roughness:.74}),0,h*.54,0);
+      for (let i=-1;i<=1;i++) { const x=i*w*.30; addScaledSphere(w*.12,h*.26,d*.18,blush,x-w*.07,h*.62,.04,20).rotation.z=.38; addScaledSphere(w*.12,h*.26,d*.18,blush,x+w*.07,h*.62,.04,20).rotation.z=-.38; addSphere(.055,new THREE.MeshStandardMaterial({color:0xc5a25f,metalness:.50,roughness:.35}),x,h*.62,d*.14); addCylinder(.025,.035,d*.55,darkMaterial,x,h*.36,d*.17,10).rotation.x=Math.PI/2; }
+    } else if (name.includes('flower bouquet')) {
+      addLathe([[.02,0],[w*.28,.02],[w*.37,h*.20],[w*.30,h*.48],[w*.16,h*.58],[.07,h*.60]],new THREE.MeshStandardMaterial({color:0xe7d8df,roughness:.40}),30);
+      const stem=new THREE.MeshStandardMaterial({color:0x6f966c,roughness:.88}); const flowerColors=[0xd47f92,0xf0d5c8,0xb58ab0,0xe4b965,0xc9879a];
+      for (let i=0;i<9;i++) { const a=i*Math.PI*2/9, sx=Math.cos(a)*w*(.08+(i%3)*.03), sz=Math.sin(a)*d*(.08+(i%3)*.03); const s=addBox(.018,h*.48,.018,stem,sx,h*.73,sz); s.rotation.z=Math.cos(a)*.18; const fy=h*(.86+(i%3)*.05); for (let p=0;p<5;p++) { const pa=p*Math.PI*2/5; addScaledSphere(.07,.035,.035,new THREE.MeshStandardMaterial({color:flowerColors[i%flowerColors.length],roughness:.9}),sx+Math.cos(pa)*.055,fy+Math.sin(pa)*.055,sz,12); } addSphere(.025,new THREE.MeshStandardMaterial({color:0xe1b65e,roughness:.7}),sx,fy,sz+.02); }
+    } else if (name.includes('perfume tray')) {
+      const gold=new THREE.MeshStandardMaterial({color:0xc5a25f,roughness:.32,metalness:.58}); addBox(w,.045,d,gold,0,.025,0); addBox(w*.92,.025,d*.90,new THREE.MeshStandardMaterial({color:0xe7d9df,roughness:.34}),0,.055,0);
+      const colors=[0xe6b6c4,0xc7d3d5,0xe8c89f,0xb9a7cd]; for (let i=0;i<4;i++) { const x=-w*.33+i*w*.22; addBox(w*.14,h*(.44+(i%2)*.12),d*.20,new THREE.MeshStandardMaterial({color:colors[i],transparent:true,opacity:.72,roughness:.22}),x,h*(.22+(i%2)*.06),0); addBox(w*.08,.05,d*.12,gold,x,h*(.47+(i%2)*.12),0); }
+    } else if (name.includes('jewelry tree')) {
+      const gold=new THREE.MeshStandardMaterial({color:0xc5a25f,roughness:.32,metalness:.60}); addCylinder(w*.28,w*.34,.05,gold,0,.025,0,24); addCylinder(.035,.045,h*.82,gold,0,h*.43,0,14);
+      for (const y of [h*.42,h*.62,h*.78]) { addCylinder(.025,.025,w*.62,gold,0,y,0,12).rotation.z=Math.PI/2; for (const side of [-1,1]) addTube([[side*w*.29,y,0],[side*w*.29,y-h*.12,.04]],.012,new THREE.MeshStandardMaterial({color:side>0?0xd2a5b1:0x7d9db0,roughness:.45,metalness:.35}),10,6); } addSphere(.07,new THREE.MeshStandardMaterial({color:0xe8d7dd,roughness:.5}),0,h*.92,0);
+    } else if (name.includes('skincare bottles')) {
+      const colors=[0xe8d8d1,0xd6c5df,0xc9ddd4,0xf1d5c1,0xb7ceda]; for (let i=0;i<5;i++) { const x=-w*.38+i*w*.19, bh=h*(.50+(i%3)*.14); addCylinder(w*.07,w*.09,bh,new THREE.MeshStandardMaterial({color:colors[i],roughness:.42,transparent:true,opacity:.88}),x,bh/2,0,16); addCylinder(w*.05,w*.05,.06,darkMaterial,x,bh+.03,0,12); }
+    } else if (name.includes('trinket dish')) {
+      const dish=new THREE.Mesh(new THREE.TorusGeometry(w*.30,w*.09,12,32),new THREE.MeshStandardMaterial({color:0xe8c8d2,roughness:.48})); dish.rotation.x=Math.PI/2; dish.position.y=h*.34; dish.castShadow=true; dish.userData.itemId=item.id; group.add(dish); addCylinder(w*.28,w*.34,h*.18,new THREE.MeshStandardMaterial({color:0xf2e2e5,roughness:.50}),0,h*.10,0,28); addSphere(.055,new THREE.MeshStandardMaterial({color:0xc5a25f,metalness:.55,roughness:.3}),-.08,h*.28,.03);
+    } else if (name.includes('teddy bear')) {
+      const teddy=makeFabric('sherpa','#c9a27f','#8f6e55'); addScaledSphere(w*.30,h*.28,d*.30,teddy,0,h*.38,0,28); addSphere(w*.24,teddy,0,h*.69,0); for (const side of [-1,1]) { addSphere(w*.10,teddy,side*w*.18,h*.84,0); addScaledSphere(w*.12,h*.23,d*.12,teddy,side*w*.28,h*.34,0,18); addScaledSphere(w*.13,h*.20,d*.13,teddy,side*w*.18,h*.10,d*.04,18); } addScaledSphere(w*.12,h*.08,d*.10,new THREE.MeshStandardMaterial({color:0xe0c5ad,roughness:.9}),0,h*.66,d*.20,16); addSphere(.025,darkMaterial,0,h*.68,d*.29); addSphere(.018,darkMaterial,-w*.09,h*.75,d*.20); addSphere(.018,darkMaterial,w*.09,h*.75,d*.20); addTube([[-w*.18,h*.53,d*.20],[0,h*.46,d*.24],[w*.18,h*.53,d*.20]],.025,new THREE.MeshStandardMaterial({color:0xc16f7f,roughness:.78}),16,7);
+    } else if (name.includes('heart cushion')) {
+      const pink=makeFabric('velvet','#d88fa2','#915767'); const left=addScaledSphere(w*.29,h*.42,d*.42,pink,-w*.17,h*.48,0,28); left.rotation.z=.32; const right=addScaledSphere(w*.29,h*.42,d*.42,pink,w*.17,h*.48,0,28); right.rotation.z=-.32; addExtrudedPanel([[-w*.36,h*.18],[0,0],[w*.36,h*.18],[0,h*.48]],d*.50,pink,0,h*.22,0,.06);
+    } else if (name.includes('bow pillow')) {
+      const bow=makeFabric('velvet','#d6a0b0','#8f6070'); const l=addScaledSphere(w*.28,h*.40,d*.40,bow,-w*.20,h*.48,0,28); l.rotation.z=.40; const r=addScaledSphere(w*.28,h*.40,d*.40,bow,w*.20,h*.48,0,28); r.rotation.z=-.40; addScaledSphere(w*.13,h*.28,d*.46,new THREE.MeshStandardMaterial({color:0xe2bdc8,roughness:.92}),0,h*.48,0,22); addExtrudedPanel([[-w*.08,0],[0,-h*.32],[w*.08,0]],d*.18,bow,-w*.05,h*.18,0,.02); addExtrudedPanel([[-w*.08,0],[0,-h*.32],[w*.08,0]],d*.18,bow,w*.05,h*.18,0,.02);
+    } else if (name.includes('rug')) {
       const rugHeight = Math.max(.006, Math.min(.018, h));
       const rugMaterial = new THREE.MeshStandardMaterial({
         map: createRugTexture(THREE, item),
@@ -3286,6 +3943,81 @@ function createFurnitureModel(item) {
           addBox(.018, .008, .14, fringeMaterial, x, rugHeight + .002,  d / 2 + .06);
         }
       }
+    } else if (name.includes('throw pillow')) {
+      const pillowMaterial=makeFabric('velvet','#b88075','#704b45');
+      const pillow=addScaledSphere(w*.47,h*.43,d*.47,pillowMaterial,0,h*.48,0,32);
+      pillow.rotation.y=.12;
+      addTube([[-w*.38,h*.48,0],[0,h*.50,d*.06],[w*.38,h*.48,0]],.012,new THREE.MeshStandardMaterial({color:0xe3c9ba,roughness:1}),20,6);
+      addSphere(.035,darkMaterial,0,h*.50,d*.43);
+    } else if (name.includes('chunky knit throw')) {
+      const throwMaterial=makeFabric('knit','#b48d75','#765b49');
+      const cloth=addScaledSphere(w*.47,h*.30,d*.46,throwMaterial,0,h*.34,0,34);
+      cloth.scale.y=.38;
+      cloth.rotation.z=-.05;
+      for (let i=0;i<9;i++) {
+        const x=-w*.40+i*w*.10;
+        addTube([[x,h*.15,-d*.38],[x+.02,h*.26,0],[x-.02,h*.18,d*.38]],.014,new THREE.MeshStandardMaterial({color:0x6f5444,roughness:1}),18,6);
+      }
+      for (let i=0;i<12;i++) addBox(.012,.012,d*.10,new THREE.MeshStandardMaterial({color:0x6f5444,roughness:1}),-w*.44+i*w*.08,h*.10,d*.47);
+    } else if (name.includes('aroma diffuser')) {
+      addLathe([[.02,0],[w*.30,.02],[w*.40,h*.18],[w*.35,h*.72],[w*.18,h*.92],[.03,h]],new THREE.MeshStandardMaterial({color:0xe4ded3,roughness:.72}),34);
+      addSphere(.025,new THREE.MeshStandardMaterial({color:0x7fd0c0,emissive:0x4f9f94,emissiveIntensity:.8}),0,h*.22,d*.35);
+      const mistMaterial=new THREE.MeshStandardMaterial({color:0xddeff1,transparent:true,opacity:.20,roughness:1});
+      for (let i=0;i<4;i++) {
+        const mist=addScaledSphere(w*(.10+i*.025),h*(.06+i*.018),d*(.10+i*.025),mistMaterial,Math.sin(i)*w*.05,h*(1.02+i*.18),0,18);
+        mist.rotation.y=i*.3;
+      }
+    } else if (name.includes('tea tray')) {
+      const trayMaterial=new THREE.MeshStandardMaterial({color:0xb18458,roughness:.70});
+      addBox(w,.06,d,trayMaterial,0,.03,0);
+      addBox(w,.12,.05,trayMaterial,0,.10,-d*.47);
+      addBox(w,.12,.05,trayMaterial,0,.10,d*.47);
+      addCylinder(w*.09,w*.10,h*.48,new THREE.MeshStandardMaterial({color:0xe9e0d3,roughness:.82}),-w*.18,h*.24,0,20);
+      addTube([[-w*.08,h*.31,0],[-w*.02,h*.34,0],[-w*.03,h*.19,0]],.025,new THREE.MeshStandardMaterial({color:0xe9e0d3,roughness:.82}),14,7);
+      addCylinder(w*.08,w*.09,h*.36,new THREE.MeshStandardMaterial({color:0x9db5a2,roughness:.82}),w*.18,h*.18,d*.05,20);
+      addSphere(w*.11,linenMaterial,w*.18,h*.44,d*.05);
+    } else if (name.includes('macramé')) {
+      const cordMaterial=new THREE.MeshStandardMaterial({color:0xe3d2b9,roughness:1});
+      addCylinder(.045,.045,w*.92,woodMaterial,0,h*.94,0,16).rotation.z=Math.PI/2;
+      for (let i=0;i<13;i++) {
+        const x=-w*.42+i*w*.07;
+        const length=h*(.50+.30*Math.sin((i/12)*Math.PI));
+        addTube([[x,h*.92,0],[x+(i%2?.035:-.035),h*.66,.01],[x,h*.92-length,0]],.018,cordMaterial,20,7);
+        if (i<12) addTube([[x,h*.73,.01],[x+w*.07,h*.59,.01]],.012,cordMaterial,12,6);
+      }
+      for (let i=0;i<9;i++) addTube([[-w*.28+i*w*.07,h*.48,0],[-w*.24+i*w*.07,h*.35,0]],.016,cordMaterial,10,6);
+    } else if (name.includes('curtain')) {
+      const curtainMaterial=makeFabric('woven','#d6c7b3','#a9967e');
+      addCylinder(.045,.045,w*.96,metalMaterial,0,h*.97,0,18).rotation.z=Math.PI/2;
+      for (const side of [-1,1]) {
+        for (let i=0;i<5;i++) {
+          const x=side*(w*.08+i*w*.075);
+          const panel=addScaledSphere(w*.075,h*.45,d*.20,curtainMaterial,x,h*.50,0,26);
+          panel.scale.z=.22;
+        }
+        addCylinder(.04,.05,.16,metalMaterial,side*w*.48,h*.97,0,12).rotation.z=Math.PI/2;
+      }
+      addTube([[-w*.38,h*.55,d*.03],[-w*.30,h*.47,d*.04]],.025,accentMaterial,10,7);
+      addTube([[w*.38,h*.55,d*.03],[w*.30,h*.47,d*.04]],.025,accentMaterial,10,7);
+    } else if (name.includes('tapestry')) {
+      const tapestryMaterial=makeFabric('woven','#9c806d','#654f43');
+      addCylinder(.035,.035,w*.92,woodMaterial,0,h*.96,0,14).rotation.z=Math.PI/2;
+      const cloth=addBox(w*.88,h*.82,.035,tapestryMaterial,0,h*.52,.02);
+      cloth.rotation.z=.01;
+      for (let i=0;i<7;i++) {
+        const x=-w*.36+i*w*.12;
+        addTube([[x,h*.89,.04],[x+(i%2?.04:-.04),h*.55,.05],[x,h*.18,.04]],.012,new THREE.MeshStandardMaterial({color:i%2?0xd2b187:0x6f8a78,roughness:1}),18,6);
+      }
+      for (let i=0;i<13;i++) addBox(.012,h*.10,.012,new THREE.MeshStandardMaterial({color:0xdac7aa,roughness:1}),-w*.42+i*w*.07,h*.08,0);
+    } else if (name.includes('cozy cat bed')) {
+      const bedFabric=makeFabric('sherpa','#dbcdbd','#b4a392');
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(Math.min(w,d)*.31,Math.min(w,d)*.12,18,40),bedFabric);
+      ring.rotation.x=Math.PI/2;
+      ring.position.y=h*.43;
+      ring.castShadow=true; ring.receiveShadow=true; ring.userData.itemId=item.id; group.add(ring);
+      addScaledSphere(w*.32,h*.15,d*.28,linenMaterial,0,h*.26,0,28);
+      addScaledSphere(w*.10,h*.06,d*.09,accentMaterial,-w*.12,h*.40,d*.04,18);
+      addScaledSphere(w*.10,h*.06,d*.09,accentMaterial,w*.12,h*.40,d*.04,18);
     } else if (name.includes('inspiration board')) {
       addBox(w, h, Math.max(.05, d), woodMaterial, 0, h / 2, 0);
       addBox(w * .91, h * .86, Math.max(.055, d) + .01, new THREE.MeshStandardMaterial({ color: 0xb98d63, roughness: .96 }), 0, h / 2, .02);
@@ -3394,7 +4126,55 @@ function createFurnitureModel(item) {
       addBox(w, h, d, accentMaterial, 0, h / 2, 0);
     }
   } else {
-    if (name.includes('monitor')) {
+    if (name.includes('p1s') || name.includes('3d printer')) {
+      const shellMaterial = new THREE.MeshStandardMaterial({ color: 0x2d3034, roughness: .48, metalness: .24 });
+      const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x15181c, roughness: .38, metalness: .38 });
+      const glassMaterial = new THREE.MeshStandardMaterial({ color: 0x7893a1, roughness: .08, metalness: .06, transparent: true, opacity: .34, side: THREE.DoubleSide });
+      const plateMaterial = new THREE.MeshStandardMaterial({ color: 0x4e555d, roughness: .68, metalness: .28 });
+      const screenMaterial = new THREE.MeshStandardMaterial({ color: 0x0e171d, emissive: 0x244a63, emissiveIntensity: .38, roughness: .18 });
+      const frame = Math.max(.055, Math.min(.11, Math.min(w, d) * .07));
+      const baseH = Math.max(.16, h * .10);
+      const topH = Math.max(.12, h * .07);
+      addBox(w, baseH, d, shellMaterial, 0, baseH / 2, 0);
+      addBox(w, topH, d, shellMaterial, 0, h - topH / 2, 0);
+      for (const x of [-w / 2 + frame / 2, w / 2 - frame / 2]) for (const z of [-d / 2 + frame / 2, d / 2 - frame / 2]) addBox(frame, h - baseH - topH, frame, frameMaterial, x, baseH + (h - baseH - topH) / 2, z);
+      addBox(w * .88, h * .73, .035, glassMaterial, 0, baseH + h * .38, d / 2 - .018);
+      addBox(.035, h * .73, d * .86, glassMaterial, w / 2 - .018, baseH + h * .38, 0);
+      addBox(w * .84, .055, d * .84, plateMaterial, 0, baseH + h * .10, 0);
+      addBox(w * .86, .075, .075, metalMaterial, 0, baseH + h * .65, -d * .18);
+      addBox(.075, h * .48, .075, metalMaterial, -w * .30, baseH + h * .40, -d * .18);
+      addBox(.075, h * .48, .075, metalMaterial,  w * .30, baseH + h * .40, -d * .18);
+      addBox(w * .52, .055, .055, metalMaterial, 0, baseH + h * .50, -d * .08);
+      addBox(.10, .11, .12, frameMaterial, 0, baseH + h * .48, -d * .02);
+      addCylinder(.025, .018, .18, metalMaterial, 0, baseH + h * .38, .01, 12);
+      addBox(w * .24, h * .13, .045, screenMaterial, w * .29, h - topH - h * .09, d / 2 + .028);
+      addBox(w * .08, h * .08, .055, darkMaterial, -w * .35, h - topH - h * .08, d / 2 + .03);
+      addBox(.035, h * .42, .055, frameMaterial, w / 2 - frame * 1.2, baseH + h * .37, d / 2 + .038);
+      const handle = addBox(w * .26, .055, .065, frameMaterial, w * .23, baseH + h * .56, d / 2 + .055);
+      handle.rotation.z = -.12;
+      // Rear filament spool and holder.
+      const spool = addCylinder(d * .22, d * .22, .10, new THREE.MeshStandardMaterial({ color: 0xbac3cb, roughness: .62 }), 0, h * .68, -d / 2 - .08, 28);
+      spool.rotation.x = Math.PI / 2;
+      const hub = addCylinder(d * .08, d * .08, .13, frameMaterial, 0, h * .68, -d / 2 - .08, 20);
+      hub.rotation.x = Math.PI / 2;
+      addBox(.07, h * .24, .07, frameMaterial, 0, h * .55, -d / 2 - .06);
+      const bambuLabel = createTextSprite(THREE, 'P1S', 0xffffff, 0x20252a);
+      bambuLabel.scale.set(Math.min(.52, w * .35), Math.min(.16, h * .09), 1);
+      bambuLabel.position.set(-w * .25, h - topH - h * .09, d / 2 + .075);
+      bambuLabel.userData.itemId = item.id;
+      group.add(bambuLabel);
+    } else if (name.includes('record player')) {
+      const caseMaterial=new THREE.MeshStandardMaterial({color:0x8c6548,roughness:.72});
+      addBox(w,h*.48,d,caseMaterial,0,h*.24,0);
+      const lid=addBox(w*.96,h*.48,.06,new THREE.MeshStandardMaterial({color:0x6f7f88,transparent:true,opacity:.30,roughness:.16}),0,h*.65,-d*.43);
+      lid.rotation.x=-.18;
+      addCylinder(w*.30,w*.30,.035,new THREE.MeshStandardMaterial({color:0x151719,roughness:.42}),-w*.08,h*.52,0,40);
+      addCylinder(w*.06,w*.06,.04,new THREE.MeshStandardMaterial({color:0xc7a45f,metalness:.45,roughness:.34}),-w*.08,h*.55,0,20);
+      addTube([[w*.24,h*.56,-d*.16],[w*.14,h*.58,-d*.02],[w*.07,h*.57,d*.13]],.022,metalMaterial,18,7);
+      addBox(w*.10,.04,d*.10,darkMaterial,w*.05,h*.57,d*.16);
+      addCylinder(.045,.045,.04,new THREE.MeshStandardMaterial({color:0xd7b870,metalness:.32,roughness:.38}),w*.34,h*.54,d*.22,16);
+      addCylinder(.035,.035,.04,new THREE.MeshStandardMaterial({color:0xd7b870,metalness:.32,roughness:.38}),w*.34,h*.54,d*.06,16);
+    } else if (name.includes('monitor')) {
       addBox(w, h * .78, Math.max(.08, d * .18), darkMaterial, 0, h * .58, 0);
       addBox(w * .90, h * .66, Math.max(.09, d * .18) + .01, new THREE.MeshStandardMaterial({ color: 0x17212b, roughness: .18, metalness: .16 }), 0, h * .58, .02);
       addBox(.10, h * .30, .10, metalMaterial, 0, h * .15, 0);
@@ -3874,7 +4654,7 @@ $('threeRaiseBtn').addEventListener('click', () => adjustSelected3D(item => ({ e
 $('threeFloorBtn').addEventListener('click', () => adjustSelected3D(item => ({ elevation: 0, ceilingMounted: false }), { sill: 0 }));
 $('resetViewBtn').addEventListener('click', () => reset3DView(false));
 $('topViewBtn').addEventListener('click', () => reset3DView(true));
-window.addEventListener('resize', () => { if (currentTab === 'plan') renderPlan(); resize3D(); });
+window.addEventListener('resize', () => { if (currentTab === 'plan') renderPlan(); fitThreeHostToViewport(); resize3D(); });
 window.addEventListener('popstate', () => {
   if (allowBackNavigation || plannerView.classList.contains('hidden')) return;
   const confirmed = window.confirm('Leave this RoomRelay room? The layout is saved on this phone, but the live connection will close.');
@@ -3973,6 +4753,41 @@ $('threeDeleteSelectedBtn').addEventListener('click', () => {
   if (selected.type === 'furniture') removeItem(selected.data.id);
   else removeOpening(selected.data.id);
   closeThreeToolMenus();
+});
+
+function setThreeUiHidden(hidden) {
+  const host = $('threeHost');
+  if (!host) return;
+  host.classList.toggle('ui-hidden', hidden);
+  $('threeUiShowBtn')?.classList.toggle('hidden', !hidden);
+  if (hidden) closeThreeToolMenus();
+}
+
+function setThreeFocusMode(enabled) {
+  const panel = $('threeTab');
+  if (!panel) return;
+  panel.classList.toggle('focus-mode', enabled);
+  document.body.classList.toggle('three-focus', enabled);
+  const host = $('threeHost');
+  if (host) host.style.height = enabled ? '100svh' : '';
+  const button = $('threeFocusBtn');
+  if (button) {
+    button.setAttribute('aria-label', enabled ? 'Exit focus mode' : 'Enter focus mode');
+    button.title = enabled ? 'Exit focus mode' : 'Focus mode';
+    const label = button.querySelector('.viewport-tool-label');
+    if (label) label.textContent = enabled ? 'Exit' : 'Focus';
+  }
+  closeThreeToolMenus();
+  requestAnimationFrame(() => { fitThreeHostToViewport(); resize3D(); setTimeout(() => { fitThreeHostToViewport(); resize3D(); }, 120); });
+}
+
+$('threeUiToggleBtn').addEventListener('click', () => setThreeUiHidden(true));
+$('threeUiShowBtn').addEventListener('click', () => setThreeUiHidden(false));
+$('threeFocusBtn').addEventListener('click', () => setThreeFocusMode(!$('threeTab').classList.contains('focus-mode')));
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  if ($('threeTab')?.classList.contains('focus-mode')) setThreeFocusMode(false);
+  else closeThreeToolMenus();
 });
 
 $('threeAddObjectBtn').addEventListener('click', openThreeCatalog);
