@@ -1,11 +1,11 @@
 <!doctype html>
-<!-- RoomRelay Build v13.0.1 -->
+<!-- RoomRelay Build v14.0.0 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#172033" />
-  <title>RoomRelay 3D v13.0.1 — Shared Room Planner</title>
+  <title>RoomRelay 3D v14.0.0 — Shared Room Planner</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -129,6 +129,22 @@
     .preset-strip { display: grid; grid-template-columns: repeat(4, minmax(84px, 1fr)); gap: 8px; }
     .preset { min-height: 64px; border: 1px solid var(--border); background: var(--panel2); border-radius: 13px; padding: 8px 6px; display: grid; place-items: center; gap: 3px; font-size: .81rem; font-weight: 700; text-align: center; }
     .preset span:first-child { font-size: 1.15rem; }
+    .plan-furniture-menu { border: 1px solid var(--border); border-radius: 14px; background: var(--panel2); overflow: hidden; }
+    .plan-furniture-menu > summary { list-style: none; min-height: 54px; padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; font-weight: 800; }
+    .plan-furniture-menu > summary::-webkit-details-marker { display: none; }
+    .plan-furniture-menu[open] > summary { border-bottom: 1px solid var(--border); background: var(--soft); }
+    .plan-furniture-summary-copy { display: grid; gap: 2px; min-width: 0; }
+    .plan-furniture-summary-copy small { color: var(--muted); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .plan-furniture-summary-action { display: inline-flex; align-items: center; gap: 7px; color: var(--accent); white-space: nowrap; font-size: .82rem; }
+    .plan-furniture-menu[open] .plan-furniture-caret { transform: rotate(180deg); }
+    .plan-furniture-caret { display: inline-block; transition: transform .16s ease; }
+    .plan-furniture-menu-panel { max-height: min(54vh, 560px); overflow: auto; padding: 10px; overscroll-behavior: contain; }
+    .plan-furniture-menu-panel .preset-strip { padding-bottom: 4px; }
+    .three-resize-card { display: grid; gap: 8px; padding: 10px; border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--border)); border-radius: 12px; background: color-mix(in srgb, var(--soft) 72%, var(--panel)); }
+    .three-resize-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: .8rem; }
+    .three-resize-readout { color: var(--muted); font-size: .72rem; font-variant-numeric: tabular-nums; }
+    .three-resize-actions { grid-template-columns: 1fr 1fr; }
+    .three-resize-help { margin: 0; color: var(--muted); font-size: .72rem; line-height: 1.35; }
     .room-card { padding: 12px; overflow: hidden; }
     .room-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 9px; }
     .room-shell { width: 100%; min-height: 390px; display: grid; place-items: center; overflow: hidden; border-radius: 14px; background: var(--panel2); padding: 20px 16px 25px 28px; }
@@ -392,11 +408,13 @@
       .viewport-tool-label { display: none; }
       #threeAddObjectBtn .viewport-tool-label { display: inline; }
       .three-v12 .tool-menu-caret { display: none; }
-      .three-v12 .tool-menu-panel { bottom: max(62px, calc(env(safe-area-inset-bottom) + 54px), calc(var(--roomrelay-browser-bottom, 0px) + 54px)); max-height: min(54svh, calc(var(--roomrelay-visible-height, 100dvh) - 92px)); }
+      .three-v12 .tool-menu-panel, .three-v12 #threeSelectedMenu .tool-menu-panel { left: 50%; right: auto; transform: translateX(-50%); bottom: max(62px, calc(env(safe-area-inset-bottom) + 54px), calc(var(--roomrelay-browser-bottom, 0px) + 54px)); max-height: min(54svh, calc(var(--roomrelay-visible-height, 100dvh) - 92px)); }
       .three-v12 .three-hint { display: none; }
       .three-v12 .three-placement-banner { top: 54px; }
       .compact-toggle-row { grid-template-columns: 1fr; }
       .quick-edit-grid { grid-template-columns: repeat(3, 1fr); }
+      .plan-furniture-menu-panel { max-height: 48svh; }
+      .plan-furniture-summary-action span:first-child { display: none; }
     }
 
   </style>
@@ -406,7 +424,7 @@
     <section id="joinView" class="panel join stack">
       <div>
         <div class="join-mark">⌂</div>
-        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v13.0.1</span></div>
+        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v14.0.0</span></div>
         <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, realistic seating, soft-cozy furniture, lighting, and detailed decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
@@ -428,7 +446,7 @@
         <div>
           <div class="brandline">
             <span class="brand">RoomRelay 3D</span>
-            <span class="version-badge" data-app-version>v13.0.1</span>
+            <span class="version-badge" data-app-version>v14.0.0</span>
             <span class="status"><span id="statusDot" class="dot connecting"></span><span id="statusText">Starting</span></span>
           </div>
           <div class="small muted">Room <span id="roomCodeLabel" class="code"></span> · <span id="peopleLabel">1 person</span></div>
@@ -486,16 +504,19 @@
               <button id="addWindowBtn" class="btn soft" type="button">＋ Window</button>
             </div>
           </div>
-          <div>
-            <div class="row spread" style="margin-bottom:8px">
-              <div>
-                <h3 style="margin-bottom:2px">3. Add furniture</h3>
-                <div class="small muted">Tap an item to add it. Tap selects; hold briefly, then drag to move. Small décor snaps onto desks and moves with them. Wall-mounted TVs, pegboards and shelves can be raised in 3D.</div>
+          <details id="planFurnitureMenu" class="plan-furniture-menu">
+            <summary>
+              <span class="plan-furniture-summary-copy"><span>3. Add furniture</span><small>Collapsed catalog keeps the 2D plan close by</small></span>
+              <span class="plan-furniture-summary-action"><span>Browse furniture</span><span class="plan-furniture-caret">▾</span></span>
+            </summary>
+            <div class="plan-furniture-menu-panel">
+              <div class="row spread" style="margin-bottom:9px">
+                <div class="small muted">Tap an item to add it. Hold briefly, then drag to move. Small décor snaps onto desks.</div>
+                <button id="starterBtn" class="btn compact" type="button">Add starter set</button>
               </div>
-              <button id="starterBtn" class="btn compact" type="button">Add starter set</button>
+              <div id="presetStrip" class="preset-strip"></div>
             </div>
-            <div id="presetStrip" class="preset-strip"></div>
-          </div>
+          </details>
         </section>
 
         <section class="panel room-card">
@@ -584,8 +605,8 @@
       <section id="threeTab" class="hidden panel three-panel three-v12">
         <div id="threeHost" class="three-host">
           <div class="three-viewport-head" aria-live="polite">
-            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v13.0.1</span></div>
-            <div id="threeSelection" class="three-statusline">Tap to select · hold to move</div>
+            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v14.0.0</span></div>
+            <div id="threeSelection" class="three-statusline">Tap to select · hold to move · triple-tap selected item to delete</div>
           </div>
           <div id="threePresence" class="three-presence">Only you in 3D</div>
 
@@ -622,7 +643,7 @@
                   <label class="tool-toggle"><input id="threeSnapToggle" type="checkbox" /> 3-inch snap</label>
                   <label class="tool-toggle"><input id="threeWallSnapToggle" type="checkbox" checked /> Wall snap</label>
                 </div>
-                <p class="three-menu-help">Drag empty space to orbit. Pinch to zoom. Two-finger drag pans.</p>
+                <p class="three-menu-help">Drag empty space to orbit. Pinch empty space to zoom. Pinch the selected object to resize.</p>
               </div>
             </details>
 
@@ -636,6 +657,14 @@
                   <div class="tool-grid">
                     <label>Name<input id="threeItemName" maxlength="40" /></label>
                     <label>Elevation (in)<input id="threeItemElevation" type="number" min="0" max="120" step="0.5" /></label>
+                  </div>
+                  <div class="three-resize-card">
+                    <div class="three-resize-head"><strong>Quick resize</strong><span id="threeResizeReadout" class="three-resize-readout">—</span></div>
+                    <div class="tool-action-grid three-resize-actions">
+                      <button id="threeSizeDownBtn" class="btn compact" type="button">− 10%</button>
+                      <button id="threeSizeUpBtn" class="btn compact" type="button">＋ 10%</button>
+                    </div>
+                    <p class="three-resize-help">On touch screens, place two fingers directly on the selected object and pinch. Rugs resize across the floor without becoming thicker.</p>
                   </div>
                   <details class="advanced-fields">
                     <summary>Size and dimensions</summary>
@@ -716,7 +745,7 @@
           <button id="threeUiShowBtn" class="three-ui-show hidden" type="button">Show controls</button>
           <div id="threePlacementBanner" class="three-placement-banner hidden"><span id="threePlacementText">Tap to place</span><button id="cancelThreePlacementBtn" class="btn compact" type="button">Cancel</button></div>
           <div id="threeStatus" class="three-status">Open this tab to load the 3D room.</div>
-          <div class="three-hint">Hold an object to move · tap Focus for a full-screen room</div>
+          <div class="three-hint">Hold to move · pinch selected object to resize · triple-tap selected item to delete</div>
         </div>
       </section>
 
@@ -760,7 +789,7 @@ const $ = id => document.getElementById(id);
 const canvas = $('roomCanvas');
 const joinView = $('joinView');
 const plannerView = $('plannerView');
-const APP_VERSION = '13.0.1';
+const APP_VERSION = '14.0.0';
 const WALL_SNAP_DISTANCE = 12;
 const WALL_ROTATIONS = { top: 0, right: 270, bottom: 180, left: 90 };
 const HOLD_TO_MOVE_MS = 420;
@@ -1429,8 +1458,10 @@ function renderThreeCatalog() {
 
 function openThreeCatalog() {
   renderThreeCatalog();
+  const active = document.activeElement;
+  if (active && typeof active.blur === 'function') active.blur();
   $('threeCatalog').classList.remove('hidden');
-  requestAnimationFrame(() => $('threeCatalogSearch')?.focus());
+  // Deliberately do not focus the search box. Mobile keyboards should open only after the user taps Search.
 }
 
 function closeThreeCatalog() {
@@ -1713,7 +1744,7 @@ function updateRoom() {
 
 function applyPhotoRoom() {
   const hasEditedShell = activeOpenings().some(o => o.rev?.n > 0);
-  if (hasEditedShell && !window.confirm('Replace the current door and window layout with the v9 default positions? Furniture will stay.')) return;
+  if (hasEditedShell && !window.confirm('Replace the current door and window layout with the default positions? Furniture will stay.')) return;
   state.meta = { ...state.meta, width: 150, depth: 126, wallHeight: 96, rev: nextRev() };
   const defaults = photoOpenings();
   state.openings = {};
@@ -1931,6 +1962,7 @@ function syncThreeCommandbar() {
     $('threeItemElevation').value = Math.round(furniture.elevation * 10) / 10;
     $('threeItemFinish').value = furniture.finish || 'default';
     $('threeItemFabric').value = furniture.fabricStyle || 'auto';
+    if ($('threeResizeReadout')) $('threeResizeReadout').textContent = `${Math.round(furniture.w * 10) / 10} × ${Math.round(furniture.d * 10) / 10} × ${Math.round(furniture.height * 10) / 10} in`;
     const isRug = String(furniture.name || '').toLowerCase().includes('rug');
     $('threeRugControls').classList.toggle('hidden', !isRug);
     if (isRug) {
@@ -1951,12 +1983,173 @@ function syncThreeCommandbar() {
     $('threeOpeningSill').disabled = opening.type === 'door';
   }
 
-  const furnitureOnly = ['threeRotateLeftBtn', 'threeRotateRightBtn'];
+  const furnitureOnly = ['threeRotateLeftBtn', 'threeRotateRightBtn', 'threeSizeDownBtn', 'threeSizeUpBtn'];
   furnitureOnly.forEach(id => $(id).disabled = !furniture);
   ['threeLowerBtn', 'threeRaiseBtn', 'threeFloorBtn'].forEach(id => {
     $(id).disabled = !furniture && !(opening?.type === 'window');
   });
   ['threeDuplicateSelectedBtn', 'threeDeleteSelectedBtn'].forEach(id => $(id).disabled = !hasSelection);
+}
+
+function isRugItem(item) {
+  return Boolean(item && String(item.name || '').toLowerCase().includes('rug'));
+}
+
+function scaleSelectedFurniture(factor, announce = true) {
+  const item = selectedType === 'furniture' && selectedId ? state.furniture[selectedId] : null;
+  if (!item || item.deleted || !Number.isFinite(factor) || factor <= 0) return;
+  const centerX = item.x + item.w / 2;
+  const centerY = item.y + item.d / 2;
+  const nextW = Math.max(1, Math.min(240, item.w * factor));
+  const nextD = Math.max(1, Math.min(240, item.d * factor));
+  const nextH = isRugItem(item) ? item.height : Math.max(.05, Math.min(144, item.height * factor));
+  patchItem(item.id, {
+    w: nextW,
+    d: nextD,
+    height: nextH,
+    x: centerX - nextW / 2,
+    y: centerY - nextD / 2
+  });
+  if (announce) toast(`${item.name} resized to ${Math.round(nextW)} × ${Math.round(nextD)} in.`);
+}
+
+function pointerDistance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function begin3DPinchResize() {
+  const runtime = threeRuntime;
+  const item = selectedType === 'furniture' && selectedId ? state.furniture[selectedId] : null;
+  if (!runtime || !item || item.deleted || runtime.drag || runtime.activePointers.size < 2) return false;
+  const candidates = [...runtime.activePointers.entries()].filter(([id]) => {
+    const entity = runtime.pointerEntities.get(id);
+    return entity?.type === 'furniture' && entity.id === item.id;
+  });
+  if (!candidates.length) return false;
+  const points = [...runtime.activePointers.entries()].slice(-2);
+  const initialDistance = pointerDistance(points[0][1], points[1][1]);
+  if (initialDistance < 12) return false;
+  clear3DPendingHold();
+  if (runtime.drag) restore3DCameraControls(runtime.drag.pointerId);
+  runtime.pinchResize = {
+    id: item.id,
+    pointerIds: points.map(([id]) => id),
+    primaryPointerId: points[0][0],
+    initialDistance,
+    original: { w: item.w, d: item.d, height: item.height, x: item.x, y: item.y },
+    centerX: item.x + item.w / 2,
+    centerY: item.y + item.d / 2,
+    lastScale: 1,
+    committed: false
+  };
+  runtime.controls.enabled = false;
+  for (const [id] of points) {
+    try { runtime.renderer.domElement.setPointerCapture(id); } catch (_) {}
+  }
+  navigator.vibrate?.(12);
+  $('threeSelection').textContent = `Pinch to resize ${item.name} · ${Math.round(item.w)} × ${Math.round(item.d)} in`;
+  return true;
+}
+
+function update3DPinchResize(event) {
+  const runtime = threeRuntime;
+  const pinch = runtime?.pinchResize;
+  if (!pinch || !pinch.pointerIds.includes(event.pointerId)) return false;
+  const a = runtime.activePointers.get(pinch.pointerIds[0]);
+  const b = runtime.activePointers.get(pinch.pointerIds[1]);
+  if (!a || !b) return true;
+  const item = state.furniture[pinch.id];
+  const object = runtime.furnitureObjects.get(pinch.id);
+  if (!item || !object) return true;
+  const scale = Math.max(.25, Math.min(4, pointerDistance(a, b) / pinch.initialDistance));
+  pinch.lastScale = scale;
+  const nextW = Math.max(1, Math.min(240, pinch.original.w * scale));
+  const nextD = Math.max(1, Math.min(240, pinch.original.d * scale));
+  const nextH = isRugItem(item) ? pinch.original.height : Math.max(.05, Math.min(144, pinch.original.height * scale));
+  const next = clampItem({
+    ...item,
+    w: nextW,
+    d: nextD,
+    height: nextH,
+    x: pinch.centerX - nextW / 2,
+    y: pinch.centerY - nextD / 2
+  });
+  Object.assign(item, next);
+  object.scale.set(
+    item.w / pinch.original.w,
+    item.height / pinch.original.height,
+    item.d / pinch.original.d
+  );
+  updateDraggedModel(item, object);
+  if ($('threeResizeReadout')) $('threeResizeReadout').textContent = `${Math.round(item.w * 10) / 10} × ${Math.round(item.d * 10) / 10} × ${Math.round(item.height * 10) / 10} in`;
+  $('threeSelection').textContent = `Resizing ${item.name} · ${Math.round(item.w)} × ${Math.round(item.d)} × ${Math.round(item.height)} in`;
+  return true;
+}
+
+function commit3DPinchResize() {
+  const runtime = threeRuntime;
+  const pinch = runtime?.pinchResize;
+  if (!pinch || pinch.committed) return;
+  pinch.committed = true;
+  const item = state.furniture[pinch.id];
+  if (!item || item.deleted) return;
+  item.rev = nextRev();
+  item.updatedBy = myName;
+  saveLocal();
+  actions?.item.send({ ...item });
+  syncAttachedChildren(item.id, true);
+  renderPlan();
+  renderSelection();
+  rebuild3D();
+  toast(`${item.name} resized.`);
+}
+
+function finish3DPinchPointer(event) {
+  const runtime = threeRuntime;
+  const pinch = runtime?.pinchResize;
+  if (!pinch || !pinch.pointerIds.includes(event.pointerId)) return false;
+  commit3DPinchResize();
+  const wasPrimary = event.pointerId === pinch.primaryPointerId;
+  runtime.activePointers.delete(event.pointerId);
+  runtime.pointerEntities.delete(event.pointerId);
+  try {
+    if (runtime.renderer.domElement.hasPointerCapture(event.pointerId)) runtime.renderer.domElement.releasePointerCapture(event.pointerId);
+  } catch (_) {}
+  const anyRemaining = pinch.pointerIds.some(id => runtime.activePointers.has(id));
+  if (wasPrimary && anyRemaining) {
+    runtime.controls.enabled = true;
+    queueMicrotask(() => { if (threeRuntime?.pinchResize) threeRuntime.controls.enabled = false; });
+  } else if (!anyRemaining) {
+    runtime.pinchResize = null;
+    runtime.controls.enabled = true;
+    runtime.controls.update();
+    send3DPresence(true);
+  }
+  return true;
+}
+
+function register3DTap(entity, event, wasSelected) {
+  const runtime = threeRuntime;
+  if (!runtime || !entity || !wasSelected) {
+    if (runtime) runtime.tapTracker = null;
+    return false;
+  }
+  const now = performance.now();
+  const previous = runtime.tapTracker;
+  const same = previous && previous.type === entity.type && previous.id === entity.id && now - previous.lastTime <= 520 && Math.hypot(event.clientX - previous.x, event.clientY - previous.y) <= 34;
+  const count = same ? previous.count + 1 : 1;
+  runtime.tapTracker = { type: entity.type, id: entity.id, count, lastTime: now, x: event.clientX, y: event.clientY };
+  if (count < 3) return false;
+  runtime.tapTracker = null;
+  const data = entity.type === 'furniture' ? state.furniture[entity.id] : state.openings[entity.id];
+  if (!data || data.deleted) return false;
+  const name = data.name || 'Object';
+  navigator.vibrate?.([22, 34, 22]);
+  if (entity.type === 'furniture') removeItem(entity.id);
+  else removeOpening(entity.id);
+  restore3DCameraControls(event.pointerId);
+  toast(`${name} removed by triple tap.`);
+  return true;
 }
 
 function clear2DHold(releasePointer = false) {
@@ -2494,6 +2687,7 @@ async function init3D() {
     threeRuntime = {
       THREE, scene, camera, renderer, controls, roomGroup, openingGroup, furnitureGroup, presenceGroup, lightingGroup,
       ambient, hemi, warm, fill, raycaster, pointer, floorPlane, planePoint, furnitureObjects: new Map(), openingObjects: new Map(), wallObjects: [], drag: null, pendingHold: null,
+      activePointers: new Map(), pointerEntities: new Map(), pinchResize: null, tapTracker: null,
       pointerStart: null, animationId: null, roomW: 12.5, roomD: 10.5
     };
 
@@ -2592,10 +2786,16 @@ function restore3DCameraControls(pointerId = null) {
   const runtime = threeRuntime;
   if (!runtime) return;
   clear3DPendingHold();
-  if (pointerId != null && runtime.renderer?.domElement?.hasPointerCapture?.(pointerId)) {
-    try { runtime.renderer.domElement.releasePointerCapture(pointerId); } catch (_) {}
+  const releaseIds = new Set([pointerId, runtime.drag?.pointerId, ...(runtime.pinchResize?.pointerIds || [])].filter(id => id != null));
+  for (const id of releaseIds) {
+    if (runtime.renderer?.domElement?.hasPointerCapture?.(id)) {
+      try { runtime.renderer.domElement.releasePointerCapture(id); } catch (_) {}
+    }
   }
   runtime.drag = null;
+  runtime.pinchResize = null;
+  runtime.activePointers?.clear();
+  runtime.pointerEntities?.clear();
   runtime.controls.enabled = true;
   runtime.controls.update();
 }
@@ -2603,7 +2803,7 @@ function restore3DCameraControls(pointerId = null) {
 function handle3DLostPointerCapture(event) {
   const runtime = threeRuntime;
   if (!runtime) return;
-  if (runtime.drag?.pointerId === event.pointerId || runtime.pendingHold?.pointerId === event.pointerId) restore3DCameraControls(event.pointerId);
+  if (runtime.drag?.pointerId === event.pointerId || runtime.pendingHold?.pointerId === event.pointerId || runtime.pinchResize?.pointerIds?.includes(event.pointerId)) restore3DCameraControls(event.pointerId);
 }
 
 function handle3DGlobalPointerEnd(event) {
@@ -2676,21 +2876,32 @@ function activate3DHold() {
 }
 
 function handle3DPointerDown(event) {
-  if (!threeRuntime || event.button > 0) return;
+  const runtime = threeRuntime;
+  if (!runtime || event.button > 0) return;
+  runtime.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY, pointerType: event.pointerType });
   if (threePlacementPreset) {
+    if (runtime.activePointers.size > 1) return;
     event.preventDefault();
     event.stopPropagation();
     placePresetIn3D(event);
     return;
   }
-  clear3DPendingHold();
   setRayFromEvent(event);
-  const hits = threeRuntime.raycaster.intersectObjects([threeRuntime.furnitureGroup, threeRuntime.openingGroup], true);
+  const hits = runtime.raycaster.intersectObjects([runtime.furnitureGroup, runtime.openingGroup], true);
   const first = hits.find(hit => findEntityOnObject(hit.object));
-  threeRuntime.pointerStart = { x: event.clientX, y: event.clientY };
-  if (!first) return;
-  const entity = findEntityOnObject(first.object);
-  threeRuntime.pendingHold = {
+  const entity = first ? findEntityOnObject(first.object) : null;
+  runtime.pointerEntities.set(event.pointerId, entity);
+  runtime.pointerStart = { x: event.clientX, y: event.clientY };
+
+  if (event.pointerType === 'touch' && runtime.activePointers.size >= 2 && begin3DPinchResize()) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
+
+  clear3DPendingHold();
+  if (!entity) return;
+  runtime.pendingHold = {
     entity,
     pointerId: event.pointerId,
     startX: event.clientX,
@@ -2704,6 +2915,12 @@ function handle3DPointerDown(event) {
 function handle3DPointerMove(event) {
   const runtime = threeRuntime;
   if (!runtime) return;
+  if (runtime.activePointers.has(event.pointerId)) runtime.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY, pointerType: event.pointerType });
+  if (runtime.pinchResize && update3DPinchResize(event)) {
+    event.preventDefault();
+    event.stopPropagation();
+    return;
+  }
   const pending = runtime.pendingHold;
   if (pending && pending.pointerId === event.pointerId && Math.hypot(event.clientX - pending.startX, event.clientY - pending.startY) > HOLD_CANCEL_PX) {
     clear3DPendingHold();
@@ -2787,16 +3004,34 @@ function handle3DPointerMove(event) {
 function handle3DPointerUp(event) {
   const runtime = threeRuntime;
   if (!runtime) return;
+  if (runtime.pinchResize && runtime.pinchResize.pointerIds.includes(event.pointerId)) {
+    finish3DPinchPointer(event);
+    return;
+  }
   const pending = runtime.pendingHold;
   if (pending && pending.pointerId === event.pointerId) {
     clear3DPendingHold();
+    if (event.type === 'pointercancel') {
+      runtime.activePointers.delete(event.pointerId);
+      runtime.pointerEntities.delete(event.pointerId);
+      runtime.controls.enabled = true;
+      runtime.controls.update();
+      return;
+    }
     const data = pending.entity.type === 'furniture' ? state.furniture[pending.entity.id] : state.openings[pending.entity.id];
-    selectEntity(pending.entity.type, pending.entity.id);
-    $('threeSelection').textContent = `Selected: ${data?.name || 'object'} · hold briefly to move`;
+    const wasSelected = selectedType === pending.entity.type && selectedId === pending.entity.id;
+    if (!register3DTap(pending.entity, event, wasSelected)) {
+      selectEntity(pending.entity.type, pending.entity.id);
+      $('threeSelection').textContent = `Selected: ${data?.name || 'object'} · hold to move · pinch to resize · triple-tap to delete`;
+    }
+    runtime.activePointers.delete(event.pointerId);
+    runtime.pointerEntities.delete(event.pointerId);
     runtime.controls.enabled = true;
     runtime.controls.update();
     return;
   }
+  runtime.activePointers.delete(event.pointerId);
+  runtime.pointerEntities.delete(event.pointerId);
   if (!runtime.drag || runtime.drag.pointerId !== event.pointerId) return;
 
   event.preventDefault();
@@ -2820,6 +3055,8 @@ function handle3DPointerUp(event) {
     if (runtime.renderer.domElement.hasPointerCapture(event.pointerId)) {
       try { runtime.renderer.domElement.releasePointerCapture(event.pointerId); } catch (_) {}
     }
+    runtime.activePointers.delete(event.pointerId);
+    runtime.pointerEntities.delete(event.pointerId);
     runtime.drag = null;
     runtime.controls.enabled = true;
     runtime.controls.update();
@@ -4880,6 +5117,8 @@ function adjustSelected3D(patchFurniture, patchWindow = null) {
     if (opening?.type === 'window') patchOpening(selectedId, typeof patchWindow === 'function' ? patchWindow(opening) : patchWindow);
   }
 }
+$('threeSizeDownBtn').addEventListener('click', () => scaleSelectedFurniture(.9));
+$('threeSizeUpBtn').addEventListener('click', () => scaleSelectedFurniture(1.1));
 $('threeRotateLeftBtn').addEventListener('click', () => adjustSelected3D(item => ({ rotation: item.rotation - 15, autoFaceCenter: false })));
 $('threeRotateRightBtn').addEventListener('click', () => adjustSelected3D(item => ({ rotation: item.rotation + 15, autoFaceCenter: false })));
 $('threeLowerBtn').addEventListener('click', () => adjustSelected3D(item => ({ elevation: item.elevation - 1 }), opening => ({ sill: opening.sill - 1 })));
