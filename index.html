@@ -122,7 +122,7 @@
       background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
       touch-action: none; user-select: none; -webkit-user-select: none; overflow: hidden;
     }
-    .room::after { content: "Drag furniture with one finger"; position: absolute; right: 8px; bottom: 7px; color: var(--muted); font-size: .7rem; pointer-events: none; opacity: .75; }
+    .room::after { content: "Drag furniture or doors/windows"; position: absolute; right: 8px; bottom: 7px; color: var(--muted); font-size: .7rem; pointer-events: none; opacity: .75; }
     .furniture {
       position: absolute; display: grid; place-items: center; padding: 3px; border: 2px solid color-mix(in srgb, var(--text) 65%, transparent);
       border-radius: 7px; color: #111827; font-size: clamp(.57rem, 2.3vw, .83rem); font-weight: 750; text-align: center;
@@ -165,6 +165,28 @@
     .idea { border: 1px solid var(--border); background: var(--panel2); border-radius: 13px; padding: 10px 12px; }
     .idea-head { display: flex; justify-content: space-between; gap: 10px; font-size: .78rem; color: var(--muted); margin-bottom: 4px; }
     .toast { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--text); color: var(--panel); border-radius: 999px; padding: 9px 14px; font-size: .84rem; z-index: 100; box-shadow: var(--shadow); max-width: calc(100% - 28px); text-align: center; }
+
+    .architecture-strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .shell-note { border-left: 3px solid var(--accent); padding-left: 10px; }
+    .opening {
+      position: absolute; z-index: 14; display: grid; place-items: center; touch-action: none; user-select: none;
+      -webkit-user-select: none; cursor: grab; border: 2px solid var(--text); color: #18202d; font-size: .65rem;
+      font-weight: 850; line-height: 1; box-shadow: 0 1px 5px rgba(0,0,0,.18); overflow: visible;
+    }
+    .opening:active { cursor: grabbing; }
+    .opening.door { background: #fffdf8; border-color: #6e665d; }
+    .opening.window { background: #a9d6e4; border-color: #38778b; }
+    .opening.selected { outline: 4px solid var(--accent); outline-offset: 2px; z-index: 18; }
+    .opening.remote { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 40%, transparent), 0 1px 5px rgba(0,0,0,.18); }
+    .opening.drag-now { opacity: .9; z-index: 22; }
+    .opening[data-wall="top"], .opening[data-wall="bottom"] { border-radius: 3px; }
+    .opening[data-wall="left"], .opening[data-wall="right"] { border-radius: 3px; }
+    .opening-editor-grid { display: grid; grid-template-columns: 1.2fr .8fr .9fr; gap: 8px; }
+    .opening-editor-grid .wide { grid-column: span 2; }
+    .opening-nudge { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .three-presence { display: inline-flex; margin-top: 7px; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 999px; padding: 5px 9px; background: var(--panel2); font-size: .78rem; }
+    .three-presence::before { content: "●"; color: #22c55e; font-size: .7rem; }
+
     @media (min-width: 760px) {
       .topbar { grid-template-columns: 1fr auto; align-items: center; }
       .plan-layout { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
@@ -179,8 +201,8 @@
       .topbar { top: 0; }
       .tabs { top: 104px; }
       .preset-strip { grid-template-columns: repeat(4, 1fr); }
-      .field-grid, .custom-grid { grid-template-columns: 1fr 1fr; }
-      .field-grid label:first-child, .custom-grid label:first-child { grid-column: 1 / -1; }
+      .field-grid, .custom-grid, .opening-editor-grid { grid-template-columns: 1fr 1fr; }
+      .field-grid label:first-child, .custom-grid label:first-child, .opening-editor-grid .wide { grid-column: 1 / -1; }
       .room-shell { min-height: 440px; padding-left: 26px; }
       .action-grid { grid-template-columns: 1fr 1fr; }
       .action-grid .danger { grid-column: 1 / -1; }
@@ -194,7 +216,7 @@
       <div>
         <div class="join-mark">⌂</div>
         <h1>RoomRelay 3D</h1>
-        <p class="muted">Move furniture together in a simple floor plan, then walk around the result in 3D.</p>
+        <p class="muted">Build the room shell, place doors and windows, then arrange furniture together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
       <label>Your name
@@ -250,11 +272,30 @@
             <label>Length (ft)<input id="roomDepth" inputmode="decimal" type="number" min="4" max="40" step="0.1" /></label>
             <button id="applyRoomBtn" class="btn compact soft" type="button">Apply</button>
           </div>
+          <div class="row spread shell-note">
+            <div>
+              <strong>Photo-room preset</strong>
+              <div class="small muted">12.5 × 10.5 ft, warm beige walls, light wood floor, white trim, two doors and one window.</div>
+            </div>
+            <button id="photoRoomBtn" class="btn compact primary" type="button">Use this room</button>
+          </div>
           <div>
             <div class="row spread" style="margin-bottom:8px">
               <div>
-                <h3 style="margin-bottom:2px">2. Add furniture</h3>
-                <div class="small muted">Tap an item, then drag it in the room.</div>
+                <h3 style="margin-bottom:2px">2. Add doors and windows</h3>
+                <div class="small muted">The preset positions are placeholders. Drag each opening along its wall, then edit the wall and size.</div>
+              </div>
+            </div>
+            <div class="architecture-strip">
+              <button id="addDoorBtn" class="btn soft" type="button">＋ Door</button>
+              <button id="addWindowBtn" class="btn soft" type="button">＋ Window</button>
+            </div>
+          </div>
+          <div>
+            <div class="row spread" style="margin-bottom:8px">
+              <div>
+                <h3 style="margin-bottom:2px">3. Add furniture</h3>
+                <div class="small muted">Tap an item, then drag it in the room. You can also drag furniture directly in 3D.</div>
               </div>
               <button id="starterBtn" class="btn compact" type="button">Add starter set</button>
             </div>
@@ -264,7 +305,7 @@
 
         <section class="panel room-card">
           <div class="room-heading">
-            <div><strong>3. Drag pieces into place</strong><div class="tiny muted">Tap to select · drag with one finger</div></div>
+            <div><strong>4. Drag everything into place</strong><div class="tiny muted">Furniture moves inside the room · doors/windows slide along walls</div></div>
             <span id="itemCount" class="selected-chip">0 pieces</span>
           </div>
           <div class="room-shell">
@@ -278,7 +319,7 @@
 
         <aside class="side-column">
           <section id="noSelection" class="panel selection">
-            <div class="empty"><strong>Select a furniture item</strong><br><span class="small">Its size, rotation and precise-position controls will appear here.</span></div>
+            <div class="empty"><strong>Select furniture, a door or a window</strong><br><span class="small">Tap an object in the plan or 3D view to edit its name, size and placement.</span></div>
           </section>
           <section id="selectionEditor" class="panel selection hidden">
             <div class="selection-title">
@@ -306,17 +347,41 @@
               <button id="deleteBtn" class="btn compact danger" type="button">Remove</button>
             </div>
           </section>
+          <section id="openingEditor" class="panel selection hidden">
+            <div class="selection-title">
+              <div><h3 style="margin-bottom:2px">Selected opening</h3><span id="openingPositionLabel" class="tiny muted"></span></div>
+              <span id="openingNameChip" class="selected-chip"></span>
+            </div>
+            <div class="opening-editor-grid">
+              <label class="wide">Name<input id="openingName" maxlength="30" /></label>
+              <label>Type<select id="openingType"><option value="door">Door</option><option value="window">Window</option></select></label>
+              <label>Wall<select id="openingWall"><option value="top">Top wall</option><option value="right">Right wall</option><option value="bottom">Bottom wall</option><option value="left">Left wall</option></select></label>
+              <label>Width (in)<input id="openingWidth" inputmode="decimal" type="number" min="18" max="240" step="1" /></label>
+              <label>Height (in)<input id="openingHeight" inputmode="decimal" type="number" min="12" max="120" step="1" /></label>
+              <label>Sill height (in)<input id="openingSill" inputmode="decimal" type="number" min="0" max="100" step="1" /></label>
+              <label>Wall position (in)<input id="openingOffset" inputmode="decimal" type="number" min="0" max="480" step="1" /></label>
+            </div>
+            <div class="opening-nudge">
+              <button class="btn compact" data-opening-nudge="-3" type="button">← 3 in</button>
+              <button class="btn compact" data-opening-nudge="3" type="button">3 in →</button>
+            </div>
+            <div class="action-grid">
+              <button id="nextWallBtn" class="btn compact" type="button">Next wall</button>
+              <button id="duplicateOpeningBtn" class="btn compact" type="button">Duplicate</button>
+              <button id="deleteOpeningBtn" class="btn compact danger" type="button">Remove</button>
+            </div>
+          </section>
         </aside>
 
         <section id="customPanel" class="panel custom hidden" style="grid-column:1/-1">
-          <div class="row spread"><h3>Add custom furniture</h3><button id="closeCustomBtn" class="btn icon compact" type="button" aria-label="Close">×</button></div>
+          <div class="row spread"><h3>Add custom object</h3><button id="closeCustomBtn" class="btn icon compact" type="button" aria-label="Close">×</button></div>
           <div class="custom-grid">
             <label>Name<input id="customName" maxlength="30" value="Furniture" /></label>
             <label>Width (in)<input id="customWidth" type="number" min="6" max="240" value="36" /></label>
             <label>Depth (in)<input id="customDepth" type="number" min="6" max="240" value="24" /></label>
             <label>Height (in)<input id="customHeight" type="number" min="2" max="120" value="30" /></label>
           </div>
-          <button id="addCustomBtn" class="btn primary" type="button">Add to room</button>
+          <button id="addCustomBtn" class="btn primary" type="button">Add custom object</button>
         </section>
       </section>
 
@@ -324,7 +389,8 @@
         <div class="three-toolbar">
           <div>
             <h2 style="margin-bottom:2px">3D room preview</h2>
-            <div id="threeSelection" class="small muted">Drag to orbit · pinch to zoom · tap furniture to select</div>
+            <div id="threeSelection" class="small muted">Drag to orbit · pinch to zoom · drag furniture directly to move it</div>
+            <div id="threePresence" class="three-presence">Only you in 3D</div>
           </div>
           <div class="row">
             <button id="topViewBtn" class="btn compact" type="button">Top view</button>
@@ -333,7 +399,7 @@
         </div>
         <div id="threeHost" class="three-host">
           <div id="threeStatus" class="three-status">Open this tab to load the 3D room.</div>
-          <div class="three-hint">One finger: orbit · two fingers: zoom</div>
+          <div class="three-hint">Empty space: orbit · furniture: move · two fingers: zoom</div>
         </div>
       </section>
 
@@ -361,854 +427,1712 @@
   </script>
 
   <script type="module">
-    const $ = id => document.getElementById(id);
-    const canvas = $('roomCanvas');
-    const joinView = $('joinView');
-    const plannerView = $('plannerView');
+const $ = id => document.getElementById(id);
+const canvas = $('roomCanvas');
+const joinView = $('joinView');
+const plannerView = $('plannerView');
 
-    const PRESETS = [
-      { name: 'Bed', kind: 'bed', icon: '🛏', w: 60, d: 80, height: 24 },
-      { name: 'Desk', kind: 'desk', icon: '▤', w: 48, d: 24, height: 30 },
-      { name: 'Dresser', kind: 'dresser', icon: '▥', w: 36, d: 20, height: 36 },
-      { name: 'Big dresser', kind: 'dresser', icon: '▦', w: 60, d: 22, height: 48 },
-      { name: 'TV stand', kind: 'tv', icon: '▰', w: 48, d: 16, height: 24 },
-      { name: 'Nightstand', kind: 'dresser', icon: '▣', w: 24, d: 20, height: 26 },
-      { name: 'Chair', kind: 'chair', icon: '♙', w: 24, d: 24, height: 36 },
-      { name: 'Custom', kind: 'custom', icon: '+', w: 36, d: 24, height: 30 }
-    ];
+const PRESETS = [
+  { name: 'Bed', kind: 'bed', icon: '🛏', w: 60, d: 80, height: 24 },
+  { name: 'Desk', kind: 'desk', icon: '▤', w: 48, d: 24, height: 30 },
+  { name: 'Dresser', kind: 'dresser', icon: '▥', w: 36, d: 20, height: 36 },
+  { name: 'Big dresser', kind: 'dresser', icon: '▦', w: 60, d: 22, height: 48 },
+  { name: 'TV stand', kind: 'tv', icon: '▰', w: 48, d: 16, height: 24 },
+  { name: 'Nightstand', kind: 'dresser', icon: '▣', w: 24, d: 20, height: 26 },
+  { name: 'Chair', kind: 'chair', icon: '♙', w: 24, d: 24, height: 36 },
+  { name: 'Custom', kind: 'custom', icon: '+', w: 36, d: 24, height: 30 }
+];
 
-    let state = freshState();
-    let currentCode = '';
-    let myName = '';
-    let actorId = uid();
-    let selectedId = null;
-    let clock = 0;
-    let drag = null;
-    let lastDragSend = 0;
-    let roomConnection = null;
-    let actions = null;
-    let connectionModule = null;
-    let currentTab = 'plan';
-    let threeRuntime = null;
-    let threeLoading = false;
-    const peers = new Map();
-    const remoteActive = new Map();
+const WALLS = ['top', 'right', 'bottom', 'left'];
+const WALL_LABELS = { top: 'Top wall', right: 'Right wall', bottom: 'Bottom wall', left: 'Left wall' };
 
-    function freshState() {
-      return {
-        version: 2,
-        meta: { width: 144, depth: 132, wallHeight: 96, snap: true, rev: { n: 0, a: '' } },
-        furniture: {},
-        messages: {}
-      };
+let state = freshState();
+let currentCode = '';
+let myName = '';
+let actorId = uid();
+let selectedId = null;
+let selectedType = null;
+let clock = 0;
+let drag = null;
+let lastDragSend = 0;
+let roomConnection = null;
+let actions = null;
+let connectionModule = null;
+let currentTab = 'plan';
+let threeRuntime = null;
+let threeLoading = false;
+let presenceTimer = null;
+let lastPresenceSend = 0;
+const peers = new Map();
+const remoteActive = new Map();
+const remotePresence = new Map();
+
+function photoOpenings() {
+  return {
+    'photo-entry-door': {
+      id: 'photo-entry-door', type: 'door', name: 'Entry door', wall: 'left', offset: 88,
+      width: 32, height: 80, sill: 0, deleted: false, rev: { n: 0, a: '' }
+    },
+    'photo-second-door': {
+      id: 'photo-second-door', type: 'door', name: 'Second door', wall: 'bottom', offset: 108,
+      width: 30, height: 80, sill: 0, deleted: false, rev: { n: 0, a: '' }
+    },
+    'photo-window': {
+      id: 'photo-window', type: 'window', name: 'Window', wall: 'bottom', offset: 28,
+      width: 48, height: 48, sill: 30, deleted: false, rev: { n: 0, a: '' }
     }
+  };
+}
 
-    function cleanCode(value) {
-      return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
-    }
+function freshState() {
+  return {
+    version: 3,
+    meta: { width: 150, depth: 126, wallHeight: 96, snap: true, rev: { n: 0, a: '' } },
+    furniture: {},
+    openings: photoOpenings(),
+    messages: {}
+  };
+}
 
-    function uid() {
-      if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
-      const bytes = new Uint8Array(16);
-      crypto.getRandomValues(bytes);
-      bytes[6] = (bytes[6] & 0x0f) | 0x40;
-      bytes[8] = (bytes[8] & 0x3f) | 0x80;
-      return Array.from(bytes, (b, i) => `${[4, 6, 8, 10].includes(i) ? '-' : ''}${b.toString(16).padStart(2, '0')}`).join('');
-    }
+function cleanCode(value) {
+  return String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+}
 
-    function generateCode() {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-      const values = new Uint32Array(6);
-      crypto.getRandomValues(values);
-      return Array.from(values, n => chars[n % chars.length]).join('');
-    }
+function uid() {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  return Array.from(bytes, (b, i) => `${[4, 6, 8, 10].includes(i) ? '-' : ''}${b.toString(16).padStart(2, '0')}`).join('');
+}
 
-    function nextRev() { return { n: ++clock, a: actorId }; }
-    function observeRev(rev) { if (rev?.n) clock = Math.max(clock, rev.n); }
-    function newer(a, b) {
-      if (!b) return true;
-      if (!a) return false;
-      return a.n > b.n || (a.n === b.n && String(a.a) > String(b.a));
-    }
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const values = new Uint32Array(6);
+  crypto.getRandomValues(values);
+  return Array.from(values, n => chars[n % chars.length]).join('');
+}
 
-    function storageKey() { return `roomrelay:v2:${currentCode}`; }
+function nextRev() { return { n: ++clock, a: actorId }; }
+function observeRev(rev) { if (rev?.n) clock = Math.max(clock, rev.n); }
+function newer(a, b) {
+  if (!b) return true;
+  if (!a) return false;
+  return a.n > b.n || (a.n === b.n && String(a.a) > String(b.a));
+}
 
-    function safeGet(key) {
-      try { return localStorage.getItem(key); } catch (_) { return null; }
-    }
+function clone(value) {
+  if (typeof structuredClone === 'function') return structuredClone(value);
+  return JSON.parse(JSON.stringify(value));
+}
 
-    function safeSet(key, value) {
-      try { localStorage.setItem(key, value); } catch (_) {}
-    }
+function storageKey() { return `roomrelay:v3:${currentCode}`; }
 
-    function normalizeItem(raw) {
-      const item = { ...raw };
-      item.d = Number(item.d ?? item.h ?? 24);
-      item.height = Number(item.height ?? defaultHeight(item.name));
-      item.w = Number(item.w ?? 36);
-      item.x = Number(item.x ?? 0);
-      item.y = Number(item.y ?? 0);
-      item.kind = item.kind || inferKind(item.name);
-      item.deleted = Boolean(item.deleted);
-      item.rev = item.rev || { n: 0, a: '' };
-      delete item.h;
-      return item;
-    }
+function safeGet(key) {
+  try { return localStorage.getItem(key); } catch (_) { return null; }
+}
 
-    function normalizeState(raw) {
-      if (!raw) return freshState();
-      const base = freshState();
-      const oldMeta = raw.meta || {};
-      base.meta.width = Number(oldMeta.width || 144);
-      base.meta.depth = Number(oldMeta.depth ?? oldMeta.height ?? 132);
-      base.meta.wallHeight = Number(oldMeta.wallHeight || 96);
-      base.meta.snap = oldMeta.snap !== false;
-      base.meta.rev = oldMeta.rev || base.meta.rev;
-      for (const [id, rawItem] of Object.entries(raw.furniture || {})) base.furniture[id] = normalizeItem({ id, ...rawItem });
-      base.messages = raw.messages || {};
-      return base;
-    }
+function safeSet(key, value) {
+  try { localStorage.setItem(key, value); } catch (_) {}
+}
 
-    function saveLocal() {
-      if (!currentCode) return;
-      safeSet(storageKey(), JSON.stringify(state));
-    }
+function inferKind(name = '') {
+  const text = name.toLowerCase();
+  if (text.includes('bed')) return 'bed';
+  if (text.includes('desk') || text.includes('table')) return 'desk';
+  if (text.includes('dresser') || text.includes('nightstand') || text.includes('cabinet')) return 'dresser';
+  if (text.includes('tv')) return 'tv';
+  if (text.includes('chair')) return 'chair';
+  return 'other';
+}
 
-    function loadLocal() {
-      try {
-        const current = safeGet(storageKey());
-        const legacy = safeGet(`roomrelay:v1:${currentCode}`);
-        if (current) state = mergeSnapshot(state, normalizeState(JSON.parse(current)));
-        else if (legacy) state = mergeSnapshot(state, normalizeState(JSON.parse(legacy)));
-      } catch (_) {}
-    }
+function defaultHeight(name = '') {
+  const kind = inferKind(name);
+  return ({ bed: 24, desk: 30, dresser: 40, tv: 24, chair: 36, other: 30 })[kind];
+}
 
-    function mergeSnapshot(base, incomingRaw) {
-      const incoming = normalizeState(incomingRaw);
-      const out = structuredClone(base);
-      observeRev(incoming.meta.rev);
-      if (newer(incoming.meta.rev, out.meta.rev)) out.meta = incoming.meta;
-      for (const [id, item] of Object.entries(incoming.furniture || {})) {
-        observeRev(item.rev);
-        if (newer(item.rev, out.furniture[id]?.rev)) out.furniture[id] = normalizeItem(item);
+function normalizeItem(raw) {
+  const item = { ...raw };
+  item.d = Number(item.d ?? item.h ?? 24);
+  item.height = Number(item.height ?? defaultHeight(item.name));
+  item.w = Number(item.w ?? 36);
+  item.x = Number(item.x ?? 0);
+  item.y = Number(item.y ?? 0);
+  item.kind = item.kind || inferKind(item.name);
+  item.deleted = Boolean(item.deleted);
+  item.rev = item.rev || { n: 0, a: '' };
+  delete item.h;
+  return item;
+}
+
+function normalizeOpening(raw) {
+  const opening = { ...raw };
+  opening.type = opening.type === 'window' ? 'window' : 'door';
+  opening.name = String(opening.name || (opening.type === 'window' ? 'Window' : 'Door')).slice(0, 30);
+  opening.wall = WALLS.includes(opening.wall) ? opening.wall : 'top';
+  opening.width = Number(opening.width || (opening.type === 'window' ? 48 : 32));
+  opening.height = Number(opening.height || (opening.type === 'window' ? 48 : 80));
+  opening.sill = opening.type === 'door' ? 0 : Number(opening.sill ?? 30);
+  opening.offset = Number(opening.offset || 0);
+  opening.deleted = Boolean(opening.deleted);
+  opening.rev = opening.rev || { n: 0, a: '' };
+  return opening;
+}
+
+function normalizeState(raw) {
+  if (!raw) return freshState();
+  const base = freshState();
+  const oldMeta = raw.meta || {};
+  base.meta.width = Number(oldMeta.width || 150);
+  base.meta.depth = Number(oldMeta.depth ?? oldMeta.height ?? 126);
+  base.meta.wallHeight = Number(oldMeta.wallHeight || 96);
+  base.meta.snap = oldMeta.snap !== false;
+  base.meta.rev = oldMeta.rev || base.meta.rev;
+  base.furniture = {};
+  for (const [id, rawItem] of Object.entries(raw.furniture || {})) base.furniture[id] = normalizeItem({ id, ...rawItem });
+  base.openings = {};
+  const rawOpenings = raw.openings && Object.keys(raw.openings).length ? raw.openings : photoOpenings();
+  for (const [id, rawOpening] of Object.entries(rawOpenings)) base.openings[id] = normalizeOpening({ id, ...rawOpening });
+  base.messages = raw.messages || {};
+  return base;
+}
+
+function saveLocal() {
+  if (!currentCode) return;
+  safeSet(storageKey(), JSON.stringify(state));
+}
+
+function loadLocal() {
+  try {
+    const keys = [storageKey(), `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
+    for (const key of keys) {
+      const stored = safeGet(key);
+      if (stored) {
+        state = mergeSnapshot(state, normalizeState(JSON.parse(stored)));
+        break;
       }
-      for (const [id, msg] of Object.entries(incoming.messages || {})) {
-        observeRev(msg.rev);
-        if (newer(msg.rev, out.messages[id]?.rev)) out.messages[id] = msg;
-      }
-      return out;
     }
+  } catch (_) {}
+}
 
-    function inferKind(name = '') {
-      const text = name.toLowerCase();
-      if (text.includes('bed')) return 'bed';
-      if (text.includes('desk') || text.includes('table')) return 'desk';
-      if (text.includes('dresser') || text.includes('nightstand') || text.includes('cabinet')) return 'dresser';
-      if (text.includes('tv')) return 'tv';
-      if (text.includes('chair')) return 'chair';
-      return 'other';
+function mergeSnapshot(base, incomingRaw) {
+  const incoming = normalizeState(incomingRaw);
+  const out = clone(base);
+  observeRev(incoming.meta.rev);
+  if (newer(incoming.meta.rev, out.meta.rev)) out.meta = incoming.meta;
+  for (const [id, item] of Object.entries(incoming.furniture || {})) {
+    observeRev(item.rev);
+    if (newer(item.rev, out.furniture[id]?.rev)) out.furniture[id] = normalizeItem(item);
+  }
+  for (const [id, opening] of Object.entries(incoming.openings || {})) {
+    observeRev(opening.rev);
+    if (newer(opening.rev, out.openings[id]?.rev)) out.openings[id] = normalizeOpening(opening);
+  }
+  for (const [id, msg] of Object.entries(incoming.messages || {})) {
+    observeRev(msg.rev);
+    if (newer(msg.rev, out.messages[id]?.rev)) out.messages[id] = msg;
+  }
+  return out;
+}
+
+function activeFurniture() { return Object.values(state.furniture).filter(item => !item.deleted); }
+function activeOpenings() { return Object.values(state.openings).filter(item => !item.deleted); }
+function entityKey(type, id) { return `${type}:${id}`; }
+
+function clampItem(input) {
+  const item = { ...input };
+  item.w = Math.max(6, Math.min(Number(item.w) || 6, state.meta.width));
+  item.d = Math.max(6, Math.min(Number(item.d) || 6, state.meta.depth));
+  item.height = Math.max(2, Math.min(Number(item.height) || 30, 120));
+  item.x = Math.max(0, Math.min(Number(item.x) || 0, state.meta.width - item.w));
+  item.y = Math.max(0, Math.min(Number(item.y) || 0, state.meta.depth - item.d));
+  return item;
+}
+
+function wallLength(wall) {
+  return wall === 'top' || wall === 'bottom' ? state.meta.width : state.meta.depth;
+}
+
+function clampOpening(input) {
+  const opening = normalizeOpening(input);
+  const length = wallLength(opening.wall);
+  opening.width = Math.max(18, Math.min(opening.width, Math.max(18, length)));
+  opening.height = Math.max(opening.type === 'door' ? 60 : 12, Math.min(opening.height, state.meta.wallHeight));
+  opening.sill = opening.type === 'door' ? 0 : Math.max(0, Math.min(opening.sill, state.meta.wallHeight - opening.height));
+  opening.offset = Math.max(0, Math.min(opening.offset, Math.max(0, length - opening.width)));
+  return opening;
+}
+
+function snapValue(value) {
+  return state.meta.snap ? Math.round(value / 3) * 3 : Math.round(value * 2) / 2;
+}
+
+function addFurniture(preset, x = null, y = null) {
+  const id = uid();
+  const item = clampItem({
+    id,
+    name: preset.name,
+    kind: preset.kind === 'custom' ? 'other' : preset.kind,
+    w: preset.w,
+    d: preset.d,
+    height: preset.height,
+    x: x ?? Math.max(0, (state.meta.width - preset.w) / 2),
+    y: y ?? Math.max(0, (state.meta.depth - preset.d) / 2),
+    deleted: false,
+    rev: nextRev(),
+    updatedBy: myName
+  });
+  state.furniture[id] = item;
+  selectEntity('furniture', id, false);
+  saveLocal();
+  renderAll();
+  actions?.item.send(item);
+  toast(`${preset.name} added. Drag it into place.`);
+}
+
+function patchItem(id, patch, options = {}) {
+  const { broadcast = true, rerender = true } = options;
+  const existing = state.furniture[id];
+  if (!existing || existing.deleted) return null;
+  const item = clampItem({ ...existing, ...patch, rev: nextRev(), updatedBy: myName });
+  state.furniture[id] = item;
+  saveLocal();
+  if (rerender) renderAll();
+  if (broadcast) actions?.item.send(item);
+  return item;
+}
+
+function removeItem(id) {
+  const existing = state.furniture[id];
+  if (!existing) return;
+  const item = { ...existing, deleted: true, rev: nextRev(), updatedBy: myName };
+  state.furniture[id] = item;
+  selectedId = null;
+  selectedType = null;
+  saveLocal();
+  renderAll();
+  actions?.item.send(item);
+}
+
+function findOpeningSlot(type, wall) {
+  const width = type === 'window' ? 48 : 32;
+  const length = wallLength(wall);
+  const used = activeOpenings().filter(o => o.wall === wall).sort((a, b) => a.offset - b.offset);
+  let cursor = 6;
+  for (const opening of used) {
+    if (opening.offset - cursor >= width + 6) return cursor;
+    cursor = Math.max(cursor, opening.offset + opening.width + 6);
+  }
+  return Math.max(0, Math.min(cursor, length - width));
+}
+
+function addOpening(type = 'door') {
+  const sameTypeCount = activeOpenings().filter(o => o.type === type).length;
+  const wallOrder = type === 'window' ? ['top', 'right', 'bottom', 'left'] : ['left', 'bottom', 'right', 'top'];
+  const wall = wallOrder[sameTypeCount % wallOrder.length];
+  const id = uid();
+  const opening = clampOpening({
+    id,
+    type,
+    name: type === 'window' ? 'Window' : 'Door',
+    wall,
+    offset: findOpeningSlot(type, wall),
+    width: type === 'window' ? 48 : 32,
+    height: type === 'window' ? 48 : 80,
+    sill: type === 'window' ? 30 : 0,
+    deleted: false,
+    rev: nextRev(),
+    updatedBy: myName
+  });
+  state.openings[id] = opening;
+  selectEntity('opening', id, false);
+  saveLocal();
+  renderAll();
+  actions?.opening.send(opening);
+  toast(`${opening.name} added. Drag it along the wall.`);
+}
+
+function patchOpening(id, patch, options = {}) {
+  const { broadcast = true, rerender = true } = options;
+  const existing = state.openings[id];
+  if (!existing || existing.deleted) return null;
+  const opening = clampOpening({ ...existing, ...patch, rev: nextRev(), updatedBy: myName });
+  state.openings[id] = opening;
+  saveLocal();
+  if (rerender) renderAll();
+  if (broadcast) actions?.opening.send(opening);
+  return opening;
+}
+
+function removeOpening(id) {
+  const existing = state.openings[id];
+  if (!existing) return;
+  const opening = { ...existing, deleted: true, rev: nextRev(), updatedBy: myName };
+  state.openings[id] = opening;
+  selectedId = null;
+  selectedType = null;
+  saveLocal();
+  renderAll();
+  actions?.opening.send(opening);
+}
+
+function updateRoom() {
+  const width = Math.max(48, Math.min(480, Number($('roomWidth').value) * 12 || state.meta.width));
+  const depth = Math.max(48, Math.min(480, Number($('roomDepth').value) * 12 || state.meta.depth));
+  const meta = { ...state.meta, width, depth, snap: $('snapToggle').checked, rev: nextRev() };
+  state.meta = meta;
+  for (const item of activeFurniture()) state.furniture[item.id] = { ...clampItem(item), rev: nextRev(), updatedBy: myName };
+  for (const opening of activeOpenings()) state.openings[opening.id] = { ...clampOpening(opening), rev: nextRev(), updatedBy: myName };
+  saveLocal();
+  renderAll();
+  actions?.meta.send(meta);
+  actions?.snapshot.send(state);
+  toast('Room size updated.');
+}
+
+function applyPhotoRoom() {
+  const hasEditedShell = activeOpenings().some(o => o.rev?.n > 0);
+  if (hasEditedShell && !window.confirm('Replace the current door and window layout with the photo-room placeholders? Furniture will stay.')) return;
+  state.meta = { ...state.meta, width: 150, depth: 126, wallHeight: 96, rev: nextRev() };
+  const defaults = photoOpenings();
+  state.openings = {};
+  for (const [id, raw] of Object.entries(defaults)) state.openings[id] = { ...raw, rev: nextRev(), updatedBy: myName };
+  for (const item of activeFurniture()) state.furniture[item.id] = { ...clampItem(item), rev: nextRev(), updatedBy: myName };
+  selectedId = null;
+  selectedType = null;
+  saveLocal();
+  renderAll();
+  actions?.snapshot.send(state);
+  toast('Loaded the 12.5 × 10.5 photo-inspired room. Door and window positions are placeholders.');
+}
+
+function addStarterSet() {
+  const existingNames = new Set(activeFurniture().map(item => item.name.toLowerCase()));
+  const starter = PRESETS.filter(p => ['Bed', 'Desk', 'Dresser', 'Big dresser', 'TV stand'].includes(p.name) && !existingNames.has(p.name.toLowerCase()));
+  if (!starter.length) return toast('The starter furniture is already in the room.');
+  starter.forEach((preset, index) => {
+    const x = Math.min(state.meta.width - preset.w, 6 + (index % 2) * 58);
+    const y = Math.min(state.meta.depth - preset.d, 6 + Math.floor(index / 2) * 34);
+    addFurniture(preset, Math.max(0, x), Math.max(0, y));
+  });
+  actions?.snapshot.send(state);
+}
+
+function renderAll() {
+  renderPlan();
+  renderSelection();
+  renderIdeas();
+  updateInputs();
+  if (threeRuntime) rebuild3D();
+}
+
+function updateInputs() {
+  $('roomWidth').value = formatFeet(state.meta.width);
+  $('roomDepth').value = formatFeet(state.meta.depth);
+  $('snapToggle').checked = state.meta.snap !== false;
+  const furnitureCount = activeFurniture().length;
+  const openingCount = activeOpenings().length;
+  $('itemCount').textContent = `${furnitureCount} furniture · ${openingCount} openings`;
+  $('dimensionTop').textContent = `${formatFeet(state.meta.width)} ft`;
+  $('dimensionSide').textContent = `${formatFeet(state.meta.depth)} ft`;
+}
+
+function formatFeet(inches) {
+  return (inches / 12).toFixed(1).replace('.0', '');
+}
+
+function renderPlan() {
+  const shell = canvas.closest('.room-shell');
+  const ratio = state.meta.depth / state.meta.width;
+  const maxWidth = Math.max(250, Math.min(shell.clientWidth - 48, 720));
+  const maxHeight = Math.max(340, Math.min(window.innerHeight * .66, 650));
+  let width = maxWidth;
+  let height = width * ratio;
+  if (height > maxHeight) { height = maxHeight; width = height / ratio; }
+  width = Math.max(220, width);
+  height = Math.max(300, height);
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  const oneFootX = width / Math.max(1, state.meta.width / 12);
+  const oneFootY = height / Math.max(1, state.meta.depth / 12);
+  canvas.style.backgroundSize = `${oneFootX}px ${oneFootY}px`;
+  canvas.innerHTML = '';
+
+  for (const opening of activeOpenings()) {
+    const el = document.createElement('div');
+    const selected = selectedType === 'opening' && opening.id === selectedId;
+    const remote = remoteActive.has(entityKey('opening', opening.id));
+    el.className = `opening ${opening.type}${selected ? ' selected' : ''}${remote ? ' remote' : ''}`;
+    el.dataset.entity = 'opening';
+    el.dataset.id = opening.id;
+    el.dataset.wall = opening.wall;
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', `${opening.name}, ${opening.width} inch ${opening.type} on ${WALL_LABELS[opening.wall]}`);
+    positionOpeningElement(el, opening);
+    el.innerHTML = `<span>${opening.type === 'door' ? 'D' : 'W'}</span>`;
+    el.title = `${opening.name} · ${Math.round(opening.width)} in · ${WALL_LABELS[opening.wall]}`;
+    canvas.appendChild(el);
+  }
+
+  for (const item of activeFurniture()) {
+    const el = document.createElement('div');
+    const selected = selectedType === 'furniture' && item.id === selectedId;
+    const remote = remoteActive.has(entityKey('furniture', item.id));
+    el.className = `furniture${selected ? ' selected' : ''}${remote ? ' remote' : ''}`;
+    el.dataset.entity = 'furniture';
+    el.dataset.id = item.id;
+    el.dataset.kind = item.kind || 'other';
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', `${item.name}, ${Math.round(item.w)} by ${Math.round(item.d)} inches`);
+    positionFurnitureElement(el, item);
+    el.innerHTML = `<span>${escapeHtml(item.name)}<span class="size-label">${Math.round(item.w)}×${Math.round(item.d)} in</span></span>`;
+    canvas.appendChild(el);
+  }
+}
+
+function positionFurnitureElement(el, item) {
+  el.style.left = `${item.x / state.meta.width * 100}%`;
+  el.style.top = `${item.y / state.meta.depth * 100}%`;
+  el.style.width = `${item.w / state.meta.width * 100}%`;
+  el.style.height = `${item.d / state.meta.depth * 100}%`;
+}
+
+function positionOpeningElement(el, opening) {
+  el.style.left = '';
+  el.style.right = '';
+  el.style.top = '';
+  el.style.bottom = '';
+  el.style.width = '';
+  el.style.height = '';
+  if (opening.wall === 'top' || opening.wall === 'bottom') {
+    el.style.left = `${opening.offset / state.meta.width * 100}%`;
+    el.style.width = `${opening.width / state.meta.width * 100}%`;
+    el.style.height = '14px';
+    el.style[opening.wall] = '0';
+  } else {
+    el.style.top = `${opening.offset / state.meta.depth * 100}%`;
+    el.style.height = `${opening.width / state.meta.depth * 100}%`;
+    el.style.width = '14px';
+    el.style[opening.wall] = '0';
+  }
+}
+
+function selectEntity(type, id, rerenderPlan = true) {
+  selectedType = type;
+  selectedId = id;
+  if (rerenderPlan) renderPlan();
+  renderSelection();
+  if (threeRuntime) update3DSelection();
+}
+
+function renderSelection() {
+  const furniture = selectedType === 'furniture' && selectedId ? state.furniture[selectedId] : null;
+  const opening = selectedType === 'opening' && selectedId ? state.openings[selectedId] : null;
+  const furnitureVisible = furniture && !furniture.deleted;
+  const openingVisible = opening && !opening.deleted;
+  $('noSelection').classList.toggle('hidden', furnitureVisible || openingVisible);
+  $('selectionEditor').classList.toggle('hidden', !furnitureVisible);
+  $('openingEditor').classList.toggle('hidden', !openingVisible);
+
+  if (furnitureVisible) {
+    $('selectedNameChip').textContent = furniture.name;
+    $('itemName').value = furniture.name;
+    $('itemWidth').value = Math.round(furniture.w);
+    $('itemDepth').value = Math.round(furniture.d);
+    $('itemHeight').value = Math.round(furniture.height);
+    $('positionLabel').textContent = `${Math.round(furniture.x)} in from left · ${Math.round(furniture.y)} in from top`;
+  }
+
+  if (openingVisible) {
+    $('openingNameChip').textContent = opening.name;
+    $('openingName').value = opening.name;
+    $('openingType').value = opening.type;
+    $('openingWall').value = opening.wall;
+    $('openingWidth').value = Math.round(opening.width);
+    $('openingHeight').value = Math.round(opening.height);
+    $('openingSill').value = Math.round(opening.sill);
+    $('openingOffset').value = Math.round(opening.offset);
+    $('openingSill').disabled = opening.type === 'door';
+    $('openingPositionLabel').textContent = `${Math.round(opening.offset)} in from the start of the ${WALL_LABELS[opening.wall].toLowerCase()}`;
+  }
+}
+
+function beginDrag(event) {
+  const target = event.target.closest('[data-entity]');
+  if (!target || !canvas.contains(target)) return;
+  event.preventDefault();
+  const id = target.dataset.id;
+  const type = target.dataset.entity;
+  const entity = type === 'opening' ? state.openings[id] : state.furniture[id];
+  if (!entity || entity.deleted) return;
+  selectEntity(type, id, false);
+  const rect = canvas.getBoundingClientRect();
+  drag = {
+    id,
+    type,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    startValueX: type === 'furniture' ? entity.x : entity.offset,
+    startValueY: type === 'furniture' ? entity.y : 0,
+    wall: type === 'opening' ? entity.wall : null,
+    rect,
+    element: target,
+    moved: false
+  };
+  target.classList.add('drag-now');
+  canvas.setPointerCapture(event.pointerId);
+  document.body.classList.add('dragging');
+}
+
+function moveDrag(event) {
+  if (!drag || drag.pointerId !== event.pointerId) return;
+  event.preventDefault();
+  const dx = (event.clientX - drag.startX) / drag.rect.width * state.meta.width;
+  const dy = (event.clientY - drag.startY) / drag.rect.height * state.meta.depth;
+  drag.moved = drag.moved || Math.abs(dx) > 1 || Math.abs(dy) > 1;
+
+  if (drag.type === 'furniture') {
+    const item = state.furniture[drag.id];
+    if (!item) return;
+    const next = clampItem({ ...item, x: snapValue(drag.startValueX + dx), y: snapValue(drag.startValueY + dy) });
+    item.x = next.x;
+    item.y = next.y;
+    positionFurnitureElement(drag.element, item);
+    $('positionLabel').textContent = `${Math.round(item.x)} in from left · ${Math.round(item.y)} in from top`;
+    const now = performance.now();
+    if (now - lastDragSend > 75) {
+      item.rev = nextRev();
+      item.updatedBy = myName;
+      actions?.item.send({ ...item });
+      actions?.active.send({ type: 'furniture', id: item.id });
+      lastDragSend = now;
     }
-
-    function defaultHeight(name = '') {
-      const kind = inferKind(name);
-      return ({ bed: 24, desk: 30, dresser: 40, tv: 24, chair: 36, other: 30 })[kind];
+  } else {
+    const opening = state.openings[drag.id];
+    if (!opening) return;
+    const delta = opening.wall === 'top' || opening.wall === 'bottom' ? dx : dy;
+    const next = clampOpening({ ...opening, offset: snapValue(drag.startValueX + delta) });
+    opening.offset = next.offset;
+    positionOpeningElement(drag.element, opening);
+    $('openingOffset').value = Math.round(opening.offset);
+    $('openingPositionLabel').textContent = `${Math.round(opening.offset)} in from the start of the ${WALL_LABELS[opening.wall].toLowerCase()}`;
+    const now = performance.now();
+    if (now - lastDragSend > 75) {
+      opening.rev = nextRev();
+      opening.updatedBy = myName;
+      actions?.opening.send({ ...opening });
+      actions?.active.send({ type: 'opening', id: opening.id });
+      lastDragSend = now;
     }
+  }
+}
 
-    function activeFurniture() { return Object.values(state.furniture).filter(item => !item.deleted); }
+function endDrag(event) {
+  if (!drag || drag.pointerId !== event.pointerId) return;
+  drag.element.classList.remove('drag-now');
+  if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+  document.body.classList.remove('dragging');
+  const entity = drag.type === 'opening' ? state.openings[drag.id] : state.furniture[drag.id];
+  if (entity) {
+    entity.rev = nextRev();
+    entity.updatedBy = myName;
+    saveLocal();
+    if (drag.type === 'opening') actions?.opening.send({ ...entity });
+    else actions?.item.send({ ...entity });
+  }
+  const moved = drag.moved;
+  drag = null;
+  if (moved && threeRuntime) rebuild3D();
+}
 
-    function clampItem(input) {
-      const item = { ...input };
-      item.w = Math.max(6, Math.min(Number(item.w) || 6, state.meta.width));
-      item.d = Math.max(6, Math.min(Number(item.d) || 6, state.meta.depth));
-      item.height = Math.max(2, Math.min(Number(item.height) || 30, 120));
-      item.x = Math.max(0, Math.min(Number(item.x) || 0, state.meta.width - item.w));
-      item.y = Math.max(0, Math.min(Number(item.y) || 0, state.meta.depth - item.d));
-      return item;
-    }
+function addMessage(text) {
+  const trimmed = text.trim();
+  if (!trimmed) return;
+  const id = uid();
+  const msg = { id, text: trimmed, name: myName, time: Date.now(), rev: nextRev() };
+  state.messages[id] = msg;
+  saveLocal();
+  renderIdeas();
+  actions?.message.send(msg);
+  $('ideaInput').value = '';
+}
 
-    function snapValue(value) {
-      return state.meta.snap ? Math.round(value / 3) * 3 : Math.round(value * 2) / 2;
-    }
+function renderIdeas() {
+  const list = $('ideasList');
+  const messages = Object.values(state.messages).sort((a, b) => a.time - b.time);
+  list.innerHTML = messages.length ? '' : '<div class="empty">No shared notes yet.</div>';
+  for (const msg of messages) {
+    const el = document.createElement('article');
+    el.className = 'idea';
+    const time = new Date(msg.time).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    el.innerHTML = `<div class="idea-head"><strong>${escapeHtml(msg.name || 'Someone')}</strong><span>${escapeHtml(time)}</span></div><div>${escapeHtml(msg.text).replace(/\n/g, '<br>')}</div>`;
+    list.appendChild(el);
+  }
+}
 
-    function addFurniture(preset, x = null, y = null) {
-      const id = uid();
-      const item = clampItem({
-        id,
-        name: preset.name,
-        kind: preset.kind === 'custom' ? 'other' : preset.kind,
-        w: preset.w,
-        d: preset.d,
-        height: preset.height,
-        x: x ?? Math.max(0, (state.meta.width - preset.w) / 2),
-        y: y ?? Math.max(0, (state.meta.depth - preset.d) / 2),
-        deleted: false,
-        rev: nextRev(),
-        updatedBy: myName
-      });
-      state.furniture[id] = item;
-      selectedId = id;
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[c]);
+}
+
+function toast(message) {
+  const el = $('toast');
+  el.textContent = message;
+  el.classList.remove('hidden');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.add('hidden'), 3600);
+}
+
+function peerIdFromMeta(meta) {
+  if (typeof meta === 'string') return meta;
+  return meta?.peerId || meta?.id || meta?.senderId || 'partner';
+}
+
+function updatePresence(mode = null) {
+  const count = peers.size + 1;
+  $('peopleLabel').textContent = `${count} ${count === 1 ? 'person' : 'people'}`;
+  const dot = $('statusDot');
+  dot.classList.remove('live', 'connecting');
+  if (mode === 'connecting') {
+    dot.classList.add('connecting');
+    $('statusText').textContent = 'Connecting';
+  } else if (peers.size > 0) {
+    dot.classList.add('live');
+    $('statusText').textContent = 'Live together';
+  } else if (actions) {
+    $('statusText').textContent = 'Waiting for partner';
+  } else {
+    $('statusText').textContent = 'Offline editing';
+  }
+  const names = [myName, ...peers.values()].filter(Boolean);
+  $('peopleNames').textContent = names.length > 1 ? `${names.join(' and ')} are here` : 'Only you are here';
+  update3DPresence();
+}
+
+async function ensureConnectionModule() {
+  if (!connectionModule) connectionModule = await import('https://cdn.jsdelivr.net/npm/trystero@0.25.3/+esm');
+  return connectionModule;
+}
+
+async function connectLive() {
+  updatePresence('connecting');
+  try {
+    const { joinRoom, selfId } = await ensureConnectionModule();
+    actorId = selfId || actorId;
+    roomConnection = joinRoom(
+      { appId: 'roomrelay-3d-v3', password: `roomrelay-${currentCode}` },
+      `room-${currentCode}`,
+      { onJoinError: ({ error }) => toast(`Connection issue: ${error?.message || 'try another network'}`) }
+    );
+    actions = {
+      snapshot: roomConnection.makeAction('snapshot'),
+      item: roomConnection.makeAction('item'),
+      opening: roomConnection.makeAction('opening'),
+      meta: roomConnection.makeAction('meta'),
+      message: roomConnection.makeAction('message'),
+      hello: roomConnection.makeAction('hello'),
+      active: roomConnection.makeAction('active'),
+      presence: roomConnection.makeAction('presence')
+    };
+
+    actions.snapshot.onMessage = incoming => {
+      state = mergeSnapshot(state, incoming);
       saveLocal();
       renderAll();
-      actions?.item.send(item);
-      toast(`${preset.name} added. Drag it into place.`);
-    }
-
-    function patchItem(id, patch, options = {}) {
-      const { broadcast = true, rerender = true } = options;
-      const existing = state.furniture[id];
-      if (!existing || existing.deleted) return null;
-      const item = clampItem({ ...existing, ...patch, rev: nextRev(), updatedBy: myName });
-      state.furniture[id] = item;
-      saveLocal();
-      if (rerender) renderAll();
-      if (broadcast) actions?.item.send(item);
-      return item;
-    }
-
-    function removeItem(id) {
-      const existing = state.furniture[id];
-      if (!existing) return;
-      const item = { ...existing, deleted: true, rev: nextRev(), updatedBy: myName };
-      state.furniture[id] = item;
-      selectedId = null;
-      saveLocal();
-      renderAll();
-      actions?.item.send(item);
-    }
-
-    function updateRoom() {
-      const width = Math.max(48, Math.min(480, Number($('roomWidth').value) * 12 || state.meta.width));
-      const depth = Math.max(48, Math.min(480, Number($('roomDepth').value) * 12 || state.meta.depth));
-      const meta = { ...state.meta, width, depth, snap: $('snapToggle').checked, rev: nextRev() };
-      state.meta = meta;
-      for (const item of activeFurniture()) state.furniture[item.id] = { ...clampItem(item), rev: nextRev(), updatedBy: myName };
-      saveLocal();
-      renderAll();
-      actions?.meta.send(meta);
-      actions?.snapshot.send(state);
-      toast('Room size updated.');
-    }
-
-    function addStarterSet() {
-      const existingNames = new Set(activeFurniture().map(item => item.name.toLowerCase()));
-      const starter = PRESETS.filter(p => ['Bed', 'Desk', 'Dresser', 'Big dresser', 'TV stand'].includes(p.name) && !existingNames.has(p.name.toLowerCase()));
-      if (!starter.length) return toast('The starter furniture is already in the room.');
-      starter.forEach((preset, index) => {
-        const x = Math.min(state.meta.width - preset.w, 6 + (index % 2) * 58);
-        const y = Math.min(state.meta.depth - preset.d, 6 + Math.floor(index / 2) * 34);
-        addFurniture(preset, Math.max(0, x), Math.max(0, y));
-      });
-      actions?.snapshot.send(state);
-    }
-
-    function renderAll() {
-      renderPlan();
-      renderSelection();
-      renderIdeas();
-      updateInputs();
-      if (threeRuntime) rebuild3D();
-    }
-
-    function updateInputs() {
-      $('roomWidth').value = formatFeet(state.meta.width);
-      $('roomDepth').value = formatFeet(state.meta.depth);
-      $('snapToggle').checked = state.meta.snap !== false;
-      const count = activeFurniture().length;
-      $('itemCount').textContent = `${count} ${count === 1 ? 'piece' : 'pieces'}`;
-      $('dimensionTop').textContent = `${formatFeet(state.meta.width)} ft`;
-      $('dimensionSide').textContent = `${formatFeet(state.meta.depth)} ft`;
-    }
-
-    function formatFeet(inches) {
-      return (inches / 12).toFixed(1).replace('.0', '');
-    }
-
-    function renderPlan() {
-      const shell = canvas.closest('.room-shell');
-      const ratio = state.meta.depth / state.meta.width;
-      const maxWidth = Math.max(250, Math.min(shell.clientWidth - 48, 720));
-      const maxHeight = Math.max(340, Math.min(window.innerHeight * .66, 650));
-      let width = maxWidth;
-      let height = width * ratio;
-      if (height > maxHeight) { height = maxHeight; width = height / ratio; }
-      width = Math.max(220, width);
-      height = Math.max(300, height);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      const oneFootX = width / Math.max(1, state.meta.width / 12);
-      const oneFootY = height / Math.max(1, state.meta.depth / 12);
-      canvas.style.backgroundSize = `${oneFootX}px ${oneFootY}px`;
-      canvas.innerHTML = '';
-
-      for (const item of activeFurniture()) {
-        const el = document.createElement('div');
-        el.className = `furniture${item.id === selectedId ? ' selected' : ''}${remoteActive.has(item.id) ? ' remote' : ''}`;
-        el.dataset.id = item.id;
-        el.dataset.kind = item.kind || 'other';
-        el.setAttribute('role', 'button');
-        el.setAttribute('aria-label', `${item.name}, ${Math.round(item.w)} by ${Math.round(item.d)} inches`);
-        positionFurnitureElement(el, item);
-        el.innerHTML = `<span>${escapeHtml(item.name)}<span class="size-label">${Math.round(item.w)}×${Math.round(item.d)} in</span></span>`;
-        canvas.appendChild(el);
-      }
-    }
-
-    function positionFurnitureElement(el, item) {
-      el.style.left = `${item.x / state.meta.width * 100}%`;
-      el.style.top = `${item.y / state.meta.depth * 100}%`;
-      el.style.width = `${item.w / state.meta.width * 100}%`;
-      el.style.height = `${item.d / state.meta.depth * 100}%`;
-    }
-
-    function selectItem(id) {
-      selectedId = id;
-      canvas.querySelectorAll('.furniture').forEach(el => el.classList.toggle('selected', el.dataset.id === id));
-      renderSelection();
-      if (threeRuntime) update3DSelection();
-    }
-
-    function renderSelection() {
-      const item = selectedId ? state.furniture[selectedId] : null;
-      const visible = item && !item.deleted;
-      $('noSelection').classList.toggle('hidden', visible);
-      $('selectionEditor').classList.toggle('hidden', !visible);
-      if (!visible) return;
-      $('selectedNameChip').textContent = item.name;
-      $('itemName').value = item.name;
-      $('itemWidth').value = Math.round(item.w);
-      $('itemDepth').value = Math.round(item.d);
-      $('itemHeight').value = Math.round(item.height);
-      $('positionLabel').textContent = `${Math.round(item.x)} in from left · ${Math.round(item.y)} in from top`;
-    }
-
-    function beginDrag(event) {
-      const target = event.target.closest('.furniture');
-      if (!target || !canvas.contains(target)) return;
-      event.preventDefault();
-      const id = target.dataset.id;
-      const item = state.furniture[id];
-      if (!item) return;
-      selectItem(id);
-      const rect = canvas.getBoundingClientRect();
-      drag = {
-        id,
-        pointerId: event.pointerId,
-        startX: event.clientX,
-        startY: event.clientY,
-        itemX: item.x,
-        itemY: item.y,
-        rect,
-        element: target,
-        moved: false
-      };
-      target.classList.add('drag-now');
-      canvas.setPointerCapture(event.pointerId);
-      document.body.classList.add('dragging');
-    }
-
-    function moveDrag(event) {
-      if (!drag || drag.pointerId !== event.pointerId) return;
-      event.preventDefault();
-      const item = state.furniture[drag.id];
-      if (!item) return;
-      const dx = (event.clientX - drag.startX) / drag.rect.width * state.meta.width;
-      const dy = (event.clientY - drag.startY) / drag.rect.height * state.meta.depth;
-      const next = clampItem({ ...item, x: snapValue(drag.itemX + dx), y: snapValue(drag.itemY + dy) });
-      item.x = next.x;
-      item.y = next.y;
-      drag.moved = drag.moved || Math.abs(dx) > 1 || Math.abs(dy) > 1;
-      positionFurnitureElement(drag.element, item);
-      $('positionLabel').textContent = `${Math.round(item.x)} in from left · ${Math.round(item.y)} in from top`;
-      const now = performance.now();
-      if (now - lastDragSend > 75) {
-        item.rev = nextRev();
-        item.updatedBy = myName;
-        actions?.item.send({ ...item });
-        actions?.active.send({ id: item.id });
-        lastDragSend = now;
-      }
-    }
-
-    function endDrag(event) {
-      if (!drag || drag.pointerId !== event.pointerId) return;
-      const item = state.furniture[drag.id];
-      drag.element.classList.remove('drag-now');
-      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
-      document.body.classList.remove('dragging');
-      if (item) {
-        item.rev = nextRev();
-        item.updatedBy = myName;
+    };
+    actions.item.onMessage = rawItem => {
+      const item = normalizeItem(rawItem);
+      if (drag?.type === 'furniture' && drag.id === item.id) return;
+      if (threeRuntime?.drag?.id === item.id) return;
+      observeRev(item.rev);
+      if (newer(item.rev, state.furniture[item.id]?.rev)) {
+        state.furniture[item.id] = item;
+        const key = entityKey('furniture', item.id);
+        remoteActive.set(key, Date.now());
+        setTimeout(() => { remoteActive.delete(key); renderPlan(); }, 550);
         saveLocal();
-        actions?.item.send({ ...item });
+        renderAll();
       }
-      const moved = drag.moved;
-      drag = null;
-      if (moved && threeRuntime) rebuild3D();
-    }
-
-    function addMessage(text) {
-      const trimmed = text.trim();
-      if (!trimmed) return;
-      const id = uid();
-      const msg = { id, text: trimmed, name: myName, time: Date.now(), rev: nextRev() };
-      state.messages[id] = msg;
-      saveLocal();
-      renderIdeas();
-      actions?.message.send(msg);
-      $('ideaInput').value = '';
-    }
-
-    function renderIdeas() {
-      const list = $('ideasList');
-      const messages = Object.values(state.messages).sort((a, b) => a.time - b.time);
-      list.innerHTML = messages.length ? '' : '<div class="empty">No shared notes yet.</div>';
-      for (const msg of messages) {
-        const el = document.createElement('article');
-        el.className = 'idea';
-        const time = new Date(msg.time).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-        el.innerHTML = `<div class="idea-head"><strong>${escapeHtml(msg.name || 'Someone')}</strong><span>${escapeHtml(time)}</span></div><div>${escapeHtml(msg.text).replace(/\n/g, '<br>')}</div>`;
-        list.appendChild(el);
+    };
+    actions.opening.onMessage = rawOpening => {
+      const opening = normalizeOpening(rawOpening);
+      if (drag?.type === 'opening' && drag.id === opening.id) return;
+      observeRev(opening.rev);
+      if (newer(opening.rev, state.openings[opening.id]?.rev)) {
+        state.openings[opening.id] = opening;
+        const key = entityKey('opening', opening.id);
+        remoteActive.set(key, Date.now());
+        setTimeout(() => { remoteActive.delete(key); renderPlan(); }, 550);
+        saveLocal();
+        renderAll();
       }
-    }
-
-    function escapeHtml(value) {
-      return String(value).replace(/[&<>'"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[c]);
-    }
-
-    function toast(message) {
-      const el = $('toast');
-      el.textContent = message;
-      el.classList.remove('hidden');
-      clearTimeout(toast.timer);
-      toast.timer = setTimeout(() => el.classList.add('hidden'), 3200);
-    }
-
-    function updatePresence(mode = null) {
-      const count = peers.size + 1;
-      $('peopleLabel').textContent = `${count} ${count === 1 ? 'person' : 'people'}`;
-      const dot = $('statusDot');
-      dot.classList.remove('live', 'connecting');
-      if (mode === 'connecting') {
-        dot.classList.add('connecting');
-        $('statusText').textContent = 'Connecting';
-      } else if (peers.size > 0) {
-        dot.classList.add('live');
-        $('statusText').textContent = 'Live together';
-      } else if (actions) {
-        $('statusText').textContent = 'Waiting for partner';
-      } else {
-        $('statusText').textContent = 'Offline editing';
+    };
+    actions.meta.onMessage = meta => {
+      observeRev(meta.rev);
+      if (newer(meta.rev, state.meta.rev)) {
+        state.meta = { ...state.meta, ...meta };
+        for (const item of activeFurniture()) state.furniture[item.id] = clampItem(item);
+        for (const opening of activeOpenings()) state.openings[opening.id] = clampOpening(opening);
+        saveLocal();
+        renderAll();
       }
-      const names = [myName, ...peers.values()].filter(Boolean);
-      $('peopleNames').textContent = names.length > 1 ? `${names.join(' and ')} are here` : 'Only you are here';
-    }
-
-    async function ensureConnectionModule() {
-      if (!connectionModule) connectionModule = await import('https://cdn.jsdelivr.net/npm/trystero@0.25.3/+esm');
-      return connectionModule;
-    }
-
-    async function connectLive() {
-      updatePresence('connecting');
-      try {
-        const { joinRoom, selfId } = await ensureConnectionModule();
-        actorId = selfId || actorId;
-        roomConnection = joinRoom(
-          { appId: 'roomrelay-3d-v2', password: `roomrelay-${currentCode}` },
-          `room-${currentCode}`,
-          { onJoinError: ({ error }) => toast(`Connection issue: ${error?.message || 'try another network'}`) }
-        );
-        actions = {
-          snapshot: roomConnection.makeAction('snapshot'),
-          item: roomConnection.makeAction('item'),
-          meta: roomConnection.makeAction('meta'),
-          message: roomConnection.makeAction('message'),
-          hello: roomConnection.makeAction('hello'),
-          active: roomConnection.makeAction('active')
-        };
-
-        actions.snapshot.onMessage = incoming => {
-          state = mergeSnapshot(state, incoming);
-          saveLocal();
-          renderAll();
-        };
-        actions.item.onMessage = rawItem => {
-          const item = normalizeItem(rawItem);
-          if (drag?.id === item.id) return;
-          observeRev(item.rev);
-          if (newer(item.rev, state.furniture[item.id]?.rev)) {
-            state.furniture[item.id] = item;
-            remoteActive.set(item.id, Date.now());
-            setTimeout(() => { remoteActive.delete(item.id); renderPlan(); }, 550);
-            saveLocal();
-            renderAll();
-          }
-        };
-        actions.meta.onMessage = meta => {
-          observeRev(meta.rev);
-          if (newer(meta.rev, state.meta.rev)) {
-            state.meta = { ...state.meta, ...meta };
-            saveLocal();
-            renderAll();
-          }
-        };
-        actions.message.onMessage = msg => {
-          observeRev(msg.rev);
-          if (newer(msg.rev, state.messages[msg.id]?.rev)) {
-            state.messages[msg.id] = msg;
-            saveLocal();
-            renderIdeas();
-          }
-        };
-        actions.hello.onMessage = (data, { peerId }) => {
-          peers.set(peerId, data.name || 'Partner');
-          updatePresence();
-        };
-        actions.active.onMessage = ({ id }) => {
-          remoteActive.set(id, Date.now());
-          setTimeout(() => { remoteActive.delete(id); renderPlan(); }, 500);
-        };
-        roomConnection.onPeerJoin = peerId => {
-          peers.set(peerId, 'Partner');
-          updatePresence();
-          actions.hello.send({ name: myName }, { target: peerId });
-          actions.snapshot.send(state, { target: peerId });
-          toast('Your partner connected.');
-        };
-        roomConnection.onPeerLeave = peerId => {
-          peers.delete(peerId);
-          updatePresence();
-          toast('Your partner disconnected. Changes remain saved on this phone.');
-        };
-        actions.hello.send({ name: myName });
-        updatePresence();
-      } catch (error) {
-        actions = null;
-        updatePresence();
-        toast('Live connection could not start. You can still edit this device.');
-        console.error(error);
+    };
+    actions.message.onMessage = msg => {
+      observeRev(msg.rev);
+      if (newer(msg.rev, state.messages[msg.id]?.rev)) {
+        state.messages[msg.id] = msg;
+        saveLocal();
+        renderIdeas();
       }
-    }
-
-    async function openRoom() {
-      myName = $('nameInput').value.trim() || 'Me';
-      currentCode = cleanCode($('codeInput').value || generateCode());
-      $('codeInput').value = currentCode;
-      safeSet('roomrelay:name', myName);
-      state = freshState();
-      loadLocal();
-      const url = new URL(location.href);
-      url.searchParams.set('room', currentCode);
-      history.replaceState(null, '', url);
-      $('roomCodeLabel').textContent = currentCode;
-      $('shareLink').value = url.toString();
-      joinView.classList.add('hidden');
-      plannerView.classList.remove('hidden');
-      renderAll();
-      connectLive();
-    }
-
-    function leaveRoom() {
-      roomConnection?.leave();
-      roomConnection = null;
-      actions = null;
-      peers.clear();
-      selectedId = null;
-      plannerView.classList.add('hidden');
-      joinView.classList.remove('hidden');
+    };
+    actions.hello.onMessage = (data, meta) => {
+      const peerId = peerIdFromMeta(meta);
+      peers.set(peerId, data.name || 'Partner');
       updatePresence();
+    };
+    actions.active.onMessage = ({ type = 'furniture', id }) => {
+      const key = entityKey(type, id);
+      remoteActive.set(key, Date.now());
+      setTimeout(() => { remoteActive.delete(key); renderPlan(); }, 500);
+    };
+    actions.presence.onMessage = (data, meta) => {
+      const peerId = peerIdFromMeta(meta);
+      remotePresence.set(peerId, { ...data, lastSeen: Date.now() });
+      if (data?.name) peers.set(peerId, data.name);
+      update3DPresence();
+    };
+    roomConnection.onPeerJoin = peerId => {
+      peers.set(peerId, 'Partner');
+      updatePresence();
+      actions.hello.send({ name: myName }, { target: peerId });
+      actions.snapshot.send(state, { target: peerId });
+      send3DPresence(true, peerId);
+      toast('Your partner connected.');
+    };
+    roomConnection.onPeerLeave = peerId => {
+      peers.delete(peerId);
+      remotePresence.delete(peerId);
+      updatePresence();
+      toast('Your partner disconnected. Changes remain saved on this phone.');
+    };
+    actions.hello.send({ name: myName });
+    send3DPresence(true);
+    updatePresence();
+  } catch (error) {
+    actions = null;
+    updatePresence();
+    toast('Live connection could not start. You can still edit this device.');
+    console.error(error);
+  }
+}
+
+async function openRoom() {
+  myName = $('nameInput').value.trim() || 'Me';
+  currentCode = cleanCode($('codeInput').value || generateCode());
+  $('codeInput').value = currentCode;
+  safeSet('roomrelay:name', myName);
+  state = freshState();
+  loadLocal();
+  const url = new URL(location.href);
+  url.searchParams.set('room', currentCode);
+  history.replaceState(null, '', url);
+  $('roomCodeLabel').textContent = currentCode;
+  $('shareLink').value = url.toString();
+  joinView.classList.add('hidden');
+  plannerView.classList.remove('hidden');
+  renderAll();
+  connectLive();
+}
+
+function leaveRoom() {
+  send3DPresence(true);
+  roomConnection?.leave();
+  roomConnection = null;
+  actions = null;
+  peers.clear();
+  remotePresence.clear();
+  selectedId = null;
+  selectedType = null;
+  plannerView.classList.add('hidden');
+  joinView.classList.remove('hidden');
+  clearInterval(presenceTimer);
+  presenceTimer = null;
+  updatePresence();
+}
+
+async function copyShareLink() {
+  const text = $('shareLink').value;
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('Room link copied.');
+  } catch (_) {
+    $('shareLink').focus();
+    $('shareLink').select();
+    document.execCommand('copy');
+    toast('Room link selected. Copy and send it.');
+  }
+}
+
+async function shareRoom() {
+  const url = $('shareLink').value;
+  const data = { title: 'Join our RoomRelay room', text: `Open our shared room ${currentCode}`, url };
+  if (navigator.share) {
+    try { await navigator.share(data); return; } catch (_) {}
+  }
+  copyShareLink();
+}
+
+function showTab(name) {
+  const leavingThree = currentTab === 'three' && name !== 'three';
+  currentTab = name;
+  document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab.dataset.tab === name));
+  $('planTab').classList.toggle('hidden', name !== 'plan');
+  $('threeTab').classList.toggle('hidden', name !== 'three');
+  $('ideasTab').classList.toggle('hidden', name !== 'ideas');
+  if (name === 'three') {
+    init3D();
+    clearInterval(presenceTimer);
+    presenceTimer = setInterval(() => send3DPresence(true), 3000);
+  } else if (leavingThree) {
+    clearInterval(presenceTimer);
+    presenceTimer = null;
+    send3DPresence(true);
+  }
+  if (name === 'plan') setTimeout(renderPlan, 0);
+}
+
+function actorColor(value) {
+  let hash = 0;
+  for (const char of String(value)) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  const colors = [0x4f6ee8, 0xc05c78, 0x2b9975, 0xb8742e, 0x7b5ac7, 0x2582a6];
+  return colors[hash % colors.length];
+}
+
+function send3DPresence(force = false, target = null) {
+  if (!actions?.presence) return;
+  const now = performance.now();
+  if (!force && now - lastPresenceSend < 120) return;
+  lastPresenceSend = now;
+  const camera = threeRuntime?.camera;
+  const targetVector = threeRuntime?.controls?.target;
+  const data = {
+    name: myName,
+    mode: currentTab === 'three' && camera ? 'three' : 'plan',
+    color: actorColor(actorId),
+    camera: camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z } : null,
+    target: targetVector ? { x: targetVector.x, y: targetVector.y, z: targetVector.z } : null,
+    sentAt: Date.now()
+  };
+  if (target) actions.presence.send(data, { target });
+  else actions.presence.send(data);
+}
+
+async function init3D() {
+  if (threeRuntime || threeLoading) {
+    if (threeRuntime) {
+      resize3D();
+      rebuild3D();
+      send3DPresence(true);
     }
+    return;
+  }
+  threeLoading = true;
+  $('threeStatus').textContent = 'Loading the photo-inspired 3D room…';
+  try {
+    const THREE = await import('three');
+    const controlsModule = await import('three/addons/controls/OrbitControls.js');
+    const host = $('threeHost');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe5e0d5);
+    scene.fog = new THREE.Fog(0xe5e0d5, 22, 55);
+    const camera = new THREE.PerspectiveCamera(54, 1, .05, 200);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    host.appendChild(renderer.domElement);
+    const controls = new controlsModule.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = .08;
+    controls.minDistance = 2.2;
+    controls.maxDistance = 45;
+    controls.maxPolarAngle = Math.PI / 2.01;
+    controls.target.set(0, 2.6, 0);
 
-    async function copyShareLink() {
-      const text = $('shareLink').value;
-      try {
-        await navigator.clipboard.writeText(text);
-        toast('Room link copied.');
-      } catch (_) {
-        $('shareLink').focus();
-        $('shareLink').select();
-        document.execCommand('copy');
-        toast('Room link selected. Copy and send it.');
-      }
-    }
+    const hemi = new THREE.HemisphereLight(0xfff9ed, 0x6c7278, 2.25);
+    scene.add(hemi);
+    const warm = new THREE.DirectionalLight(0xfff4df, 3.1);
+    warm.position.set(-5, 12, 7);
+    warm.castShadow = true;
+    warm.shadow.mapSize.set(1536, 1536);
+    warm.shadow.camera.near = 1;
+    warm.shadow.camera.far = 40;
+    warm.shadow.camera.left = -15;
+    warm.shadow.camera.right = 15;
+    warm.shadow.camera.top = 15;
+    warm.shadow.camera.bottom = -15;
+    scene.add(warm);
+    const fill = new THREE.PointLight(0xfff7e8, 35, 25, 2);
+    fill.position.set(0, 7, 0);
+    scene.add(fill);
 
-    async function shareRoom() {
-      const url = $('shareLink').value;
-      const data = { title: 'Join our RoomRelay room', text: `Open our shared room ${currentCode}`, url };
-      if (navigator.share) {
-        try { await navigator.share(data); return; } catch (_) {}
-      }
-      copyShareLink();
-    }
+    const roomGroup = new THREE.Group();
+    const openingGroup = new THREE.Group();
+    const furnitureGroup = new THREE.Group();
+    const presenceGroup = new THREE.Group();
+    scene.add(roomGroup, openingGroup, furnitureGroup, presenceGroup);
 
-    function showTab(name) {
-      currentTab = name;
-      document.querySelectorAll('.tab').forEach(tab => tab.classList.toggle('active', tab.dataset.tab === name));
-      $('planTab').classList.toggle('hidden', name !== 'plan');
-      $('threeTab').classList.toggle('hidden', name !== 'three');
-      $('ideasTab').classList.toggle('hidden', name !== 'ideas');
-      if (name === 'three') init3D();
-      if (name === 'plan') setTimeout(renderPlan, 0);
-    }
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const planePoint = new THREE.Vector3();
 
-    async function init3D() {
-      if (threeRuntime || threeLoading) {
-        if (threeRuntime) { resize3D(); rebuild3D(); }
-        return;
-      }
-      threeLoading = true;
-      $('threeStatus').textContent = 'Loading the 3D room…';
-      try {
-        const THREE = await import('three');
-        const controlsModule = await import('three/addons/controls/OrbitControls.js');
-        const host = $('threeHost');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(window.matchMedia('(prefers-color-scheme: dark)').matches ? 0x202838 : 0xe8eef7);
-        const camera = new THREE.PerspectiveCamera(48, 1, .05, 200);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
-        host.appendChild(renderer.domElement);
-        const controls = new controlsModule.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = .08;
-        controls.minDistance = 3;
-        controls.maxDistance = 45;
-        controls.maxPolarAngle = Math.PI / 2.02;
-        controls.target.set(0, 1.5, 0);
+    threeRuntime = {
+      THREE, scene, camera, renderer, controls, roomGroup, openingGroup, furnitureGroup, presenceGroup,
+      raycaster, pointer, floorPlane, planePoint, furnitureObjects: new Map(), wallObjects: [], drag: null,
+      pointerStart: null, animationId: null, roomW: 12.5, roomD: 10.5
+    };
 
-        const hemi = new THREE.HemisphereLight(0xffffff, 0x596579, 2.2);
-        scene.add(hemi);
-        const sun = new THREE.DirectionalLight(0xffffff, 2.7);
-        sun.position.set(8, 14, 10);
-        sun.castShadow = true;
-        sun.shadow.mapSize.set(1024, 1024);
-        scene.add(sun);
+    controls.addEventListener('change', () => send3DPresence(false));
+    renderer.domElement.addEventListener('pointerdown', handle3DPointerDown, true);
+    renderer.domElement.addEventListener('pointermove', handle3DPointerMove, true);
+    renderer.domElement.addEventListener('pointerup', handle3DPointerUp, true);
+    renderer.domElement.addEventListener('pointercancel', handle3DPointerUp, true);
 
-        const furnitureGroup = new THREE.Group();
-        const roomGroup = new THREE.Group();
-        scene.add(roomGroup, furnitureGroup);
-
-        const raycaster = new THREE.Raycaster();
-        const pointer = new THREE.Vector2();
-        let pointerStart = null;
-        renderer.domElement.addEventListener('pointerdown', event => { pointerStart = { x: event.clientX, y: event.clientY }; });
-        renderer.domElement.addEventListener('pointerup', event => {
-          if (!pointerStart || Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 8) return;
-          const rect = renderer.domElement.getBoundingClientRect();
-          pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-          pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-          raycaster.setFromCamera(pointer, camera);
-          const hits = raycaster.intersectObjects(furnitureGroup.children, false);
-          if (hits[0]?.object?.userData?.itemId) {
-            selectItem(hits[0].object.userData.itemId);
-            const item = state.furniture[selectedId];
-            $('threeSelection').textContent = `Selected: ${item.name} · return to 2D to move it`;
-          }
-        });
-
-        threeRuntime = { THREE, scene, camera, renderer, controls, furnitureGroup, roomGroup, animationId: null };
-        $('threeStatus').classList.add('hidden');
-        resize3D();
-        rebuild3D();
-        reset3DView(false);
-        const animate = () => {
-          threeRuntime.animationId = requestAnimationFrame(animate);
-          controls.update();
-          renderer.render(scene, camera);
-        };
-        animate();
-      } catch (error) {
-        $('threeStatus').textContent = 'The 3D viewer could not load. Check that the page has internet access, then reload.';
-        console.error(error);
-      } finally {
-        threeLoading = false;
-      }
-    }
-
-    function clearGroup(group) {
-      while (group.children.length) {
-        const child = group.children.pop();
-        child.geometry?.dispose();
-        if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
-        else child.material?.dispose();
-      }
-    }
-
-    function rebuild3D() {
+    $('threeStatus').classList.add('hidden');
+    resize3D();
+    rebuild3D();
+    reset3DView(false);
+    const animate = () => {
       if (!threeRuntime) return;
-      const { THREE, roomGroup, furnitureGroup } = threeRuntime;
-      clearGroup(roomGroup);
-      clearGroup(furnitureGroup);
-      const roomW = state.meta.width / 12;
-      const roomD = state.meta.depth / 12;
-      const wallH = state.meta.wallHeight / 12;
+      threeRuntime.animationId = requestAnimationFrame(animate);
+      controls.update();
+      updateWallFade();
+      renderer.render(scene, camera);
+    };
+    animate();
+    send3DPresence(true);
+  } catch (error) {
+    $('threeStatus').textContent = 'The 3D viewer could not load. Check that the page has internet access, then reload.';
+    console.error(error);
+  } finally {
+    threeLoading = false;
+  }
+}
 
-      const floorMaterial = new THREE.MeshStandardMaterial({ color: 0xd9d2c2, roughness: .88 });
-      const floor = new THREE.Mesh(new THREE.BoxGeometry(roomW, .12, roomD), floorMaterial);
-      floor.position.y = -.06;
-      floor.receiveShadow = true;
-      roomGroup.add(floor);
+function setRayFromEvent(event) {
+  const { renderer, pointer, raycaster, camera } = threeRuntime;
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+}
 
-      const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xf4f1e9, roughness: .95, side: THREE.DoubleSide });
-      const backWall = new THREE.Mesh(new THREE.BoxGeometry(roomW, wallH, .10), wallMaterial.clone());
-      backWall.position.set(0, wallH / 2, -roomD / 2);
-      backWall.receiveShadow = true;
-      roomGroup.add(backWall);
-      const leftWall = new THREE.Mesh(new THREE.BoxGeometry(.10, wallH, roomD), wallMaterial.clone());
-      leftWall.position.set(-roomW / 2, wallH / 2, 0);
-      leftWall.receiveShadow = true;
-      roomGroup.add(leftWall);
+function findEntityOnObject(object) {
+  let node = object;
+  while (node) {
+    if (node.userData?.itemId) return { type: 'furniture', id: node.userData.itemId };
+    if (node.userData?.openingId) return { type: 'opening', id: node.userData.openingId };
+    node = node.parent;
+  }
+  return null;
+}
 
-      const borderMaterial = new THREE.LineBasicMaterial({ color: 0x596274 });
-      const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(roomW, .12, roomD)), borderMaterial);
-      edges.position.y = -.06;
-      roomGroup.add(edges);
+function handle3DPointerDown(event) {
+  if (!threeRuntime || event.button > 0) return;
+  setRayFromEvent(event);
+  const furnitureHits = threeRuntime.raycaster.intersectObjects(threeRuntime.furnitureGroup.children, true)
+    .filter(hit => findEntityOnObject(hit.object)?.type === 'furniture');
+  threeRuntime.pointerStart = { x: event.clientX, y: event.clientY };
+  if (!furnitureHits.length) return;
+  const entity = findEntityOnObject(furnitureHits[0].object);
+  const item = state.furniture[entity.id];
+  const object = threeRuntime.furnitureObjects.get(entity.id);
+  if (!item || !object) return;
+  event.preventDefault();
+  event.stopPropagation();
+  setRayFromEvent(event);
+  threeRuntime.raycaster.ray.intersectPlane(threeRuntime.floorPlane, threeRuntime.planePoint);
+  threeRuntime.drag = {
+    id: entity.id,
+    pointerId: event.pointerId,
+    object,
+    offsetX: object.position.x - threeRuntime.planePoint.x,
+    offsetZ: object.position.z - threeRuntime.planePoint.z,
+    moved: false,
+    startX: event.clientX,
+    startY: event.clientY
+  };
+  threeRuntime.controls.enabled = false;
+  threeRuntime.renderer.domElement.setPointerCapture(event.pointerId);
+  selectEntity('furniture', entity.id);
+}
 
-      const colors = { bed: 0x6f9fe5, desk: 0xb77c42, dresser: 0x96613c, tv: 0x343b48, chair: 0x559072, other: 0x7968ae };
-      for (const item of activeFurniture()) {
-        const w = item.w / 12;
-        const d = item.d / 12;
-        const h = item.height / 12;
-        const material = new THREE.MeshStandardMaterial({
-          color: colors[item.kind] || colors.other,
-          roughness: .68,
-          metalness: item.kind === 'tv' ? .18 : 0
-        });
-        if (item.id === selectedId) material.emissive.setHex(0x2233aa);
-        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), material);
-        mesh.position.set(-roomW / 2 + (item.x + item.w / 2) / 12, h / 2, -roomD / 2 + (item.y + item.d / 2) / 12);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        mesh.userData.itemId = item.id;
-        mesh.userData.name = item.name;
-        furnitureGroup.add(mesh);
-        if (item.id === selectedId) {
-          const helper = new THREE.BoxHelper(mesh, 0x5367e8);
-          helper.userData.isHelper = true;
-          furnitureGroup.add(helper);
+function handle3DPointerMove(event) {
+  const runtime = threeRuntime;
+  if (!runtime?.drag || runtime.drag.pointerId !== event.pointerId) return;
+  event.preventDefault();
+  event.stopPropagation();
+  setRayFromEvent(event);
+  if (!runtime.raycaster.ray.intersectPlane(runtime.floorPlane, runtime.planePoint)) return;
+  const item = state.furniture[runtime.drag.id];
+  if (!item) return;
+  const roomW = state.meta.width / 12;
+  const roomD = state.meta.depth / 12;
+  const centerX = runtime.planePoint.x + runtime.drag.offsetX;
+  const centerZ = runtime.planePoint.z + runtime.drag.offsetZ;
+  const next = clampItem({
+    ...item,
+    x: snapValue((centerX + roomW / 2) * 12 - item.w / 2),
+    y: snapValue((centerZ + roomD / 2) * 12 - item.d / 2)
+  });
+  item.x = next.x;
+  item.y = next.y;
+  runtime.drag.object.position.set(
+    -roomW / 2 + (item.x + item.w / 2) / 12,
+    0,
+    -roomD / 2 + (item.y + item.d / 2) / 12
+  );
+  runtime.drag.moved = runtime.drag.moved || Math.hypot(event.clientX - runtime.drag.startX, event.clientY - runtime.drag.startY) > 2;
+  const now = performance.now();
+  if (now - lastDragSend > 75) {
+    item.rev = nextRev();
+    item.updatedBy = myName;
+    actions?.item.send({ ...item });
+    actions?.active.send({ type: 'furniture', id: item.id });
+    lastDragSend = now;
+  }
+}
+
+function handle3DPointerUp(event) {
+  const runtime = threeRuntime;
+  if (!runtime) return;
+  if (runtime.drag && runtime.drag.pointerId === event.pointerId) {
+    event.preventDefault();
+    event.stopPropagation();
+    const item = state.furniture[runtime.drag.id];
+    if (item) {
+      item.rev = nextRev();
+      item.updatedBy = myName;
+      saveLocal();
+      actions?.item.send({ ...item });
+    }
+    if (runtime.renderer.domElement.hasPointerCapture(event.pointerId)) runtime.renderer.domElement.releasePointerCapture(event.pointerId);
+    runtime.controls.enabled = true;
+    runtime.drag = null;
+    renderPlan();
+    renderSelection();
+    rebuild3D();
+    send3DPresence(true);
+    return;
+  }
+  const start = runtime.pointerStart;
+  runtime.pointerStart = null;
+  if (!start || Math.hypot(event.clientX - start.x, event.clientY - start.y) > 8) return;
+  setRayFromEvent(event);
+  const hits = runtime.raycaster.intersectObjects([runtime.furnitureGroup, runtime.openingGroup], true);
+  for (const hit of hits) {
+    const entity = findEntityOnObject(hit.object);
+    if (!entity) continue;
+    selectEntity(entity.type, entity.id);
+    const label = entity.type === 'furniture' ? state.furniture[entity.id]?.name : state.openings[entity.id]?.name;
+    $('threeSelection').textContent = entity.type === 'furniture'
+      ? `Selected: ${label} · drag it directly in 3D`
+      : `Selected: ${label} · move it along its wall in 2D`;
+    break;
+  }
+}
+
+function disposeObject(object) {
+  object.traverse?.(child => {
+    child.geometry?.dispose?.();
+    if (Array.isArray(child.material)) child.material.forEach(material => {
+      material.map?.dispose?.();
+      material.dispose?.();
+    });
+    else {
+      child.material?.map?.dispose?.();
+      child.material?.dispose?.();
+    }
+  });
+}
+
+function clearGroup(group) {
+  while (group.children.length) {
+    const child = group.children[0];
+    group.remove(child);
+    disposeObject(child);
+  }
+}
+
+function createWoodTexture(THREE, roomW, roomD) {
+  const textureCanvas = document.createElement('canvas');
+  textureCanvas.width = 512;
+  textureCanvas.height = 512;
+  const ctx = textureCanvas.getContext('2d');
+  ctx.fillStyle = '#b9aa95';
+  ctx.fillRect(0, 0, 512, 512);
+  const palette = ['#c9baa4', '#b5a48e', '#d0c2ae', '#aa9a86', '#c0b19c', '#9f927f'];
+  let seed = 1837;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const plankH = 58;
+  const plankW = 150;
+  for (let row = 0; row < 10; row++) {
+    const y = row * plankH;
+    const shift = row % 2 ? -75 : 0;
+    for (let col = -1; col < 5; col++) {
+      const x = shift + col * plankW;
+      ctx.fillStyle = palette[Math.floor(random() * palette.length)];
+      ctx.fillRect(x + 1, y + 1, plankW - 2, plankH - 2);
+      ctx.strokeStyle = 'rgba(78,68,58,.17)';
+      ctx.strokeRect(x + .5, y + .5, plankW - 1, plankH - 1);
+      for (let line = 0; line < 4; line++) {
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(90,74,60,${.035 + random() * .05})`;
+        const yy = y + 8 + random() * (plankH - 16);
+        ctx.moveTo(x + 8, yy);
+        ctx.bezierCurveTo(x + 45, yy + random() * 5 - 2.5, x + 100, yy + random() * 5 - 2.5, x + plankW - 8, yy);
+        ctx.stroke();
+      }
+    }
+  }
+  const texture = new THREE.CanvasTexture(textureCanvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(Math.max(1, roomW / 4.1), Math.max(1, roomD / 4.1));
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = Math.min(8, threeRuntime.renderer.capabilities.getMaxAnisotropy());
+  return texture;
+}
+
+function wallPlacement(wall, alongCenter, yCenter, alongSize, ySize, depthSize, inward = 0) {
+  const roomW = state.meta.width / 12;
+  const roomD = state.meta.depth / 12;
+  if (wall === 'top') return {
+    geometry: [alongSize, ySize, depthSize],
+    position: [-roomW / 2 + alongCenter, yCenter, -roomD / 2 + inward]
+  };
+  if (wall === 'bottom') return {
+    geometry: [alongSize, ySize, depthSize],
+    position: [-roomW / 2 + alongCenter, yCenter, roomD / 2 - inward]
+  };
+  if (wall === 'left') return {
+    geometry: [depthSize, ySize, alongSize],
+    position: [-roomW / 2 + inward, yCenter, -roomD / 2 + alongCenter]
+  };
+  return {
+    geometry: [depthSize, ySize, alongSize],
+    position: [roomW / 2 - inward, yCenter, -roomD / 2 + alongCenter]
+  };
+}
+
+function addWallBox(group, wall, alongCenter, yCenter, alongSize, ySize, depthSize, material, inward = 0, openingId = null) {
+  const { THREE } = threeRuntime;
+  if (alongSize <= .01 || ySize <= .01) return null;
+  const placement = wallPlacement(wall, alongCenter, yCenter, alongSize, ySize, depthSize, inward);
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(...placement.geometry), material.clone ? material.clone() : material);
+  mesh.position.set(...placement.position);
+  mesh.castShadow = false;
+  mesh.receiveShadow = true;
+  mesh.userData.wall = wall;
+  if (openingId) mesh.userData.openingId = openingId;
+  group.add(mesh);
+  return mesh;
+}
+
+function addWallSegment(wall, start, length, bottom, height, material) {
+  const mesh = addWallBox(threeRuntime.roomGroup, wall, start + length / 2, bottom + height / 2, length, height, .12, material, 0);
+  if (mesh) threeRuntime.wallObjects.push(mesh);
+}
+
+function addOpeningVisual(opening, wallH, frameMaterial, doorMaterial, glassMaterial) {
+  const { THREE, openingGroup } = threeRuntime;
+  const group = new THREE.Group();
+  group.userData.openingId = opening.id;
+  group.userData.wall = opening.wall;
+  openingGroup.add(group);
+  const start = opening.offset / 12;
+  const width = opening.width / 12;
+  const height = opening.height / 12;
+  const bottom = opening.type === 'door' ? 0 : opening.sill / 12;
+  const frame = .12;
+  const depth = .18;
+  const center = start + width / 2;
+  addWallBox(group, opening.wall, start + frame / 2, bottom + height / 2, frame, height + frame * 2, depth, frameMaterial, .02, opening.id);
+  addWallBox(group, opening.wall, start + width - frame / 2, bottom + height / 2, frame, height + frame * 2, depth, frameMaterial, .02, opening.id);
+  addWallBox(group, opening.wall, center, bottom + height + frame / 2, width, frame, depth, frameMaterial, .02, opening.id);
+  if (opening.type === 'window') {
+    addWallBox(group, opening.wall, center, bottom - frame / 2, width, frame, depth, frameMaterial, .02, opening.id);
+    addWallBox(group, opening.wall, center, bottom + height / 2, Math.max(.05, width - frame * 2), Math.max(.05, height - frame * 2), .035, glassMaterial, .075, opening.id);
+    addWallBox(group, opening.wall, center, bottom + height / 2, frame * .72, Math.max(.05, height - frame * 2), .07, frameMaterial, .085, opening.id);
+    addWallBox(group, opening.wall, center, bottom + height / 2, Math.max(.05, width - frame * 2), frame * .72, .07, frameMaterial, .085, opening.id);
+  } else {
+    addWallBox(group, opening.wall, center, height / 2, Math.max(.05, width - frame * 1.7), Math.max(.05, height - frame * 1.5), .06, doorMaterial, .075, opening.id);
+    const panelCenterY = Math.min(height - .7, height * .52);
+    addWallBox(group, opening.wall, center, panelCenterY, Math.max(.05, width - .5), .035, .075, frameMaterial, .115, opening.id);
+    addWallBox(group, opening.wall, center, Math.min(height - 1.15, height * .70), Math.max(.05, width - .5), .035, .075, frameMaterial, .115, opening.id);
+    const knobAlong = start + width * .78;
+    const knobPoint = wallPlacement(opening.wall, knobAlong, height * .52, .1, .1, .1, .14).position;
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(.055, 12, 8), new THREE.MeshStandardMaterial({ color: 0x6f6a60, metalness: .75, roughness: .25 }));
+    knob.position.set(...knobPoint);
+    knob.userData.openingId = opening.id;
+    knob.userData.wall = opening.wall;
+    group.add(knob);
+  }
+  const label = createTextSprite(THREE, opening.name, 0x2f3540, 0xffffff);
+  const labelPoint = wallPlacement(opening.wall, center, Math.min(wallH - .45, bottom + height + .38), .1, .1, .1, .18).position;
+  label.position.set(...labelPoint);
+  label.scale.set(Math.min(2.5, Math.max(1.2, width)), .36, 1);
+  label.userData.openingId = opening.id;
+  label.userData.wall = opening.wall;
+  group.add(label);
+}
+
+function buildWallWithOpenings(wall, wallMaterial, frameMaterial, doorMaterial, glassMaterial) {
+  const wallH = state.meta.wallHeight / 12;
+  const length = wall === 'top' || wall === 'bottom' ? state.meta.width / 12 : state.meta.depth / 12;
+  const openings = activeOpenings().filter(o => o.wall === wall).sort((a, b) => a.offset - b.offset);
+  let cursor = 0;
+  for (const opening of openings) {
+    const start = Math.max(cursor, opening.offset / 12);
+    const width = Math.min(opening.width / 12, Math.max(0, length - start));
+    if (start > cursor) addWallSegment(wall, cursor, start - cursor, 0, wallH, wallMaterial);
+    if (width <= 0) continue;
+    const bottom = opening.type === 'door' ? 0 : opening.sill / 12;
+    const top = Math.min(wallH, bottom + opening.height / 12);
+    if (bottom > 0) addWallSegment(wall, start, width, 0, bottom, wallMaterial);
+    if (top < wallH) addWallSegment(wall, start, width, top, wallH - top, wallMaterial);
+    addOpeningVisual(opening, wallH, frameMaterial, doorMaterial, glassMaterial);
+    cursor = Math.max(cursor, start + width);
+  }
+  if (cursor < length) addWallSegment(wall, cursor, length - cursor, 0, wallH, wallMaterial);
+}
+
+function addTrimForWall(wall, trimMaterial) {
+  const wallH = state.meta.wallHeight / 12;
+  const length = wall === 'top' || wall === 'bottom' ? state.meta.width / 12 : state.meta.depth / 12;
+  const doors = activeOpenings().filter(o => o.wall === wall && o.type === 'door').sort((a, b) => a.offset - b.offset);
+  let cursor = 0;
+  for (const door of doors) {
+    const start = door.offset / 12;
+    if (start > cursor) addWallBox(threeRuntime.roomGroup, wall, cursor + (start - cursor) / 2, .16, start - cursor, .32, .16, trimMaterial, .09);
+    cursor = Math.max(cursor, start + door.width / 12);
+  }
+  if (cursor < length) addWallBox(threeRuntime.roomGroup, wall, cursor + (length - cursor) / 2, .16, length - cursor, .32, .16, trimMaterial, .09);
+  addWallBox(threeRuntime.roomGroup, wall, length / 2, wallH - .12, length, .24, .16, trimMaterial, .09);
+}
+
+function createFurnitureModel(item) {
+  const { THREE } = threeRuntime;
+  const group = new THREE.Group();
+  group.userData.itemId = item.id;
+  group.userData.name = item.name;
+  const w = item.w / 12;
+  const d = item.d / 12;
+  const h = item.height / 12;
+  const palette = {
+    bed: 0x8faed2,
+    desk: 0xa9794e,
+    dresser: 0x9c6d45,
+    tv: 0x30343a,
+    chair: 0x628a72,
+    other: 0x8473a7
+  };
+  const mainColor = palette[item.kind] || palette.other;
+  const mainMaterial = new THREE.MeshStandardMaterial({ color: mainColor, roughness: .68, metalness: item.kind === 'tv' ? .18 : 0 });
+  const darkMaterial = new THREE.MeshStandardMaterial({ color: 0x393a3c, roughness: .58, metalness: .12 });
+  const lightMaterial = new THREE.MeshStandardMaterial({ color: 0xe3dfd6, roughness: .86 });
+  const accentMaterial = new THREE.MeshStandardMaterial({ color: 0xc9d4e6, roughness: .82 });
+  const addBox = (bw, bh, bd, material, x = 0, y = bh / 2, z = 0) => {
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(Math.max(.03, bw), Math.max(.03, bh), Math.max(.03, bd)), material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData.itemId = item.id;
+    group.add(mesh);
+    return mesh;
+  };
+
+  if (item.kind === 'bed') {
+    const frameH = Math.min(.45, h * .26);
+    addBox(w, frameH, d, mainMaterial, 0, frameH / 2, 0);
+    const mattressH = Math.max(.32, Math.min(.72, h - frameH));
+    addBox(w * .96, mattressH, d * .94, lightMaterial, 0, frameH + mattressH / 2, .02);
+    const pillowW = Math.max(.55, w * .36);
+    const pillowD = Math.max(.35, d * .14);
+    addBox(pillowW, .16, pillowD, accentMaterial, -w * .23, frameH + mattressH + .08, -d * .36);
+    addBox(pillowW, .16, pillowD, accentMaterial, w * .23, frameH + mattressH + .08, -d * .36);
+  } else if (item.kind === 'desk') {
+    const topH = Math.min(.2, Math.max(.12, h * .08));
+    addBox(w, topH, d, mainMaterial, 0, h - topH / 2, 0);
+    const leg = Math.min(.16, w * .08, d * .12);
+    const legH = Math.max(.2, h - topH);
+    for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, legH, leg, darkMaterial, x, legH / 2, z);
+  } else if (item.kind === 'dresser') {
+    addBox(w, h, d, mainMaterial, 0, h / 2, 0);
+    const drawers = Math.max(2, Math.min(5, Math.round(h / .75)));
+    for (let i = 1; i < drawers; i++) addBox(w * .90, .025, .035, darkMaterial, 0, h * i / drawers, d / 2 + .025);
+    for (let i = 0; i < drawers; i++) addBox(w * .18, .045, .055, darkMaterial, 0, h * (i + .5) / drawers, d / 2 + .055);
+  } else if (item.kind === 'tv') {
+    const standH = Math.max(.25, h * .34);
+    addBox(w, standH, d, mainMaterial, 0, standH / 2, 0);
+    const screenH = Math.max(.45, h - standH + .35);
+    const screenD = Math.min(.12, d * .4);
+    addBox(w * .82, screenH, screenD, darkMaterial, 0, standH + screenH / 2, 0);
+    addBox(w * .75, screenH * .82, screenD + .015, new THREE.MeshStandardMaterial({ color: 0x12171e, roughness: .25, metalness: .2 }), 0, standH + screenH / 2, screenD * .12);
+  } else if (item.kind === 'chair') {
+    const seatY = Math.min(h * .48, 1.6);
+    addBox(w, .18, d, mainMaterial, 0, seatY, 0);
+    addBox(w, Math.max(.4, h - seatY), .16, mainMaterial, 0, seatY + (h - seatY) / 2, -d / 2 + .08);
+    const leg = Math.min(.12, w * .1, d * .1);
+    for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, seatY, leg, darkMaterial, x, seatY / 2, z);
+  } else {
+    addBox(w, h, d, mainMaterial, 0, h / 2, 0);
+  }
+
+  if (selectedType === 'furniture' && item.id === selectedId) {
+    group.traverse(child => {
+      if (!child.material) return;
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      for (const material of materials) {
+        if (material.emissive) {
+          material.emissive.setHex(0x263fa8);
+          material.emissiveIntensity = .28;
         }
       }
-      resize3D();
-    }
-
-    function update3DSelection() {
-      if (!threeRuntime) return;
-      rebuild3D();
-      const item = selectedId ? state.furniture[selectedId] : null;
-      $('threeSelection').textContent = item ? `Selected: ${item.name} · return to 2D to move it` : 'Drag to orbit · pinch to zoom · tap furniture to select';
-    }
-
-    function resize3D() {
-      if (!threeRuntime) return;
-      const host = $('threeHost');
-      const width = Math.max(1, host.clientWidth);
-      const height = Math.max(1, host.clientHeight);
-      threeRuntime.camera.aspect = width / height;
-      threeRuntime.camera.updateProjectionMatrix();
-      threeRuntime.renderer.setSize(width, height, false);
-    }
-
-    function reset3DView(top = false) {
-      if (!threeRuntime) return;
-      const roomW = state.meta.width / 12;
-      const roomD = state.meta.depth / 12;
-      const span = Math.max(roomW, roomD);
-      if (top) {
-        threeRuntime.camera.position.set(0, span * 1.35, .01);
-        threeRuntime.controls.target.set(0, 0, 0);
-      } else {
-        threeRuntime.camera.position.set(span * .88, span * .72, span * 1.02);
-        threeRuntime.controls.target.set(0, Math.min(2.6, state.meta.wallHeight / 36), 0);
-      }
-      threeRuntime.controls.update();
-    }
-
-    PRESETS.forEach(preset => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'preset';
-      button.innerHTML = `<span>${preset.icon}</span><span>${escapeHtml(preset.name)}</span>`;
-      button.addEventListener('click', () => {
-        if (preset.kind === 'custom') $('customPanel').classList.remove('hidden');
-        else addFurniture(preset);
-      });
-      $('presetStrip').appendChild(button);
     });
+  }
+  return group;
+}
 
-    canvas.addEventListener('pointerdown', beginDrag);
-    canvas.addEventListener('pointermove', moveDrag);
-    canvas.addEventListener('pointerup', endDrag);
-    canvas.addEventListener('pointercancel', endDrag);
+function createTextSprite(THREE, text, textColor = 0xffffff, backgroundColor = 0x1f2937) {
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 128;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0, 0, c.width, c.height);
+  const bg = `#${backgroundColor.toString(16).padStart(6, '0')}`;
+  const fg = `#${textColor.toString(16).padStart(6, '0')}`;
+  ctx.fillStyle = bg;
+  ctx.globalAlpha = .86;
+  ctx.beginPath();
+  if (typeof ctx.roundRect === 'function') ctx.roundRect(6, 12, 500, 104, 30);
+  else ctx.rect(6, 12, 500, 104);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = fg;
+  ctx.font = '600 46px system-ui, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const clipped = String(text).slice(0, 22);
+  ctx.fillText(clipped, 256, 65);
+  const texture = new THREE.CanvasTexture(c);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+  const sprite = new THREE.Sprite(material);
+  sprite.renderOrder = 50;
+  return sprite;
+}
 
-    $('newCodeBtn').addEventListener('click', () => $('codeInput').value = generateCode());
-    $('joinBtn').addEventListener('click', openRoom);
-    $('codeInput').addEventListener('input', event => event.target.value = cleanCode(event.target.value));
-    $('codeInput').addEventListener('keydown', event => { if (event.key === 'Enter') openRoom(); });
-    $('shareBtn').addEventListener('click', shareRoom);
-    $('copyBtn').addEventListener('click', copyShareLink);
-    $('leaveBtn').addEventListener('click', leaveRoom);
-    $('applyRoomBtn').addEventListener('click', updateRoom);
-    $('snapToggle').addEventListener('change', updateRoom);
-    $('starterBtn').addEventListener('click', addStarterSet);
-    $('closeCustomBtn').addEventListener('click', () => $('customPanel').classList.add('hidden'));
-    $('addCustomBtn').addEventListener('click', () => {
-      addFurniture({
-        name: $('customName').value.trim() || 'Furniture',
-        kind: 'other',
-        w: Number($('customWidth').value) || 36,
-        d: Number($('customDepth').value) || 24,
-        height: Number($('customHeight').value) || 30
-      });
-      $('customPanel').classList.add('hidden');
-    });
+function rebuild3D() {
+  if (!threeRuntime) return;
+  const { THREE, roomGroup, openingGroup, furnitureGroup } = threeRuntime;
+  clearGroup(roomGroup);
+  clearGroup(openingGroup);
+  clearGroup(furnitureGroup);
+  threeRuntime.furnitureObjects = new Map();
+  threeRuntime.wallObjects = [];
+  const roomW = state.meta.width / 12;
+  const roomD = state.meta.depth / 12;
+  const wallH = state.meta.wallHeight / 12;
+  threeRuntime.roomW = roomW;
+  threeRuntime.roomD = roomD;
 
-    document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => showTab(button.dataset.tab)));
-    document.querySelectorAll('[data-nudge]').forEach(button => button.addEventListener('click', () => {
-      const item = selectedId ? state.furniture[selectedId] : null;
-      if (!item) return;
-      const [dx, dy] = button.dataset.nudge.split(',').map(Number);
-      patchItem(selectedId, { x: item.x + dx, y: item.y + dy });
-    }));
+  const woodTexture = createWoodTexture(THREE, roomW, roomD);
+  const floorMaterial = new THREE.MeshStandardMaterial({ map: woodTexture, color: 0xe9e2d7, roughness: .83, metalness: 0 });
+  const floor = new THREE.Mesh(new THREE.BoxGeometry(roomW, .12, roomD), floorMaterial);
+  floor.position.y = -.06;
+  floor.receiveShadow = true;
+  roomGroup.add(floor);
 
-    function commitSelectedFields() {
-      if (!selectedId) return;
-      patchItem(selectedId, {
-        name: $('itemName').value.trim() || 'Furniture',
-        kind: inferKind($('itemName').value),
-        w: Number($('itemWidth').value) || 12,
-        d: Number($('itemDepth').value) || 12,
-        height: Number($('itemHeight').value) || 30
-      });
+  const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xc8b79d, roughness: .95, side: THREE.DoubleSide, transparent: true, opacity: 1 });
+  const trimMaterial = new THREE.MeshStandardMaterial({ color: 0xf6f3ec, roughness: .82, transparent: true, opacity: 1 });
+  const doorMaterial = new THREE.MeshStandardMaterial({ color: 0xf3f0e8, roughness: .82, transparent: true, opacity: 1 });
+  const glassMaterial = new THREE.MeshStandardMaterial({ color: 0x9fd2df, roughness: .18, metalness: .05, transparent: true, opacity: .46, side: THREE.DoubleSide });
+
+  for (const wall of WALLS) buildWallWithOpenings(wall, wallMaterial, trimMaterial, doorMaterial, glassMaterial);
+  for (const wall of WALLS) addTrimForWall(wall, trimMaterial);
+
+  const ceilingLine = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.BoxGeometry(roomW, .04, roomD)),
+    new THREE.LineBasicMaterial({ color: 0xf4f0e8, transparent: true, opacity: .65 })
+  );
+  ceilingLine.position.y = wallH;
+  roomGroup.add(ceilingLine);
+
+  for (const item of activeFurniture()) {
+    const model = createFurnitureModel(item);
+    model.position.set(
+      -roomW / 2 + (item.x + item.w / 2) / 12,
+      0,
+      -roomD / 2 + (item.y + item.d / 2) / 12
+    );
+    furnitureGroup.add(model);
+    threeRuntime.furnitureObjects.set(item.id, model);
+  }
+
+  update3DPresence();
+  resize3D();
+}
+
+function updateWallFade() {
+  if (!threeRuntime?.wallObjects?.length) return;
+  const { camera, roomW, roomD } = threeRuntime;
+  const distances = {
+    left: Math.abs(camera.position.x + roomW / 2),
+    right: Math.abs(camera.position.x - roomW / 2),
+    top: Math.abs(camera.position.z + roomD / 2),
+    bottom: Math.abs(camera.position.z - roomD / 2)
+  };
+  const nearX = distances.left < distances.right ? 'left' : 'right';
+  const nearZ = distances.top < distances.bottom ? 'top' : 'bottom';
+  const apply = group => group.traverse(object => {
+    if (!object.material || !object.userData.wall) return;
+    const faded = object.userData.wall === nearX || object.userData.wall === nearZ;
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    for (const material of materials) {
+      if (!('opacity' in material)) continue;
+      material.transparent = true;
+      const isGlass = material.opacity < .7 && object.userData.openingId;
+      material.opacity = isGlass ? (faded ? .10 : .46) : (faded ? .10 : 1);
+      material.depthWrite = !faded;
     }
-    $('itemName').addEventListener('change', commitSelectedFields);
-    $('itemWidth').addEventListener('change', commitSelectedFields);
-    $('itemDepth').addEventListener('change', commitSelectedFields);
-    $('itemHeight').addEventListener('change', commitSelectedFields);
-    $('rotateBtn').addEventListener('click', () => {
-      const item = selectedId ? state.furniture[selectedId] : null;
-      if (item) patchItem(selectedId, { w: item.d, d: item.w });
-    });
-    $('duplicateBtn').addEventListener('click', () => {
-      const item = selectedId ? state.furniture[selectedId] : null;
-      if (item) addFurniture({ ...item, name: `${item.name} copy` }, item.x + 6, item.y + 6);
-    });
-    $('deleteBtn').addEventListener('click', () => selectedId && removeItem(selectedId));
-    $('sendIdeaBtn').addEventListener('click', () => addMessage($('ideaInput').value));
-    $('ideaInput').addEventListener('keydown', event => {
-      if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') addMessage(event.target.value);
-    });
-    $('resetViewBtn').addEventListener('click', () => reset3DView(false));
-    $('topViewBtn').addEventListener('click', () => reset3DView(true));
-    window.addEventListener('resize', () => { if (currentTab === 'plan') renderPlan(); resize3D(); });
-    window.addEventListener('beforeunload', () => roomConnection?.leave());
+  });
+  apply(threeRuntime.roomGroup);
+  apply(threeRuntime.openingGroup);
+}
 
-    const params = new URLSearchParams(location.search);
-    $('nameInput').value = safeGet('roomrelay:name') || '';
-    $('codeInput').value = cleanCode(params.get('room') || generateCode());
-    $('fileWarning').classList.toggle('hidden', location.protocol !== 'file:');
+function update3DPresence() {
+  const label = $('threePresence');
+  const active = [...remotePresence.entries()].filter(([, data]) => data.mode === 'three' && Date.now() - (data.lastSeen || 0) < 12000);
+  if (label) {
+    if (!active.length) label.textContent = 'Only you in 3D';
+    else label.textContent = `${active.map(([id, data]) => data.name || peers.get(id) || 'Partner').join(', ')} in 3D`;
+  }
+  if (!threeRuntime) return;
+  const { THREE, presenceGroup, roomW, roomD } = threeRuntime;
+  clearGroup(presenceGroup);
+  for (const [peerId, data] of active) {
+    const color = Number(data.color) || actorColor(peerId);
+    const group = new THREE.Group();
+    const material = new THREE.MeshStandardMaterial({ color, roughness: .55 });
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(.22, .28, .9, 18), material);
+    body.position.y = .72;
+    body.castShadow = true;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(.20, 18, 12), new THREE.MeshStandardMaterial({ color: 0xd7b59a, roughness: .75 }));
+    head.position.y = 1.38;
+    head.castShadow = true;
+    const pointer = new THREE.Mesh(new THREE.ConeGeometry(.12, .34, 12), material.clone());
+    pointer.rotation.x = Math.PI / 2;
+    pointer.position.set(0, .82, -.42);
+    group.add(body, head, pointer);
+    const name = data.name || peers.get(peerId) || 'Partner';
+    const sprite = createTextSprite(THREE, name, 0xffffff, color);
+    sprite.position.y = 1.92;
+    sprite.scale.set(1.8, .45, 1);
+    group.add(sprite);
+    const camera = data.camera || { x: 0, z: 0 };
+    const x = Math.max(-roomW / 2 + .45, Math.min(roomW / 2 - .45, Number(camera.x) || 0));
+    const z = Math.max(-roomD / 2 + .45, Math.min(roomD / 2 - .45, Number(camera.z) || 0));
+    group.position.set(x, 0, z);
+    const target = data.target || { x: 0, z: 0 };
+    group.rotation.y = Math.atan2((Number(target.x) || 0) - x, (Number(target.z) || 0) - z);
+    presenceGroup.add(group);
+  }
+}
+
+function update3DSelection() {
+  if (!threeRuntime) return;
+  rebuild3D();
+  if (selectedType === 'furniture') {
+    const item = state.furniture[selectedId];
+    $('threeSelection').textContent = item ? `Selected: ${item.name} · drag it directly in 3D` : 'Drag to orbit · pinch to zoom · drag furniture to move it';
+  } else if (selectedType === 'opening') {
+    const opening = state.openings[selectedId];
+    $('threeSelection').textContent = opening ? `Selected: ${opening.name} · move it along its wall in 2D` : 'Drag to orbit · pinch to zoom · drag furniture to move it';
+  } else {
+    $('threeSelection').textContent = 'Drag to orbit · pinch to zoom · drag furniture to move it';
+  }
+}
+
+function resize3D() {
+  if (!threeRuntime) return;
+  const host = $('threeHost');
+  const width = Math.max(1, host.clientWidth);
+  const height = Math.max(1, host.clientHeight);
+  threeRuntime.camera.aspect = width / height;
+  threeRuntime.camera.updateProjectionMatrix();
+  threeRuntime.renderer.setSize(width, height, false);
+}
+
+function reset3DView(top = false) {
+  if (!threeRuntime) return;
+  const roomW = state.meta.width / 12;
+  const roomD = state.meta.depth / 12;
+  const span = Math.max(roomW, roomD);
+  if (top) {
+    threeRuntime.camera.position.set(0, span * 1.35, .01);
+    threeRuntime.controls.target.set(0, 0, 0);
+  } else {
+    threeRuntime.camera.position.set(-roomW * .38, 5.4, roomD * .42);
+    threeRuntime.controls.target.set(roomW * .08, 2.7, -roomD * .18);
+  }
+  threeRuntime.controls.update();
+  send3DPresence(true);
+}
+
+PRESETS.forEach(preset => {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'preset';
+  button.innerHTML = `<span>${preset.icon}</span><span>${escapeHtml(preset.name)}</span>`;
+  button.addEventListener('click', () => {
+    if (preset.kind === 'custom') $('customPanel').classList.remove('hidden');
+    else addFurniture(preset);
+  });
+  $('presetStrip').appendChild(button);
+});
+
+canvas.addEventListener('pointerdown', beginDrag);
+canvas.addEventListener('pointermove', moveDrag);
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+
+$('newCodeBtn').addEventListener('click', () => $('codeInput').value = generateCode());
+$('joinBtn').addEventListener('click', openRoom);
+$('codeInput').addEventListener('input', event => event.target.value = cleanCode(event.target.value));
+$('codeInput').addEventListener('keydown', event => { if (event.key === 'Enter') openRoom(); });
+$('shareBtn').addEventListener('click', shareRoom);
+$('copyBtn').addEventListener('click', copyShareLink);
+$('leaveBtn').addEventListener('click', leaveRoom);
+$('applyRoomBtn').addEventListener('click', updateRoom);
+$('photoRoomBtn').addEventListener('click', applyPhotoRoom);
+$('snapToggle').addEventListener('change', updateRoom);
+$('starterBtn').addEventListener('click', addStarterSet);
+$('addDoorBtn').addEventListener('click', () => addOpening('door'));
+$('addWindowBtn').addEventListener('click', () => addOpening('window'));
+$('closeCustomBtn').addEventListener('click', () => $('customPanel').classList.add('hidden'));
+$('addCustomBtn').addEventListener('click', () => {
+  addFurniture({
+    name: $('customName').value.trim() || 'Furniture',
+    kind: inferKind($('customName').value),
+    w: Number($('customWidth').value) || 36,
+    d: Number($('customDepth').value) || 24,
+    height: Number($('customHeight').value) || 30
+  });
+  $('customPanel').classList.add('hidden');
+});
+
+document.querySelectorAll('.tab').forEach(button => button.addEventListener('click', () => showTab(button.dataset.tab)));
+document.querySelectorAll('[data-nudge]').forEach(button => button.addEventListener('click', () => {
+  const item = selectedType === 'furniture' && selectedId ? state.furniture[selectedId] : null;
+  if (!item) return;
+  const [dx, dy] = button.dataset.nudge.split(',').map(Number);
+  patchItem(selectedId, { x: item.x + dx, y: item.y + dy });
+}));
+
+document.querySelectorAll('[data-opening-nudge]').forEach(button => button.addEventListener('click', () => {
+  const opening = selectedType === 'opening' && selectedId ? state.openings[selectedId] : null;
+  if (!opening) return;
+  patchOpening(selectedId, { offset: opening.offset + Number(button.dataset.openingNudge) });
+}));
+
+function commitSelectedFields() {
+  if (selectedType !== 'furniture' || !selectedId) return;
+  patchItem(selectedId, {
+    name: $('itemName').value.trim() || 'Furniture',
+    kind: inferKind($('itemName').value),
+    w: Number($('itemWidth').value) || 12,
+    d: Number($('itemDepth').value) || 12,
+    height: Number($('itemHeight').value) || 30
+  });
+}
+$('itemName').addEventListener('change', commitSelectedFields);
+$('itemWidth').addEventListener('change', commitSelectedFields);
+$('itemDepth').addEventListener('change', commitSelectedFields);
+$('itemHeight').addEventListener('change', commitSelectedFields);
+$('rotateBtn').addEventListener('click', () => {
+  const item = selectedType === 'furniture' && selectedId ? state.furniture[selectedId] : null;
+  if (item) patchItem(selectedId, { w: item.d, d: item.w });
+});
+$('duplicateBtn').addEventListener('click', () => {
+  const item = selectedType === 'furniture' && selectedId ? state.furniture[selectedId] : null;
+  if (item) addFurniture({ ...item, name: `${item.name} copy` }, item.x + 6, item.y + 6);
+});
+$('deleteBtn').addEventListener('click', () => selectedType === 'furniture' && selectedId && removeItem(selectedId));
+
+function commitOpeningFields() {
+  if (selectedType !== 'opening' || !selectedId) return;
+  patchOpening(selectedId, {
+    name: $('openingName').value.trim() || ($('openingType').value === 'window' ? 'Window' : 'Door'),
+    type: $('openingType').value,
+    wall: $('openingWall').value,
+    width: Number($('openingWidth').value) || 30,
+    height: Number($('openingHeight').value) || 80,
+    sill: Number($('openingSill').value) || 0,
+    offset: Number($('openingOffset').value) || 0
+  });
+}
+$('openingName').addEventListener('change', commitOpeningFields);
+$('openingType').addEventListener('change', commitOpeningFields);
+$('openingWall').addEventListener('change', commitOpeningFields);
+$('openingWidth').addEventListener('change', commitOpeningFields);
+$('openingHeight').addEventListener('change', commitOpeningFields);
+$('openingSill').addEventListener('change', commitOpeningFields);
+$('openingOffset').addEventListener('change', commitOpeningFields);
+$('nextWallBtn').addEventListener('click', () => {
+  const opening = selectedType === 'opening' && selectedId ? state.openings[selectedId] : null;
+  if (!opening) return;
+  const index = WALLS.indexOf(opening.wall);
+  patchOpening(selectedId, { wall: WALLS[(index + 1) % WALLS.length], offset: 6 });
+});
+$('duplicateOpeningBtn').addEventListener('click', () => {
+  const opening = selectedType === 'opening' && selectedId ? state.openings[selectedId] : null;
+  if (!opening) return;
+  const id = uid();
+  const copy = clampOpening({ ...opening, id, name: `${opening.name} copy`, offset: opening.offset + 6, rev: nextRev(), updatedBy: myName });
+  state.openings[id] = copy;
+  selectEntity('opening', id, false);
+  saveLocal();
+  renderAll();
+  actions?.opening.send(copy);
+});
+$('deleteOpeningBtn').addEventListener('click', () => selectedType === 'opening' && selectedId && removeOpening(selectedId));
+
+$('sendIdeaBtn').addEventListener('click', () => addMessage($('ideaInput').value));
+$('ideaInput').addEventListener('keydown', event => {
+  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') addMessage(event.target.value);
+});
+$('resetViewBtn').addEventListener('click', () => reset3DView(false));
+$('topViewBtn').addEventListener('click', () => reset3DView(true));
+window.addEventListener('resize', () => { if (currentTab === 'plan') renderPlan(); resize3D(); });
+window.addEventListener('beforeunload', () => {
+  send3DPresence(true);
+  roomConnection?.leave();
+});
+
+const params = new URLSearchParams(location.search);
+$('nameInput').value = safeGet('roomrelay:name') || '';
+$('codeInput').value = cleanCode(params.get('room') || generateCode());
+$('fileWarning').classList.toggle('hidden', location.protocol !== 'file:');
+
   </script>
 </body>
 </html>
