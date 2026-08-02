@@ -1,11 +1,11 @@
 <!doctype html>
-<!-- RoomRelay Build v6.0.0 -->
+<!-- RoomRelay Build v7.0.0 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#172033" />
-  <title>RoomRelay 3D v6.0.0 — Shared Room Planner</title>
+  <title>RoomRelay 3D v7.0.0 — Shared Room Planner</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -214,6 +214,21 @@
     .opening-nudge { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .three-presence { display: inline-flex; margin-top: 7px; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 999px; padding: 5px 9px; background: var(--panel2); font-size: .78rem; }
     .three-presence::before { content: "●"; color: #22c55e; font-size: .7rem; }
+    .three-placement-banner { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 8; display: flex; align-items: center; gap: 8px; max-width: calc(100% - 24px); padding: 8px 10px; border-radius: 12px; background: color-mix(in srgb, var(--panel) 94%, transparent); border: 1px solid var(--accent); box-shadow: var(--shadow); font-size: .82rem; font-weight: 700; }
+    .catalog-backdrop { position: fixed; inset: 0; z-index: 200; display: grid; align-items: end; background: rgba(10, 15, 25, .54); backdrop-filter: blur(3px); padding: 12px; }
+    .catalog-sheet { width: min(100%, 760px); max-height: min(88vh, 760px); margin: 0 auto; display: grid; grid-template-rows: auto auto auto minmax(0, 1fr); gap: 10px; overflow: hidden; padding: 14px; border-radius: 22px 22px 16px 16px; background: var(--panel); border: 1px solid var(--border); box-shadow: 0 24px 80px rgba(0,0,0,.30); }
+    .catalog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .catalog-filters { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+    .catalog-filter { border: 1px solid var(--border); background: var(--panel2); border-radius: 999px; min-height: 38px; padding: 7px 11px; white-space: nowrap; font-weight: 700; }
+    .catalog-filter.active { background: var(--soft); border-color: var(--accent); }
+    .catalog-grid { overflow: auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 2px 2px 10px; }
+    .catalog-item { min-height: 96px; display: grid; align-content: center; justify-items: center; gap: 5px; padding: 9px 6px; border: 1px solid var(--border); border-radius: 14px; background: var(--panel2); text-align: center; }
+    .catalog-item:active { transform: scale(.98); }
+    .catalog-icon { font-size: 1.45rem; line-height: 1; }
+    .catalog-name { font-size: .82rem; font-weight: 800; line-height: 1.1; }
+    .catalog-meta { font-size: .69rem; color: var(--muted); }
+    @media (min-width: 760px) { .catalog-backdrop { align-items: center; } .catalog-sheet { border-radius: 22px; } .catalog-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+    @media (max-width: 430px) { .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
     @media (min-width: 760px) {
       .topbar { grid-template-columns: 1fr auto; align-items: center; }
@@ -247,7 +262,7 @@
     <section id="joinView" class="panel join stack">
       <div>
         <div class="join-mark">⌂</div>
-        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v6.0.0</span></div>
+        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v7.0.0</span></div>
         <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, shelves, lights, and decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
@@ -269,7 +284,7 @@
         <div>
           <div class="brandline">
             <span class="brand">RoomRelay 3D</span>
-            <span class="version-badge" data-app-version>v6.0.0</span>
+            <span class="version-badge" data-app-version>v7.0.0</span>
             <span class="status"><span id="statusDot" class="dot connecting"></span><span id="statusText">Starting</span></span>
           </div>
           <div class="small muted">Room <span id="roomCodeLabel" class="code"></span> · <span id="peopleLabel">1 person</span></div>
@@ -426,12 +441,13 @@
         <div class="three-toolbar">
           <div>
             <h2 style="margin-bottom:2px">3D room preview</h2>
-            <div id="threeSelection" class="small muted">Tap to select · hold briefly to move · small décor snaps onto desks · pinch to zoom</div>
+            <div id="threeSelection" class="small muted">Add object opens the 3D placement menu · tap selects · hold briefly to move · pinch to zoom</div>
             <div id="threePresence" class="three-presence">Only you in 3D</div>
           </div>
           <div class="row">
+            <button id="threeAddObjectBtn" class="btn compact primary" type="button">＋ Add object</button>
             <button id="topViewBtn" class="btn compact" type="button">Top view</button>
-            <button id="resetViewBtn" class="btn compact primary" type="button">Room view</button>
+            <button id="resetViewBtn" class="btn compact" type="button">Room view</button>
           </div>
           <div class="three-controls">
             <label>Lighting
@@ -459,8 +475,9 @@
           </div>
         </div>
         <div id="threeHost" class="three-host">
+          <div id="threePlacementBanner" class="three-placement-banner hidden"><span id="threePlacementText">Tap to place</span><button id="cancelThreePlacementBtn" class="btn compact" type="button">Cancel</button></div>
           <div id="threeStatus" class="three-status">Open this tab to load the 3D room.</div>
-          <div class="three-hint">Tap selects · hold 0.4 s to move · small décor snaps onto desks · mounted items move across and up/down walls · empty space orbits</div>
+          <div class="three-hint">Add object opens the placement menu · tap selects · hold 0.4 s to move · release restores camera orbit · mounted items move on walls</div>
         </div>
       </section>
 
@@ -475,6 +492,18 @@
       </section>
     </section>
   </main>
+
+  <div id="threeCatalog" class="catalog-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="threeCatalogTitle">
+    <section class="catalog-sheet">
+      <div class="catalog-header">
+        <div><h2 id="threeCatalogTitle" style="margin-bottom:3px">Place an object in 3D</h2><div class="small muted">Choose an item, then tap the floor, a desk, or a wall.</div></div>
+        <button id="closeThreeCatalogBtn" class="btn icon compact" type="button" aria-label="Close object menu">×</button>
+      </div>
+      <input id="threeCatalogSearch" type="search" placeholder="Search chairs, plants, shelves…" autocomplete="off" />
+      <div id="threeCatalogFilters" class="catalog-filters" aria-label="Object categories"></div>
+      <div id="threeCatalogGrid" class="catalog-grid"></div>
+    </section>
+  </div>
 
   <div id="toast" class="toast hidden" aria-live="polite"></div>
 
@@ -492,7 +521,7 @@ const $ = id => document.getElementById(id);
 const canvas = $('roomCanvas');
 const joinView = $('joinView');
 const plannerView = $('plannerView');
-const APP_VERSION = '6.0.0';
+const APP_VERSION = '7.0.0';
 const WALL_SNAP_DISTANCE = 12;
 const WALL_ROTATIONS = { top: 0, right: 270, bottom: 180, left: 90 };
 const HOLD_TO_MOVE_MS = 420;
@@ -569,6 +598,8 @@ let actions = null;
 let connectionModule = null;
 let currentTab = 'plan';
 let threeRuntime = null;
+let threePlacementPreset = null;
+let threeCatalogFilter = 'all';
 let threeLoading = false;
 let presenceTimer = null;
 let lastPresenceSend = 0;
@@ -636,7 +667,7 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function storageKey() { return `roomrelay:v6:${currentCode}`; }
+function storageKey() { return `roomrelay:v7:${currentCode}`; }
 
 function safeGet(key) {
   try { return localStorage.getItem(key); } catch (_) { return null; }
@@ -1000,6 +1031,150 @@ function threeSnapValue(value) {
   return $('threeSnapToggle')?.checked ? Math.round(value / 3) * 3 : Math.round(value * 10) / 10;
 }
 
+function threeCatalogCategory(preset) {
+  if (preset.wallMounted) return 'wall';
+  if (preset.surfaceItem) return 'desktop';
+  if (preset.kind === 'chair' || preset.kind === 'sofa' || preset.kind === 'bed') return 'seating';
+  if (preset.kind === 'storage' || preset.kind === 'dresser' || preset.kind === 'desk' || preset.kind === 'tv') return 'furniture';
+  if (preset.kind === 'decor' || preset.kind === 'light') return 'decor';
+  return 'other';
+}
+
+function renderThreeCatalog() {
+  const filters = [
+    ['all', 'All'], ['furniture', 'Furniture'], ['seating', 'Seating'],
+    ['wall', 'Wall items'], ['desktop', 'Desk objects'], ['decor', 'Decor + lights']
+  ];
+  const filterHost = $('threeCatalogFilters');
+  if (filterHost) {
+    filterHost.innerHTML = filters.map(([value, label]) => `<button class="catalog-filter${threeCatalogFilter === value ? ' active' : ''}" type="button" data-three-filter="${value}">${label}</button>`).join('');
+  }
+  const query = String($('threeCatalogSearch')?.value || '').trim().toLowerCase();
+  const matches = PRESETS.filter(preset => preset.kind !== 'custom')
+    .filter(preset => threeCatalogFilter === 'all' || threeCatalogCategory(preset) === threeCatalogFilter)
+    .filter(preset => !query || `${preset.name} ${preset.kind} ${threeCatalogCategory(preset)}`.toLowerCase().includes(query));
+  const grid = $('threeCatalogGrid');
+  if (!grid) return;
+  grid.innerHTML = matches.length ? matches.map(preset => {
+    const index = PRESETS.indexOf(preset);
+    const placement = preset.wallMounted ? 'Tap a wall' : preset.surfaceItem ? 'Tap a desk or floor' : 'Tap the floor';
+    return `<button class="catalog-item" type="button" data-three-preset="${index}"><span class="catalog-icon">${preset.icon}</span><span class="catalog-name">${escapeHtml(preset.name)}</span><span class="catalog-meta">${placement}</span></button>`;
+  }).join('') : '<div class="empty" style="grid-column:1/-1">No objects match that search.</div>';
+}
+
+function openThreeCatalog() {
+  renderThreeCatalog();
+  $('threeCatalog').classList.remove('hidden');
+  requestAnimationFrame(() => $('threeCatalogSearch')?.focus());
+}
+
+function closeThreeCatalog() {
+  $('threeCatalog').classList.add('hidden');
+}
+
+function updateThreePlacementBanner() {
+  const banner = $('threePlacementBanner');
+  if (!banner) return;
+  if (!threePlacementPreset) {
+    banner.classList.add('hidden');
+    return;
+  }
+  const instruction = threePlacementPreset.wallMounted ? 'tap a wall' : threePlacementPreset.surfaceItem ? 'tap a desk or floor' : 'tap the floor';
+  $('threePlacementText').textContent = `Place ${threePlacementPreset.name}: ${instruction}`;
+  banner.classList.remove('hidden');
+}
+
+function beginThreePlacement(preset) {
+  threePlacementPreset = { ...preset };
+  closeThreeCatalog();
+  clear3DPendingHold();
+  if (threeRuntime) {
+    threeRuntime.drag = null;
+    threeRuntime.controls.enabled = true;
+  }
+  updateThreePlacementBanner();
+  $('threeSelection').textContent = `Placement mode: ${preset.name} · tap ${preset.wallMounted ? 'a wall' : preset.surfaceItem ? 'a desk or the floor' : 'the floor'}`;
+}
+
+function cancelThreePlacement(showMessage = true) {
+  if (!threePlacementPreset) return;
+  threePlacementPreset = null;
+  updateThreePlacementBanner();
+  update3DSelection();
+  if (showMessage) toast('3D placement canceled.');
+}
+
+function wallFromHitObject(object) {
+  let node = object;
+  while (node) {
+    if (WALLS.includes(node.userData?.wall)) return node.userData.wall;
+    node = node.parent;
+  }
+  return null;
+}
+
+function placePresetIn3D(event) {
+  const preset = threePlacementPreset;
+  const runtime = threeRuntime;
+  if (!preset || !runtime) return false;
+  setRayFromEvent(event);
+  let item = null;
+
+  if (preset.wallMounted) {
+    const hits = runtime.raycaster.intersectObjects(runtime.wallObjects, true);
+    const hit = hits.find(candidate => wallFromHitObject(candidate.object));
+    if (!hit) {
+      toast(`Tap directly on a wall to place ${preset.name}.`);
+      return true;
+    }
+    const wall = wallFromHitObject(hit.object);
+    const alongFeet = wall === 'top' || wall === 'bottom' ? hit.point.x + runtime.roomW / 2 : hit.point.z + runtime.roomD / 2;
+    const elevation = Math.max(0, Math.min(state.meta.wallHeight - preset.height, hit.point.y * 12 - preset.height / 2));
+    const x = wall === 'left' ? -preset.w / 2 : wall === 'right' ? state.meta.width - preset.w / 2 : alongFeet * 12 - preset.w / 2;
+    const y = wall === 'top' ? -preset.d / 2 : wall === 'bottom' ? state.meta.depth - preset.d / 2 : alongFeet * 12 - preset.d / 2;
+    item = addFurniture({ ...preset, wall, elevation, rotation: WALL_ROTATIONS[wall] }, x, y);
+  } else {
+    const furnitureHits = runtime.raycaster.intersectObjects(runtime.furnitureGroup.children, true);
+    const hostHit = furnitureHits.find(hit => {
+      const entity = findEntityOnObject(hit.object);
+      return entity?.type === 'furniture' && isSurfaceHost(state.furniture[entity.id]);
+    });
+    if (preset.surfaceItem && hostHit) {
+      const hostEntity = findEntityOnObject(hostHit.object);
+      const host = state.furniture[hostEntity.id];
+      const localX = (hostHit.point.x + runtime.roomW / 2) * 12 - preset.w / 2;
+      const localY = (hostHit.point.z + runtime.roomD / 2) * 12 - preset.d / 2;
+      item = addFurniture(preset, localX, localY);
+      patchItem(item.id, { x: localX, y: localY }, { broadcast: true, rerender: true });
+      item = state.furniture[item.id];
+      if (!item.parentId) {
+        const center = itemCenter(host);
+        patchItem(item.id, { x: center.x - item.w / 2, y: center.y - item.d / 2 }, { broadcast: true, rerender: true });
+        item = state.furniture[item.id];
+      }
+    } else {
+      if (!runtime.raycaster.ray.intersectPlane(runtime.floorPlane, runtime.planePoint)) {
+        toast(`Tap the floor to place ${preset.name}.`);
+        return true;
+      }
+      const x = (runtime.planePoint.x + runtime.roomW / 2) * 12 - preset.w / 2;
+      const y = (runtime.planePoint.z + runtime.roomD / 2) * 12 - preset.d / 2;
+      item = addFurniture(preset, x, y);
+    }
+  }
+
+  if (item) {
+    threePlacementPreset = null;
+    updateThreePlacementBanner();
+    selectedType = 'furniture';
+    selectedId = item.id;
+    renderSelection();
+    rebuild3D();
+    $('threeSelection').textContent = `Placed ${item.name}. Hold it to move or open Add object for another item.`;
+  }
+  return true;
+}
+
 function addFurniture(preset, x = null, y = null) {
   const id = uid();
   const wallMounted = Boolean(preset.wallMounted ?? isWallMountedName(preset.name));
@@ -1150,7 +1325,7 @@ function updateRoom() {
 
 function applyPhotoRoom() {
   const hasEditedShell = activeOpenings().some(o => o.rev?.n > 0);
-  if (hasEditedShell && !window.confirm('Replace the current door and window layout with the v6 default positions? Furniture will stay.')) return;
+  if (hasEditedShell && !window.confirm('Replace the current door and window layout with the v7 default positions? Furniture will stay.')) return;
   state.meta = { ...state.meta, width: 150, depth: 126, wallHeight: 96, rev: nextRev() };
   const defaults = photoOpenings();
   state.openings = {};
@@ -1161,7 +1336,7 @@ function applyPhotoRoom() {
   saveLocal();
   renderAll();
   actions?.snapshot.send(state);
-  toast('Loaded the v6 12.5 × 10.5 room with doors 16 inches from each top corner and a centered left-wall window.');
+  toast('Loaded the v7 12.5 × 10.5 room with doors 16 inches from each top corner and a centered left-wall window.');
 }
 
 function addStarterSet() {
@@ -1534,7 +1709,7 @@ async function connectLive() {
     const { joinRoom, selfId } = await ensureConnectionModule();
     actorId = selfId || actorId;
     roomConnection = joinRoom(
-      { appId: 'roomrelay-3d-v6', password: `roomrelay-${currentCode}` },
+      { appId: 'roomrelay-3d-v7', password: `roomrelay-${currentCode}` },
       `room-${currentCode}`,
       { onJoinError: ({ error }) => toast(`Connection issue: ${error?.message || 'try another network'}`) }
     );
@@ -1663,6 +1838,9 @@ async function openRoom() {
 }
 
 function leaveRoom() {
+  restore3DCameraControls();
+  cancelThreePlacement(false);
+  closeThreeCatalog();
   send3DPresence(true);
   roomConnection?.leave();
   roomConnection = null;
@@ -1712,6 +1890,9 @@ function showTab(name) {
     clearInterval(presenceTimer);
     presenceTimer = setInterval(() => send3DPresence(true), 3000);
   } else if (leavingThree) {
+    restore3DCameraControls();
+    cancelThreePlacement(false);
+    closeThreeCatalog();
     clearInterval(presenceTimer);
     presenceTimer = null;
     send3DPresence(true);
@@ -1822,6 +2003,10 @@ async function init3D() {
     renderer.domElement.addEventListener('pointermove', handle3DPointerMove, true);
     renderer.domElement.addEventListener('pointerup', handle3DPointerUp, true);
     renderer.domElement.addEventListener('pointercancel', handle3DPointerUp, true);
+    renderer.domElement.addEventListener('lostpointercapture', handle3DLostPointerCapture, true);
+    window.addEventListener('pointerup', handle3DGlobalPointerEnd, true);
+    window.addEventListener('blur', () => restore3DCameraControls(), true);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) restore3DCameraControls(); });
     renderer.domElement.addEventListener('contextmenu', event => event.preventDefault());
 
     $('threeStatus').classList.add('hidden');
@@ -1904,6 +2089,30 @@ function updateDraggedModel(item, object) {
   object.rotation.y = threeRuntime.THREE.MathUtils.degToRad(item.rotation || 0);
 }
 
+function restore3DCameraControls(pointerId = null) {
+  const runtime = threeRuntime;
+  if (!runtime) return;
+  clear3DPendingHold();
+  if (pointerId != null && runtime.renderer?.domElement?.hasPointerCapture?.(pointerId)) {
+    try { runtime.renderer.domElement.releasePointerCapture(pointerId); } catch (_) {}
+  }
+  runtime.drag = null;
+  runtime.controls.enabled = true;
+  runtime.controls.update();
+}
+
+function handle3DLostPointerCapture(event) {
+  const runtime = threeRuntime;
+  if (!runtime) return;
+  if (runtime.drag?.pointerId === event.pointerId || runtime.pendingHold?.pointerId === event.pointerId) restore3DCameraControls(event.pointerId);
+}
+
+function handle3DGlobalPointerEnd(event) {
+  const runtime = threeRuntime;
+  if (!runtime) return;
+  if (runtime.drag?.pointerId === event.pointerId && event.target !== runtime.renderer.domElement) handle3DPointerUp(event);
+}
+
 function activate3DHold() {
   const runtime = threeRuntime;
   const pending = runtime?.pendingHold;
@@ -1969,6 +2178,12 @@ function activate3DHold() {
 
 function handle3DPointerDown(event) {
   if (!threeRuntime || event.button > 0) return;
+  if (threePlacementPreset) {
+    event.preventDefault();
+    event.stopPropagation();
+    placePresetIn3D(event);
+    return;
+  }
   clear3DPendingHold();
   setRayFromEvent(event);
   const hits = threeRuntime.raycaster.intersectObjects([threeRuntime.furnitureGroup, threeRuntime.openingGroup], true);
@@ -2078,13 +2293,18 @@ function handle3DPointerUp(event) {
     const data = pending.entity.type === 'furniture' ? state.furniture[pending.entity.id] : state.openings[pending.entity.id];
     selectEntity(pending.entity.type, pending.entity.id);
     $('threeSelection').textContent = `Selected: ${data?.name || 'object'} · hold briefly to move`;
+    runtime.controls.enabled = true;
+    runtime.controls.update();
     return;
   }
-  if (runtime.drag && runtime.drag.pointerId === event.pointerId) {
-    event.preventDefault();
-    event.stopPropagation();
-    const drag = runtime.drag;
-    const data = drag.type === 'furniture' ? state.furniture[drag.id] : state.openings[drag.id];
+  if (!runtime.drag || runtime.drag.pointerId !== event.pointerId) return;
+
+  event.preventDefault();
+  // Do not stop propagation here. OrbitControls must receive pointerup so its
+  // internal rotate/pan state resets before camera controls are re-enabled.
+  const drag = runtime.drag;
+  const data = drag.type === 'furniture' ? state.furniture[drag.id] : state.openings[drag.id];
+  try {
     if (data) {
       data.rev = nextRev();
       data.updatedBy = myName;
@@ -2096,15 +2316,18 @@ function handle3DPointerUp(event) {
         if (parent) toast(`${data.name} placed on ${parent.name}.`);
       } else actions?.opening.send({ ...data });
     }
-    if (runtime.renderer.domElement.hasPointerCapture(event.pointerId)) runtime.renderer.domElement.releasePointerCapture(event.pointerId);
-    runtime.controls.enabled = true;
+  } finally {
+    if (runtime.renderer.domElement.hasPointerCapture(event.pointerId)) {
+      try { runtime.renderer.domElement.releasePointerCapture(event.pointerId); } catch (_) {}
+    }
     runtime.drag = null;
-    renderPlan();
-    renderSelection();
-    rebuild3D();
-    send3DPresence(true);
-    return;
+    runtime.controls.enabled = true;
+    runtime.controls.update();
   }
+  renderPlan();
+  renderSelection();
+  rebuild3D();
+  send3DPresence(true);
 }
 
 
@@ -2405,17 +2628,52 @@ function createFurnitureModel(item) {
     }
   } else if (item.kind === 'storage') {
     if (name.includes('bookcase')) {
-      addBox(w, h, d, woodMaterial, 0, h / 2, 0);
-      addBox(w * .88, h * .94, d * .74, new THREE.MeshStandardMaterial({ color: 0xefe6d7, roughness: .96 }), 0, h / 2, -.03);
-      const shelves = Math.max(3, Math.min(5, Math.floor(h / 1.2)));
-      for (let i = 1; i <= shelves; i++) addBox(w * .88, .06, d * .76, woodMaterial, 0, h * i / (shelves + 1), 0);
+      const frame = Math.max(.07, Math.min(.14, Math.min(w, h) * .055));
+      const innerW = Math.max(.2, w - frame * 2);
+      const innerH = Math.max(.2, h - frame * 2);
+      const backDepth = Math.max(.035, Math.min(.07, d * .16));
+      addBox(frame, h, d, woodMaterial, -w / 2 + frame / 2, h / 2, 0);
+      addBox(frame, h, d, woodMaterial,  w / 2 - frame / 2, h / 2, 0);
+      addBox(innerW, frame, d, woodMaterial, 0, frame / 2, 0);
+      addBox(innerW, frame, d, woodMaterial, 0, h - frame / 2, 0);
+      addBox(innerW, innerH, backDepth, lightMaterial, 0, h / 2, -d / 2 + backDepth / 2);
+      const shelves = Math.max(3, Math.min(6, Math.round(h / 1.15)));
+      for (let i = 1; i < shelves; i++) addBox(innerW, frame * .72, d * .96, woodMaterial, 0, frame + i * innerH / shelves, 0);
+      const bookColors = [accentMaterial, fabricMaterial, darkMaterial, lightMaterial];
+      for (let shelf = 0; shelf < Math.min(4, shelves); shelf++) {
+        const baseY = frame + shelf * innerH / shelves + frame * .75;
+        for (let i = 0; i < 4; i++) {
+          const bookW = innerW * (.09 + (i % 2) * .02);
+          const bookH = innerH / shelves * (.46 + (i % 3) * .09);
+          addBox(bookW, bookH, d * .48, bookColors[(shelf + i) % bookColors.length], -innerW * .34 + i * innerW * .19, baseY + bookH / 2, d * .14);
+        }
+      }
     } else if (name.includes('cube')) {
-      addBox(w, h, d, woodMaterial, 0, h / 2, 0);
-      addBox(w * .86, h * .86, d * .8, new THREE.MeshStandardMaterial({ color: 0xf0e7d8, roughness: .96 }), 0, h / 2, -.02);
-      const cols = Math.max(2, Math.min(4, Math.round(w / 1.5)));
-      const rows = Math.max(2, Math.min(3, Math.round(h / 1.2)));
-      for (let c = 1; c < cols; c++) addBox(.07, h * .86, d * .78, woodMaterial, -w/2 + c * w / cols, h / 2, 0);
-      for (let r = 1; r < rows; r++) addBox(w * .86, .07, d * .78, woodMaterial, 0, h * r / rows, 0);
+      const cols = Math.max(2, Math.min(4, Math.round(w / 1.25)));
+      const rows = Math.max(2, Math.min(3, Math.round(h / 1.05)));
+      const frame = Math.max(.07, Math.min(.13, Math.min(w / cols, h / rows) * .10));
+      const innerW = Math.max(.2, w - frame * 2);
+      const innerH = Math.max(.2, h - frame * 2);
+      const backDepth = Math.max(.03, Math.min(.06, d * .14));
+      // Build an open frame and real dividers instead of one solid box.
+      addBox(w, frame, d, woodMaterial, 0, frame / 2, 0);
+      addBox(w, frame, d, woodMaterial, 0, h - frame / 2, 0);
+      addBox(frame, innerH, d, woodMaterial, -w / 2 + frame / 2, h / 2, 0);
+      addBox(frame, innerH, d, woodMaterial,  w / 2 - frame / 2, h / 2, 0);
+      addBox(innerW, innerH, backDepth, lightMaterial, 0, h / 2, -d / 2 + backDepth / 2);
+      for (let c = 1; c < cols; c++) addBox(frame, innerH, d * .98, woodMaterial, -w / 2 + frame + c * innerW / cols, h / 2, 0);
+      for (let r = 1; r < rows; r++) addBox(innerW, frame, d * .98, woodMaterial, 0, frame + r * innerH / rows, 0);
+      // Add a few inset fabric bins while keeping most cubbies visibly open.
+      const cellW = innerW / cols;
+      const cellH = innerH / rows;
+      const binMaterial = new THREE.MeshStandardMaterial({ color: 0xb9a48d, roughness: .95 });
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        if ((r + c) % 3 !== 1) continue;
+        const cx = -innerW / 2 + cellW * (c + .5);
+        const cy = frame + cellH * r + cellH * .34;
+        addBox(cellW * .72, cellH * .58, d * .70, binMaterial, cx, cy, d * .08);
+        addBox(cellW * .22, .035, .04, darkMaterial, cx, cy + cellH * .08, d * .45);
+      }
     } else if (name.includes('rolling cart')) {
       const post = .06;
       for (const x of [-w / 2 + post, w / 2 - post]) for (const z of [-d / 2 + post, d / 2 - post]) addBox(post, h - .12, post, metalMaterial, x, (h - .12) / 2 + .06, z);
@@ -3079,6 +3337,31 @@ window.addEventListener('beforeunload', event => {
     event.returnValue = '';
   }
 });
+
+$('threeAddObjectBtn').addEventListener('click', openThreeCatalog);
+$('closeThreeCatalogBtn').addEventListener('click', closeThreeCatalog);
+$('cancelThreePlacementBtn').addEventListener('click', () => cancelThreePlacement(true));
+$('threeCatalogSearch').addEventListener('input', renderThreeCatalog);
+$('threeCatalog').addEventListener('click', event => {
+  if (event.target === $('threeCatalog')) closeThreeCatalog();
+  const filterButton = event.target.closest('[data-three-filter]');
+  if (filterButton) {
+    threeCatalogFilter = filterButton.dataset.threeFilter;
+    renderThreeCatalog();
+    return;
+  }
+  const itemButton = event.target.closest('[data-three-preset]');
+  if (itemButton) {
+    const preset = PRESETS[Number(itemButton.dataset.threePreset)];
+    if (preset) beginThreePlacement(preset);
+  }
+});
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape') return;
+  if (!$('threeCatalog').classList.contains('hidden')) closeThreeCatalog();
+  else if (threePlacementPreset) cancelThreePlacement(false);
+});
+renderThreeCatalog();
 
 document.querySelectorAll('[data-app-version]').forEach(element => { element.textContent = `v${APP_VERSION}`; });
 document.documentElement.dataset.roomrelayVersion = APP_VERSION;
