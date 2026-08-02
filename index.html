@@ -1,11 +1,11 @@
 <!doctype html>
-<!-- RoomRelay Build v14.0.0 -->
+<!-- RoomRelay Build v15.0.0 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#172033" />
-  <title>RoomRelay 3D v14.0.0 — Shared Room Planner</title>
+  <title>RoomRelay 3D v15.0.0 — Shared Room Planner</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -298,6 +298,34 @@
     @media (min-width: 760px) { .catalog-backdrop { align-items: center; } .catalog-sheet { border-radius: 22px; } .catalog-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
     @media (max-width: 430px) { .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
+    /* v15 model previews, layout ideas, radial placement wheel, and occlusion controls */
+    .catalog-item { grid-template-rows: 66px auto auto auto; min-height: 138px; overflow: hidden; }
+    .catalog-preview-wrap { width: 100%; height: 66px; display: grid; place-items: center; overflow: hidden; border-radius: 10px; background: linear-gradient(145deg, color-mix(in srgb, var(--panel) 86%, #dfe7f3), color-mix(in srgb, var(--panel2) 90%, #eadfce)); border: 1px solid color-mix(in srgb, var(--border) 72%, transparent); }
+    .catalog-preview { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .catalog-preview-fallback { font-size: 1.45rem; opacity: .9; }
+    .preset-model-preview { width: 54px; height: 40px; object-fit: contain; border-radius: 8px; background: color-mix(in srgb, var(--panel2) 84%, #dfe7f3); }
+    .layout-ideas-card { display: grid; gap: 8px; padding: 10px; border-radius: 13px; border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border)); background: color-mix(in srgb, var(--soft) 52%, var(--panel)); }
+    .layout-ideas-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; align-items: end; }
+    .layout-idea-description { min-height: 2.4em; margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.35; }
+    .radial-wheel { position: absolute; z-index: 120; width: 272px; height: 272px; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none; filter: drop-shadow(0 18px 34px rgba(15,23,42,.30)); }
+    .radial-wheel::before { content: ''; position: absolute; inset: 20px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--panel) 96%, transparent) 0 26%, color-mix(in srgb, var(--panel) 84%, transparent) 27% 61%, color-mix(in srgb, var(--accent) 16%, transparent) 62% 63%, transparent 64%); border: 1px solid color-mix(in srgb, var(--border) 76%, transparent); backdrop-filter: blur(10px); }
+    .radial-center { position: absolute; left: 50%; top: 50%; width: 92px; min-height: 72px; transform: translate(-50%,-50%); display: grid; place-items: center; align-content: center; gap: 2px; padding: 8px; text-align: center; border-radius: 50%; background: color-mix(in srgb, var(--panel) 96%, transparent); border: 1px solid var(--border); font-size: .70rem; line-height: 1.1; color: var(--muted); }
+    .radial-center strong { color: var(--text); font-size: .78rem; }
+    .radial-option { position: absolute; left: 50%; top: 50%; width: 72px; min-height: 52px; transform: translate(calc(-50% + var(--rx)), calc(-50% + var(--ry))); display: grid; place-items: center; align-content: center; gap: 2px; padding: 5px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--border) 86%, transparent); background: color-mix(in srgb, var(--panel) 94%, transparent); color: var(--text); font-size: .67rem; font-weight: 800; line-height: 1.05; text-align: center; transition: transform .08s ease, background .08s ease, border-color .08s ease; }
+    .radial-option .radial-icon { font-size: 1.08rem; line-height: 1; }
+    .radial-option.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); transform: translate(calc(-50% + var(--rx)), calc(-50% + var(--ry))) scale(1.12); }
+    .radial-option.more { border-style: dashed; }
+    .radial-surface-pill { position: absolute; left: 50%; top: -17px; transform: translateX(-50%); padding: 4px 8px; border-radius: 999px; background: var(--text); color: var(--panel); font-size: .67rem; font-weight: 850; white-space: nowrap; }
+    .radial-wheel.hidden { display: none !important; }
+    .three-host.radial-active canvas { cursor: crosshair; }
+    .wall-cull-note { display: block; color: var(--muted); font-size: .69rem; line-height: 1.25; margin-top: 3px; }
+    @media (max-width: 430px) {
+      .catalog-item { min-height: 132px; }
+      .radial-wheel { width: 250px; height: 250px; }
+      .radial-option { width: 66px; min-height: 49px; font-size: .63rem; }
+      .layout-ideas-row { grid-template-columns: 1fr; }
+    }
+
     @media (min-width: 760px) {
       .topbar { grid-template-columns: 1fr auto; align-items: center; }
       .plan-layout { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
@@ -424,7 +452,7 @@
     <section id="joinView" class="panel join stack">
       <div>
         <div class="join-mark">⌂</div>
-        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v14.0.0</span></div>
+        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v15.0.0</span></div>
         <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, realistic seating, soft-cozy furniture, lighting, and detailed decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
@@ -446,7 +474,7 @@
         <div>
           <div class="brandline">
             <span class="brand">RoomRelay 3D</span>
-            <span class="version-badge" data-app-version>v14.0.0</span>
+            <span class="version-badge" data-app-version>v15.0.0</span>
             <span class="status"><span id="statusDot" class="dot connecting"></span><span id="statusText">Starting</span></span>
           </div>
           <div class="small muted">Room <span id="roomCodeLabel" class="code"></span> · <span id="peopleLabel">1 person</span></div>
@@ -491,6 +519,24 @@
               <div class="small muted">12.5 × 10.5 ft, warm beige walls, light wood floor, white trim, top-left/top-right doors and a centered left-wall window.</div>
             </div>
             <button id="photoRoomBtn" class="btn compact primary" type="button">Use this room</button>
+          </div>
+          <div class="layout-ideas-card">
+            <div class="row spread">
+              <div><strong>Room layout ideas</strong><div class="tiny muted">Practical arrangements sized for this 12.5 × 10.5 ft room.</div></div>
+              <span class="selected-chip">4 presets</span>
+            </div>
+            <div class="layout-ideas-row">
+              <label>Layout
+                <select id="layoutIdeaSelect">
+                  <option value="cozy-craft">Cozy craft lounge</option>
+                  <option value="maker-flow">Maker workflow</option>
+                  <option value="shared-studio">Shared creative studio</option>
+                  <option value="reading-nook">Reading + hobby nook</option>
+                </select>
+              </label>
+              <button id="applyLayoutIdeaBtn" class="btn compact primary" type="button">Apply layout</button>
+            </div>
+            <p id="layoutIdeaDescription" class="layout-idea-description">A daybed and reading chair share the room with one clear craft workstation, open circulation, and storage near the walls.</p>
           </div>
           <div>
             <div class="row spread" style="margin-bottom:8px">
@@ -605,7 +651,7 @@
       <section id="threeTab" class="hidden panel three-panel three-v12">
         <div id="threeHost" class="three-host">
           <div class="three-viewport-head" aria-live="polite">
-            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v14.0.0</span></div>
+            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v15.0.0</span></div>
             <div id="threeSelection" class="three-statusline">Tap to select · hold to move · triple-tap selected item to delete</div>
           </div>
           <div id="threePresence" class="three-presence">Only you in 3D</div>
@@ -642,8 +688,10 @@
                 <div class="compact-toggle-row">
                   <label class="tool-toggle"><input id="threeSnapToggle" type="checkbox" /> 3-inch snap</label>
                   <label class="tool-toggle"><input id="threeWallSnapToggle" type="checkbox" checked /> Wall snap</label>
+                  <label class="tool-toggle"><input id="threeCullWallsToggle" type="checkbox" checked /> Cull front walls</label>
                 </div>
-                <p class="three-menu-help">Drag empty space to orbit. Pinch empty space to zoom. Pinch the selected object to resize.</p>
+                <span class="wall-cull-note">When enabled, the wall between the camera and room hides automatically. When disabled, walls block taps so objects cannot be selected through them.</span>
+                <p class="three-menu-help">Drag empty space to orbit. Pinch empty space to zoom. Pinch the selected object to resize. Hold an empty wall or floor spot for the placement wheel.</p>
               </div>
             </details>
 
@@ -743,9 +791,10 @@
           </div>
 
           <button id="threeUiShowBtn" class="three-ui-show hidden" type="button">Show controls</button>
+          <div id="threeRadialWheel" class="radial-wheel hidden" aria-hidden="true"></div>
           <div id="threePlacementBanner" class="three-placement-banner hidden"><span id="threePlacementText">Tap to place</span><button id="cancelThreePlacementBtn" class="btn compact" type="button">Cancel</button></div>
           <div id="threeStatus" class="three-status">Open this tab to load the 3D room.</div>
-          <div class="three-hint">Hold to move · pinch selected object to resize · triple-tap selected item to delete</div>
+          <div class="three-hint">Hold object to move · pinch selected object to resize · hold empty floor/wall for quick-place wheel · triple-tap to delete</div>
         </div>
       </section>
 
@@ -789,7 +838,7 @@ const $ = id => document.getElementById(id);
 const canvas = $('roomCanvas');
 const joinView = $('joinView');
 const plannerView = $('plannerView');
-const APP_VERSION = '14.0.0';
+const APP_VERSION = '15.0.0';
 const WALL_SNAP_DISTANCE = 12;
 const WALL_ROTATIONS = { top: 0, right: 270, bottom: 180, left: 90 };
 const HOLD_TO_MOVE_MS = 420;
@@ -988,8 +1037,8 @@ function photoOpenings() {
 
 function freshState() {
   return {
-    version: 13,
-    meta: { width: 150, depth: 126, wallHeight: 96, snap: true, threeSnap: false, wallSnap: true, lighting: 'day', rev: { n: 0, a: '' } },
+    version: 15,
+    meta: { width: 150, depth: 126, wallHeight: 96, snap: true, threeSnap: false, wallSnap: true, wallCulling: true, lighting: 'day', rev: { n: 0, a: '' } },
     furniture: {},
     openings: photoOpenings(),
     messages: {}
@@ -1150,6 +1199,7 @@ function normalizeState(raw) {
   base.meta.snap = oldMeta.snap !== false;
   base.meta.threeSnap = oldMeta.threeSnap === true;
   base.meta.wallSnap = oldMeta.wallSnap !== false;
+  base.meta.wallCulling = oldMeta.wallCulling !== false;
   base.meta.lighting = ['day', 'warm', 'studio'].includes(oldMeta.lighting) ? oldMeta.lighting : 'day';
   base.meta.rev = oldMeta.rev || base.meta.rev;
   base.furniture = {};
@@ -1423,6 +1473,174 @@ function threeSnapValue(value) {
   return $('threeSnapToggle')?.checked ? Math.round(value / 3) * 3 : Math.round(value * 10) / 10;
 }
 
+const ROOM_LAYOUT_PRESETS = {
+  'cozy-craft': {
+    label: 'Cozy craft lounge',
+    description: 'A daybed and reading chair share the room with one clear craft workstation, open circulation, and storage near the walls.',
+    items: [
+      ['Neutral area rug', .26, .34, 0], ['Daybed', .03, .70, 90], ['Craft desk', .50, .08, 0],
+      ['Cozy chair', .69, .55, 225], ['Round side table', .83, .59, 0], ['Floor lamp', .88, .45, 0],
+      ['Cube shelf', .02, .35, 90], ['Floor plant', .82, .76, 0]
+    ]
+  },
+  'maker-flow': {
+    label: 'Maker workflow',
+    description: 'A central craft island creates a work triangle between storage, the printer station, and a rolling supply cart while keeping both doors clear.',
+    items: [
+      ['Craft island', .31, .36, 0], ['Printer table', .73, .68, 0], ['Bambu Lab P1S 3D printer', .77, .71, 0, 'Printer table'],
+      ['Bookcase', .01, .32, 90], ['Rolling cart', .77, .34, 0], ['Cube shelf', .18, .72, 0],
+      ['Task lamp', .46, .40, 0, 'Craft island'], ['Cutting mat', .38, .40, 0, 'Craft island']
+    ]
+  },
+  'shared-studio': {
+    label: 'Shared creative studio',
+    description: 'Two work zones face inward with a shared center rug, easy chair clearance, and storage split between opposite walls.',
+    items: [
+      ['Double desk', .18, .67, 0], ['Swivel office chair', .28, .52, 180], ['Swivel office chair', .54, .52, 180],
+      ['Craft desk', .51, .08, 0], ['Storage console', .01, .44, 90], ['Cube shelf', .74, .38, 90],
+      ['Checker craft rug', .27, .32, 0], ['Floor plant', .82, .72, 0]
+    ]
+  },
+  'reading-nook': {
+    label: 'Reading + hobby nook',
+    description: 'A quiet reading corner anchors one side while a compact desk and accessible shelving preserve a separate hobby zone.',
+    items: [
+      ['Vintage floral rug', .25, .35, 0], ['Wingback reading chair', .07, .57, 135], ['Round side table', .25, .65, 0],
+      ['Floor lamp', .02, .70, 0], ['Daybed', .45, .70, 90], ['Craft desk', .48, .08, 0],
+      ['Bookcase', .80, .35, 90], ['Floor plant', .76, .72, 0]
+    ]
+  }
+};
+
+function presetByName(name) {
+  return PRESETS.find(preset => preset.name === name) || null;
+}
+
+function updateLayoutIdeaDescription() {
+  const selected = ROOM_LAYOUT_PRESETS[$('layoutIdeaSelect')?.value];
+  if ($('layoutIdeaDescription')) $('layoutIdeaDescription').textContent = selected?.description || '';
+}
+
+function applyRoomLayoutIdea() {
+  const layout = ROOM_LAYOUT_PRESETS[$('layoutIdeaSelect')?.value];
+  if (!layout) return;
+  const existing = activeFurniture();
+  if (existing.length && !confirm(`Replace the current ${existing.length} furniture item${existing.length === 1 ? '' : 's'} with “${layout.label}”? Doors and windows stay in place.`)) return;
+  for (const item of existing) {
+    const deleted = { ...item, deleted: true, rev: nextRev(), updatedBy: myName };
+    state.furniture[item.id] = deleted;
+    actions?.item.send(deleted);
+  }
+  const createdByName = new Map();
+  for (const [name, xRatio, yRatio, rotation = 0, parentName = null] of layout.items) {
+    const preset = presetByName(name);
+    if (!preset) continue;
+    const x = Math.max(0, Math.min(state.meta.width - preset.w, xRatio * state.meta.width));
+    const y = Math.max(0, Math.min(state.meta.depth - preset.d, yRatio * state.meta.depth));
+    const item = addFurniture({ ...preset, rotation, autoFaceCenter: false }, x, y);
+    createdByName.set(name, item);
+    if (parentName) {
+      const parent = createdByName.get(parentName);
+      if (parent && isSurfaceHost(parent)) {
+        const parentCenter = itemCenter(parent);
+        const child = state.furniture[item.id];
+        const next = attachItemToSurface({ ...child, x: parentCenter.x - child.w / 2, y: parentCenter.y - child.d / 2 }, { host: parent, local: { x: 0, y: 0 } });
+        next.rev = nextRev(); next.updatedBy = myName;
+        state.furniture[item.id] = next;
+        actions?.item.send({ ...next });
+      }
+    }
+  }
+  selectedId = null; selectedType = null;
+  saveLocal(); renderAll(); actions?.snapshot.send(state);
+  toast(`${layout.label} applied. Fine-tune anything in 2D or 3D.`);
+}
+
+const catalogThumbnailCache = new Map();
+let catalogThumbnailRenderer = null;
+let catalogThumbnailQueueToken = 0;
+
+function fallbackPreviewSvg(preset) {
+  const name = String(preset.name || '').toLowerCase();
+  const bg = '#eef1f6', stroke = '#29354a', wood = '#b78a5c', fabric = '#cbb5a5', green = '#7b9c72';
+  let body = `<rect x="1" y="1" width="158" height="98" rx="12" fill="${bg}"/>`;
+  if (name.includes('rug')) body += '<ellipse cx="80" cy="62" rx="57" ry="23" fill="#c9a98e" stroke="#8b6e58" stroke-width="3"/><path d="M30 62h100M46 48l68 28M46 76l68-28" stroke="#f0dfca" stroke-width="3" opacity=".8"/>';
+  else if (name.includes('plant')) body += `<path d="M80 78V42M80 52L58 30M80 56l22-28M80 62L54 51M80 66l27-8" stroke="${green}" stroke-width="7" stroke-linecap="round"/><path d="M64 76h32l-5 18H69z" fill="${wood}"/>`;
+  else if (name.includes('chair') || name.includes('sofa') || name.includes('daybed')) body += `<path d="M38 70v-28q0-12 12-12h60q12 0 12 12v28" fill="${fabric}" stroke="${stroke}" stroke-width="4"/><rect x="30" y="61" width="100" height="24" rx="9" fill="${fabric}" stroke="${stroke}" stroke-width="4"/><path d="M43 85v10M117 85v10" stroke="${stroke}" stroke-width="5"/>`;
+  else if (name.includes('shelf') || name.includes('bookcase') || name.includes('cube')) body += `<rect x="38" y="18" width="84" height="72" fill="none" stroke="${wood}" stroke-width="7"/><path d="M38 54h84M66 18v72M94 18v72" stroke="${wood}" stroke-width="5"/>`;
+  else if (name.includes('desk') || name.includes('table') || name.includes('island')) body += `<path d="M28 45h104v16H28z" fill="${wood}" stroke="${stroke}" stroke-width="3"/><path d="M40 61v34M120 61v34" stroke="${stroke}" stroke-width="7"/>`;
+  else if (name.includes('lamp') || preset.kind === 'light') body += `<path d="M80 88V38" stroke="${stroke}" stroke-width="6"/><path d="M58 42h44l-10-25H68z" fill="#f2d48d" stroke="${stroke}" stroke-width="3"/><ellipse cx="80" cy="90" rx="22" ry="6" fill="${stroke}"/>`;
+  else if (name.includes('tv')) body += `<rect x="28" y="18" width="104" height="58" rx="5" fill="#253044" stroke="${stroke}" stroke-width="4"/><path d="M80 76v12M55 91h50" stroke="${stroke}" stroke-width="6"/>`;
+  else if (name.includes('printer')) body += `<rect x="45" y="18" width="70" height="72" rx="5" fill="#343b46" stroke="${stroke}" stroke-width="4"/><rect x="52" y="27" width="56" height="45" fill="#b7d1d4" opacity=".65"/><path d="M60 50h40M80 32v34" stroke="#4e5968" stroke-width="3"/>`;
+  else body += `<path d="M36 80V35h88v45z" fill="${wood}" stroke="${stroke}" stroke-width="4"/><path d="M48 50h64M48 65h64" stroke="#e8d5bd" stroke-width="4"/>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100">${body}</svg>`)}`;
+}
+
+function ensureCatalogThumbnailRenderer() {
+  if (catalogThumbnailRenderer || !threeRuntime?.THREE) return catalogThumbnailRenderer;
+  const THREE = threeRuntime.THREE;
+  const canvas = document.createElement('canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(1);
+  renderer.setSize(240, 160, false);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled = false;
+  catalogThumbnailRenderer = { THREE, renderer, canvas };
+  return catalogThumbnailRenderer;
+}
+
+function renderPresetThumbnailData(preset, index) {
+  const key = `${APP_VERSION}:${index}:${preset.finish || ''}:${preset.fabricStyle || ''}`;
+  if (catalogThumbnailCache.has(key)) return catalogThumbnailCache.get(key);
+  const thumb = ensureCatalogThumbnailRenderer();
+  if (!thumb) return fallbackPreviewSvg(preset);
+  const { THREE, renderer, canvas } = thumb;
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf1eee8);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7d6c, 2.4));
+  const keyLight = new THREE.DirectionalLight(0xfff2db, 3.2); keyLight.position.set(-4, 7, 5); scene.add(keyLight);
+  const fill = new THREE.DirectionalLight(0xdce8ff, 1.4); fill.position.set(5, 3, -4); scene.add(fill);
+  const fake = normalizeItem({ ...preset, id: `thumb-${index}`, x: 0, y: 0, elevation: 0, deleted: false, rev: { n: 0, a: '' } });
+  const model = createFurnitureModel(fake);
+  scene.add(model);
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  model.position.sub(center);
+  const maxDim = Math.max(.5, size.x, size.y, size.z);
+  const camera = new THREE.PerspectiveCamera(35, 1.5, .01, 100);
+  const isFlat = String(preset.name || '').toLowerCase().includes('rug');
+  camera.position.set(maxDim * (isFlat ? 0.6 : 1.45), maxDim * (isFlat ? 2.2 : 1.15), maxDim * (isFlat ? 0.75 : 1.65));
+  camera.lookAt(0, isFlat ? 0 : size.y * .08, 0);
+  scene.add(camera);
+  renderer.render(scene, camera);
+  const data = canvas.toDataURL('image/webp', .82);
+  catalogThumbnailCache.set(key, data);
+  disposeObject(model);
+  return data;
+}
+
+function hydrateCatalogThumbnails(matches) {
+  const token = ++catalogThumbnailQueueToken;
+  const queue = matches.map(preset => ({ preset, index: PRESETS.indexOf(preset) }));
+  const run = deadline => {
+    if (token !== catalogThumbnailQueueToken) return;
+    let count = 0;
+    while (queue.length && (count < 2 || !deadline || deadline.timeRemaining() > 6)) {
+      const { preset, index } = queue.shift();
+      const images = [...document.querySelectorAll(`img[data-model-preview="${index}"]`)];
+      if (images.some(img => !img.dataset.loaded)) {
+        let source;
+        try { source = renderPresetThumbnailData(preset, index); } catch (_) { source = fallbackPreviewSvg(preset); }
+        for (const img of images) { img.src = source; img.dataset.loaded = 'true'; }
+      }
+      count++;
+    }
+    if (queue.length) (window.requestIdleCallback || (cb => setTimeout(() => cb({ timeRemaining: () => 8 }), 24)))(run);
+  };
+  (window.requestIdleCallback || (cb => setTimeout(() => cb({ timeRemaining: () => 8 }), 24)))(run);
+}
+
 function threeCatalogCategory(preset) {
   if (preset.ceilingMounted) return 'ceiling';
   if (preset.wallMounted) return 'wall';
@@ -1452,8 +1670,9 @@ function renderThreeCatalog() {
     const index = PRESETS.indexOf(preset);
     const placement = preset.ceilingMounted ? 'Tap beneath ceiling spot' : preset.wallMounted ? 'Tap a wall' : preset.surfaceItem ? 'Tap a surface or floor' : 'Tap the floor';
     const quality = preset.premium ? '<span class="catalog-quality">Detailed model</span>' : '';
-    return `<button class="catalog-item" type="button" data-three-preset="${index}"><span class="catalog-icon">${preset.icon}</span><span class="catalog-name">${escapeHtml(preset.name)}</span>${quality}<span class="catalog-meta">${placement}</span></button>`;
+    return `<button class="catalog-item" type="button" data-three-preset="${index}"><span class="catalog-preview-wrap"><img class="catalog-preview" data-model-preview="${index}" src="${fallbackPreviewSvg(preset)}" alt="Preview of ${escapeHtml(preset.name)}" /></span><span class="catalog-name">${escapeHtml(preset.name)}</span>${quality}<span class="catalog-meta">${placement}</span></button>`;
   }).join('') : '<div class="empty" style="grid-column:1/-1">No objects match that search.</div>';
+  hydrateCatalogThumbnails(matches);
 }
 
 function openThreeCatalog() {
@@ -1731,7 +1950,7 @@ function removeOpening(id) {
 function updateRoom() {
   const width = Math.max(48, Math.min(480, Number($('roomWidth').value) * 12 || state.meta.width));
   const depth = Math.max(48, Math.min(480, Number($('roomDepth').value) * 12 || state.meta.depth));
-  const meta = { ...state.meta, width, depth, snap: $('snapToggle').checked, threeSnap: $('threeSnapToggle')?.checked === true, wallSnap: $('wallSnapToggle')?.checked !== false, lighting: $('lightingMode')?.value || state.meta.lighting || 'day', rev: nextRev() };
+  const meta = { ...state.meta, width, depth, snap: $('snapToggle').checked, threeSnap: $('threeSnapToggle')?.checked === true, wallSnap: $('wallSnapToggle')?.checked !== false, wallCulling: $('threeCullWallsToggle')?.checked !== false, lighting: $('lightingMode')?.value || state.meta.lighting || 'day', rev: nextRev() };
   state.meta = meta;
   for (const item of activeFurniture()) state.furniture[item.id] = { ...clampItem(item), rev: nextRev(), updatedBy: myName };
   for (const opening of activeOpenings()) state.openings[opening.id] = { ...clampOpening(opening), rev: nextRev(), updatedBy: myName };
@@ -1784,6 +2003,7 @@ function updateInputs() {
   $('snapToggle').checked = state.meta.snap !== false;
   if ($('wallSnapToggle')) $('wallSnapToggle').checked = state.meta.wallSnap !== false;
   if ($('threeWallSnapToggle')) $('threeWallSnapToggle').checked = state.meta.wallSnap !== false;
+  if ($('threeCullWallsToggle')) $('threeCullWallsToggle').checked = state.meta.wallCulling !== false;
   if ($('threeSnapToggle')) $('threeSnapToggle').checked = state.meta.threeSnap === true;
   if ($('lightingMode')) $('lightingMode').value = state.meta.lighting || 'day';
   const furnitureCount = activeFurniture().length;
@@ -2687,7 +2907,7 @@ async function init3D() {
     threeRuntime = {
       THREE, scene, camera, renderer, controls, roomGroup, openingGroup, furnitureGroup, presenceGroup, lightingGroup,
       ambient, hemi, warm, fill, raycaster, pointer, floorPlane, planePoint, furnitureObjects: new Map(), openingObjects: new Map(), wallObjects: [], drag: null, pendingHold: null,
-      activePointers: new Map(), pointerEntities: new Map(), pinchResize: null, tapTracker: null,
+      activePointers: new Map(), pointerEntities: new Map(), pinchResize: null, tapTracker: null, surfaceHold: null, radial: null,
       pointerStart: null, animationId: null, roomW: 12.5, roomD: 10.5
     };
 
@@ -2705,10 +2925,12 @@ async function init3D() {
     $('threeStatus').classList.add('hidden');
     $('threeSnapToggle').checked = state.meta.threeSnap === true;
     $('lightingMode').value = state.meta.lighting || 'day';
+    if ($('threeCullWallsToggle')) $('threeCullWallsToggle').checked = state.meta.wallCulling !== false;
     applyLightingMode();
     resize3D();
     rebuild3D();
     reset3DView(false);
+    hydrateCatalogThumbnails(PRESETS.filter(preset => preset.kind !== 'custom'));
     const animate = () => {
       if (!threeRuntime) return;
       threeRuntime.animationId = requestAnimationFrame(animate);
@@ -2875,6 +3097,220 @@ function activate3DHold() {
     : `Moving ${label} along its wall${data.type === 'window' ? ' · height mode changes sill height' : ''}`;
 }
 
+function isObjectBehindSolidWall(hitList) {
+  for (const hit of hitList) {
+    const entity = findEntityOnObject(hit.object);
+    if (entity) return { hit, entity };
+    let node = hit.object;
+    while (node) {
+      if (node.userData?.wall && node.visible !== false && !node.userData?.openingId) return null;
+      node = node.parent;
+    }
+  }
+  return null;
+}
+
+function visibleEntityHit() {
+  const runtime = threeRuntime;
+  if (!runtime) return null;
+  const roots = [runtime.furnitureGroup, runtime.openingGroup, ...runtime.wallObjects.filter(object => object.visible !== false)];
+  return isObjectBehindSolidWall(runtime.raycaster.intersectObjects(roots, true));
+}
+
+function surfaceContextFromRay() {
+  const runtime = threeRuntime;
+  if (!runtime) return null;
+  const wallHits = runtime.raycaster.intersectObjects(runtime.wallObjects.filter(object => object.visible !== false), true)
+    .filter(hit => wallFromHitObject(hit.object));
+  const wallHit = wallHits[0] || null;
+  const floorPoint = new runtime.THREE.Vector3();
+  const hasFloor = runtime.raycaster.ray.intersectPlane(runtime.floorPlane, floorPoint);
+  const floorDistance = hasFloor ? runtime.camera.position.distanceTo(floorPoint) : Infinity;
+  if (wallHit && wallHit.distance < floorDistance) return { type: 'wall', point: wallHit.point.clone(), wall: wallFromHitObject(wallHit.object), distance: wallHit.distance };
+  if (hasFloor) return { type: 'floor', point: floorPoint.clone(), distance: floorDistance };
+  return null;
+}
+
+function radialCategoryForPreset(preset, surfaceType) {
+  const name = String(preset.name || '').toLowerCase();
+  if (surfaceType === 'wall') {
+    if (name.includes('shelf') || name.includes('pegboard') || name.includes('hook') || name.includes('thread rack')) return 'Shelves + organization';
+    if (name.includes('tv') || name.includes('mirror')) return 'Media + mirrors';
+    if (name.includes('light') || name.includes('sconce') || name.includes('neon')) return 'Wall lighting';
+    if (name.includes('curtain') || name.includes('tapestry') || name.includes('macram') || name.includes('art') || name.includes('photo') || name.includes('collage')) return 'Wall decor';
+    return 'Other wall items';
+  }
+  if (name.includes('rug')) return 'Rugs';
+  if (preset.kind === 'chair' || preset.kind === 'sofa' || preset.kind === 'bed') return 'Seating + beds';
+  if (preset.kind === 'desk' || name.includes('table') || name.includes('island')) return 'Desks + tables';
+  if (preset.kind === 'storage' || preset.kind === 'dresser' || preset.kind === 'tv') return 'Storage';
+  if (name.includes('plant')) return 'Plants';
+  if (preset.kind === 'light') return 'Lighting';
+  if (name.includes('printer') || name.includes('sewing') || name.includes('craft') || name.includes('cart')) return 'Maker tools';
+  if (preset.collection === 'soft-cozy' || preset.premium) return 'Cozy decor';
+  return 'Decor + other';
+}
+
+function radialOptionsForSurface(surfaceType) {
+  const presets = PRESETS.filter(p => p.kind !== 'custom')
+    .filter(p => surfaceType === 'wall' ? p.wallMounted : !p.wallMounted && !p.ceilingMounted && !p.surfaceItem);
+  const groups = new Map();
+  for (const preset of presets) {
+    const category = radialCategoryForPreset(preset, surfaceType);
+    if (!groups.has(category)) groups.set(category, []);
+    groups.get(category).push(preset);
+  }
+  if (surfaceType === 'wall') groups.set('Doors + windows', [
+    { name: 'Door', icon: '🚪', openingType: 'door', width: 32, height: 80 },
+    { name: 'Window', icon: '▣', openingType: 'window', width: 48, height: 48, sill: 30 }
+  ]);
+  return groups;
+}
+
+function radialIconFor(option) {
+  if (option.more) return '…';
+  if (option.openingType === 'door') return '🚪';
+  if (option.openingType === 'window') return '▣';
+  return option.icon || '＋';
+}
+
+function renderRadialWheel() {
+  const runtime = threeRuntime;
+  const radial = runtime?.radial;
+  const host = $('threeRadialWheel');
+  if (!radial || !host) { host?.classList.add('hidden'); return; }
+  const options = radial.visibleOptions || [];
+  const radius = 91;
+  const optionHtml = options.map((option, index) => {
+    const angle = -Math.PI / 2 + index * Math.PI * 2 / Math.max(1, options.length);
+    const x = Math.cos(angle) * radius;
+    const y = Math.sin(angle) * radius;
+    return `<div class="radial-option${index === radial.selectedIndex ? ' active' : ''}${option.more ? ' more' : ''}" style="--rx:${x.toFixed(1)}px;--ry:${y.toFixed(1)}px"><span class="radial-icon">${radialIconFor(option)}</span><span>${escapeHtml(option.label || option.name || '')}</span></div>`;
+  }).join('');
+  host.innerHTML = `<span class="radial-surface-pill">${radial.context.type === 'wall' ? WALL_LABELS[radial.context.wall] : 'Floor'} quick place</span><div class="radial-center"><strong>${radial.stage === 'categories' ? 'Choose category' : radial.category}</strong><span>${radial.stage === 'categories' ? 'Swipe outward and hold' : 'Release on an item'}</span></div>${optionHtml}`;
+  host.style.left = `${radial.clientX}px`; host.style.top = `${radial.clientY}px`;
+  host.classList.remove('hidden'); host.setAttribute('aria-hidden','false');
+  $('threeHost').classList.add('radial-active');
+}
+
+function setRadialStage(stage, category = null, page = 0) {
+  const radial = threeRuntime?.radial;
+  if (!radial) return;
+  radial.stage = stage; radial.category = category; radial.page = page; radial.selectedIndex = -1; radial.hoverKey = ''; radial.hoverSince = performance.now();
+  if (stage === 'categories') {
+    radial.visibleOptions = [...radial.groups.keys()].map(label => ({ label, category: label }));
+  } else {
+    const all = radial.groups.get(category) || [];
+    const pageSize = 7;
+    const start = page * pageSize;
+    radial.visibleOptions = all.slice(start, start + pageSize).map(item => ({ ...item, label: item.name }));
+    if (all.length > start + pageSize) radial.visibleOptions.push({ label: 'More…', more: true, nextPage: page + 1 });
+    else if (page > 0) radial.visibleOptions.push({ label: 'Back to first', more: true, nextPage: 0 });
+  }
+  renderRadialWheel();
+}
+
+function openRadialWheel(surfaceHold) {
+  const runtime = threeRuntime;
+  if (!runtime || !surfaceHold) return;
+  runtime.surfaceHold = null;
+  runtime.controls.enabled = false;
+  try { runtime.renderer.domElement.setPointerCapture(surfaceHold.pointerId); } catch (_) {}
+  const rect = $('threeHost').getBoundingClientRect();
+  runtime.radial = {
+    pointerId: surfaceHold.pointerId,
+    clientX: Math.max(126, Math.min(rect.width - 126, surfaceHold.startX - rect.left)),
+    clientY: Math.max(126, Math.min(rect.height - 126, surfaceHold.startY - rect.top)),
+    screenX: surfaceHold.startX, screenY: surfaceHold.startY,
+    context: surfaceHold.context,
+    groups: radialOptionsForSurface(surfaceHold.context.type),
+    stage: 'categories', category: null, page: 0, visibleOptions: [], selectedIndex: -1, hoverKey: '', hoverSince: performance.now()
+  };
+  navigator.vibrate?.(24);
+  setRadialStage('categories');
+  $('threeSelection').textContent = `Quick place: swipe to a ${surfaceHold.context.type} category, then release on an item.`;
+}
+
+function clearSurfaceHold() {
+  const hold = threeRuntime?.surfaceHold;
+  if (!hold) return;
+  clearTimeout(hold.timer);
+  threeRuntime.surfaceHold = null;
+}
+
+function beginSurfaceRadialHold(event, context) {
+  if (!threeRuntime || !context || event.pointerType === 'mouse' && event.button !== 0) return;
+  clearSurfaceHold();
+  const hold = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, context, timer: null };
+  hold.timer = setTimeout(() => openRadialWheel(hold), 520);
+  threeRuntime.surfaceHold = hold;
+}
+
+function radialPointerMove(event) {
+  const radial = threeRuntime?.radial;
+  if (!radial || radial.pointerId !== event.pointerId) return false;
+  const dx = event.clientX - radial.screenX, dy = event.clientY - radial.screenY;
+  const distance = Math.hypot(dx,dy);
+  if (distance < 34 || !radial.visibleOptions.length) { radial.selectedIndex=-1; renderRadialWheel(); return true; }
+  const angle = (Math.atan2(dy,dx) + Math.PI/2 + Math.PI*2) % (Math.PI*2);
+  const index = Math.round(angle / (Math.PI*2) * radial.visibleOptions.length) % radial.visibleOptions.length;
+  if (index !== radial.selectedIndex) {
+    radial.selectedIndex=index; radial.hoverSince=performance.now(); radial.hoverKey=`${radial.stage}:${index}`; navigator.vibrate?.(7); renderRadialWheel();
+    clearTimeout(radial.hoverTimer);
+    const stageAtSchedule = radial.stage;
+    radial.hoverTimer = setTimeout(() => {
+      const current = threeRuntime?.radial;
+      if (!current || current !== radial || current.stage !== stageAtSchedule || current.selectedIndex !== index) return;
+      const option = current.visibleOptions[index];
+      if (current.stage === 'categories' && option?.category) setRadialStage('items', option.category, 0);
+      else if (current.stage === 'items' && option?.more) setRadialStage('items', current.category, option.nextPage || 0);
+    }, 250);
+  }
+  return true;
+}
+
+function placeRadialOption(option, context) {
+  if (!option || !context) return null;
+  if (option.openingType) {
+    const length = context.wall === 'top' || context.wall === 'bottom' ? state.meta.width : state.meta.depth;
+    const along = (context.wall === 'top' || context.wall === 'bottom' ? context.point.x + threeRuntime.roomW/2 : context.point.z + threeRuntime.roomD/2) * 12;
+    const id=uid();
+    const opening=clampOpening({ id, type: option.openingType, name: option.name, wall: context.wall, width: option.width, height: option.height, sill: option.openingType==='window' ? option.sill : 0, offset: Math.max(0,Math.min(length-option.width,along-option.width/2)), deleted:false, rev:nextRev(), updatedBy:myName });
+    state.openings[id]=opening; selectedType='opening'; selectedId=id; saveLocal(); actions?.opening.send(opening); renderAll(); return opening;
+  }
+  let item;
+  if (context.type === 'wall') {
+    const wall=context.wall;
+    const alongFeet=wall==='top'||wall==='bottom'?context.point.x+threeRuntime.roomW/2:context.point.z+threeRuntime.roomD/2;
+    const elevation=Math.max(0,Math.min(state.meta.wallHeight-option.height,context.point.y*12-option.height/2));
+    const x=wall==='left'?-option.w/2:wall==='right'?state.meta.width-option.w/2:alongFeet*12-option.w/2;
+    const y=wall==='top'?-option.d/2:wall==='bottom'?state.meta.depth-option.d/2:alongFeet*12-option.d/2;
+    item=addFurniture({...option,wall,elevation,rotation:WALL_ROTATIONS[wall]},x,y);
+  } else {
+    const x=(context.point.x+threeRuntime.roomW/2)*12-option.w/2;
+    const y=(context.point.z+threeRuntime.roomD/2)*12-option.d/2;
+    item=addFurniture({...option,autoFaceCenter:option.autoFaceCenter!==false},x,y);
+  }
+  return item;
+}
+
+function finishRadialWheel(event, canceled=false) {
+  const runtime=threeRuntime, radial=runtime?.radial;
+  if (!radial || radial.pointerId!==event.pointerId) return false;
+  const option=radial.visibleOptions?.[radial.selectedIndex];
+  if (!canceled && radial.stage==='items' && option && !option.more) {
+    const placed=placeRadialOption(option,radial.context);
+    if (placed) toast(`${placed.name} placed from the quick wheel.`);
+  }
+  $('threeRadialWheel').classList.add('hidden'); $('threeRadialWheel').setAttribute('aria-hidden','true'); $('threeHost').classList.remove('radial-active');
+  clearTimeout(radial.hoverTimer);
+  runtime.radial=null;
+  try { if(runtime.renderer.domElement.hasPointerCapture(event.pointerId)) runtime.renderer.domElement.releasePointerCapture(event.pointerId); } catch(_) {}
+  runtime.controls.enabled=true; runtime.controls.update();
+  update3DSelection();
+  return true;
+}
+
 function handle3DPointerDown(event) {
   const runtime = threeRuntime;
   if (!runtime || event.button > 0) return;
@@ -2887,9 +3323,8 @@ function handle3DPointerDown(event) {
     return;
   }
   setRayFromEvent(event);
-  const hits = runtime.raycaster.intersectObjects([runtime.furnitureGroup, runtime.openingGroup], true);
-  const first = hits.find(hit => findEntityOnObject(hit.object));
-  const entity = first ? findEntityOnObject(first.object) : null;
+  const visible = visibleEntityHit();
+  const entity = visible?.entity || null;
   runtime.pointerEntities.set(event.pointerId, entity);
   runtime.pointerStart = { x: event.clientX, y: event.clientY };
 
@@ -2900,7 +3335,11 @@ function handle3DPointerDown(event) {
   }
 
   clear3DPendingHold();
-  if (!entity) return;
+  if (!entity) {
+    const context = surfaceContextFromRay();
+    if (context) beginSurfaceRadialHold(event, context);
+    return;
+  }
   runtime.pendingHold = {
     entity,
     pointerId: event.pointerId,
@@ -2916,6 +3355,9 @@ function handle3DPointerMove(event) {
   const runtime = threeRuntime;
   if (!runtime) return;
   if (runtime.activePointers.has(event.pointerId)) runtime.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY, pointerType: event.pointerType });
+  if (radialPointerMove(event)) { event.preventDefault(); event.stopPropagation(); return; }
+  const surfaceHold = runtime.surfaceHold;
+  if (surfaceHold && surfaceHold.pointerId === event.pointerId && Math.hypot(event.clientX-surfaceHold.startX,event.clientY-surfaceHold.startY) > HOLD_CANCEL_PX) clearSurfaceHold();
   if (runtime.pinchResize && update3DPinchResize(event)) {
     event.preventDefault();
     event.stopPropagation();
@@ -3004,6 +3446,8 @@ function handle3DPointerMove(event) {
 function handle3DPointerUp(event) {
   const runtime = threeRuntime;
   if (!runtime) return;
+  if (finishRadialWheel(event, event.type === 'pointercancel')) { runtime.activePointers.delete(event.pointerId); runtime.pointerEntities.delete(event.pointerId); return; }
+  if (runtime.surfaceHold?.pointerId === event.pointerId) clearSurfaceHold();
   if (runtime.pinchResize && runtime.pinchResize.pointerIds.includes(event.pointerId)) {
     finish3DPinchPointer(event);
     return;
@@ -3252,178 +3696,77 @@ function addTrimForWall(wall, trimMaterial) {
 }
 
 function createRugTexture(THREE, item) {
+  const widthIn = Math.max(12, Number(item.w) || 60);
+  const depthIn = Math.max(12, Number(item.d) || 48);
+  const maxPixels = 1024;
+  const minPixels = 320;
+  const aspect = Math.max(.25, Math.min(4, widthIn / depthIn));
   const canvas = document.createElement('canvas');
-  canvas.width = 768;
-  canvas.height = 512;
+  if (aspect >= 1) { canvas.width = maxPixels; canvas.height = Math.max(minPixels, Math.round(maxPixels / aspect)); }
+  else { canvas.height = maxPixels; canvas.width = Math.max(minPixels, Math.round(maxPixels * aspect)); }
   const ctx = canvas.getContext('2d');
+  const ppiX = canvas.width / widthIn;
+  const ppiY = canvas.height / depthIn;
+  const px = inches => inches * ppiX;
+  const py = inches => inches * ppiY;
   const style = String(item.rugStyle || item.name || 'woven').toLowerCase();
+  const scaleIn = Math.max(12, Math.min(144, Number(item.rugPatternScale) || 48));
   let seed = 2166136261;
-  for (const ch of `${style}:${item.id || item.name || 'rug'}`) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619) >>> 0;
+  for (const ch of `${style}:${item.id || item.name || 'rug'}:${widthIn}:${depthIn}`) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619) >>> 0;
   const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  const roundedRect = (x, y, w, h, r) => {
-    ctx.beginPath();
-    if (typeof ctx.roundRect === 'function') ctx.roundRect(x, y, w, h, r);
-    else ctx.rect(x, y, w, h);
+  const palette = {
+    woven: ['#d2c4b0','#a99982','#e5dbcc'], floral: ['#d8c3a6','#745a55','#a65e64','#6e896c'], blushfloral: ['#ead5d9','#ad6f80','#f5e6e4','#789476'],
+    checker: ['#e9ddc8','#8da080','#d09a72'], moroccan: ['#eee6d7','#2f3b43','#c78372','#7b9987'], botanical: ['#dfe5d5','#66806a','#b28f7e'],
+    gingham: ['#f5e7e8','#cb8da0','#9c6475'], jute: ['#b89468','#d1b38a','#846342'], braided: ['#ead9bf','#a66d4d','#d3b28d','#7f8e77'], fauxfur: ['#f9f1ef','#e9d5d8','#c9adb5']
   };
+  const key = style.includes('blush') ? 'blushfloral' : style.includes('floral') ? 'floral' : style.includes('moroccan') ? 'moroccan' : style.includes('botanical') ? 'botanical' : style.includes('gingham') ? 'gingham' : style.includes('checker') ? 'checker' : style.includes('jute') ? 'jute' : style.includes('braided') ? 'braided' : style.includes('fauxfur') ? 'fauxfur' : 'woven';
+  const colors = palette[key];
+  ctx.fillStyle = colors[0]; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  if (style.includes('fauxfur')) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    const blobs = [[0,0,250,165],[-190,-30,135,115],[185,-45,145,120],[-120,115,150,105],[125,110,160,105]];
-    for (const [x,y,rx,ry] of blobs) {
-      const gradient = ctx.createRadialGradient(x-rx*.18,y-ry*.20,10,x,y,Math.max(rx,ry));
-      gradient.addColorStop(0,'rgba(255,248,246,.98)'); gradient.addColorStop(.62,'rgba(241,220,222,.96)'); gradient.addColorStop(1,'rgba(216,184,190,.20)');
-      ctx.fillStyle=gradient; ctx.beginPath(); ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2); ctx.fill();
+  if (key === 'checker' || key === 'gingham') {
+    const cellX = Math.max(12, px(scaleIn / 3));
+    const cellY = Math.max(12, py(scaleIn / 3));
+    for (let y=0,row=0;y<canvas.height;y+=cellY,row++) for(let x=0,col=0;x<canvas.width;x+=cellX,col++) {
+      ctx.fillStyle = (row+col)%2 ? colors[1] : colors[2]; ctx.globalAlpha = key==='gingham' ? .48 : .92; ctx.fillRect(x,y,cellX+.5,cellY+.5);
     }
-    ctx.globalAlpha=.34;
-    for (let i=0;i<2600;i++) {
-      const a=random()*Math.PI*2, r=Math.sqrt(random());
-      const x=Math.cos(a)*canvas.width*.43*r, y=Math.sin(a)*canvas.height*.40*r;
-      ctx.strokeStyle=i%3?'#fff8f5':'#caaeb5'; ctx.lineWidth=.7+random()*1.4;
-      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+(random()-.5)*8,y+(random()-.5)*8); ctx.stroke();
+    if (key==='gingham') { ctx.globalAlpha=.30; ctx.fillStyle=colors[1]; for(let x=0;x<canvas.width;x+=cellX*2)ctx.fillRect(x,0,cellX*.48,canvas.height); for(let y=0;y<canvas.height;y+=cellY*2)ctx.fillRect(0,y,canvas.width,cellY*.48); }
+    ctx.globalAlpha=1;
+  } else if (key === 'moroccan') {
+    const tileX=Math.max(36,px(scaleIn)), tileY=Math.max(30,py(scaleIn*.72)); ctx.strokeStyle=colors[1]; ctx.lineWidth=Math.max(2,px(.35));
+    for(let y=-tileY;y<canvas.height+tileY;y+=tileY) for(let x=-tileX;x<canvas.width+tileX;x+=tileX){ctx.beginPath();ctx.moveTo(x,y+tileY/2);ctx.lineTo(x+tileX/2,y);ctx.lineTo(x+tileX,y+tileY/2);ctx.lineTo(x+tileX/2,y+tileY);ctx.closePath();ctx.stroke();ctx.fillStyle=((x/tileX+y/tileY)&1)?colors[2]:colors[3];ctx.beginPath();ctx.arc(x+tileX/2,y+tileY/2,Math.max(3,px(.45)),0,Math.PI*2);ctx.fill();}
+  } else if (key === 'botanical' || key === 'floral' || key === 'blushfloral') {
+    const stepX=Math.max(60,px(scaleIn*.75)), stepY=Math.max(52,py(scaleIn*.62));
+    for(let y=stepY*.35,row=0;y<canvas.height+stepY;y+=stepY,row++) for(let x=stepX*.35,col=0;x<canvas.width+stepX;x+=stepX,col++) {
+      const ox=x+(row%2)*stepX*.42+(random()-.5)*stepX*.14, oy=y+(random()-.5)*stepY*.16, r=Math.min(stepX,stepY)*.16;
+      ctx.strokeStyle=key==='botanical'?colors[1]:colors[3];ctx.lineWidth=Math.max(2,px(.28));ctx.beginPath();ctx.moveTo(ox,oy+r*.25);ctx.quadraticCurveTo(ox-r*.7,oy+r*1.15,ox-r*.35,oy+r*1.8);ctx.stroke();
+      if(key==='botanical'){for(let i=0;i<5;i++){const a=-1.1+i*.55;ctx.fillStyle=i%2?colors[2]:colors[1];ctx.beginPath();ctx.ellipse(ox+Math.cos(a)*r*.9,oy+Math.sin(a)*r*.9,r*.55,r*.22,a,0,Math.PI*2);ctx.fill();}}
+      else {for(let i=0;i<6;i++){const a=i*Math.PI/3;ctx.fillStyle=i%2?colors[2]:colors[1];ctx.beginPath();ctx.ellipse(ox+Math.cos(a)*r*.62,oy+Math.sin(a)*r*.62,r*.54,r*.27,a,0,Math.PI*2);ctx.fill();}ctx.fillStyle='#d8ad62';ctx.beginPath();ctx.arc(ox,oy,r*.22,0,Math.PI*2);ctx.fill();}
     }
-    ctx.restore();
-  } else if (style.includes('blush')) {
-    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 26);
-    ctx.fillStyle = '#ead4d8'; ctx.fill();
-    ctx.strokeStyle = '#b98291'; ctx.lineWidth = 18; ctx.strokeRect(22,22,canvas.width-44,canvas.height-44);
-    ctx.strokeStyle = '#d5aeb5'; ctx.lineWidth = 6; ctx.strokeRect(48,48,canvas.width-96,canvas.height-96);
-    const flowers=[[120,125,34],[290,345,42],[500,145,40],[650,340,36],[390,250,30]];
-    for (const [x,y,r] of flowers) {
-      for (let i=0;i<6;i++) { const a=i*Math.PI/3; ctx.fillStyle=i%2?'#f8e9e8':'#c98292'; ctx.beginPath(); ctx.ellipse(x+Math.cos(a)*r*.62,y+Math.sin(a)*r*.62,r*.52,r*.26,a,0,Math.PI*2); ctx.fill(); }
-      ctx.fillStyle='#d7ad63'; ctx.beginPath(); ctx.arc(x,y,r*.23,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle='#7d9a78'; ctx.lineWidth=7; ctx.beginPath(); ctx.moveTo(x,y+r*.4); ctx.quadraticCurveTo(x-r*.8,y+r*1.3,x-r*.45,y+r*2); ctx.stroke();
-    }
-  } else if (style.includes('moroccan')) {
-    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 24);
-    ctx.fillStyle = '#eee6d7'; ctx.fill();
-    ctx.strokeStyle = '#2f3b43'; ctx.lineWidth = 7;
-    const tile = 118;
-    for (let y = -tile; y < canvas.height + tile; y += tile) {
-      for (let x = -tile; x < canvas.width + tile; x += tile) {
-        ctx.beginPath(); ctx.moveTo(x, y + tile/2); ctx.lineTo(x + tile/2, y); ctx.lineTo(x + tile, y + tile/2); ctx.lineTo(x + tile/2, y + tile); ctx.closePath(); ctx.stroke();
-        ctx.fillStyle = ((x+y)/tile)%2 ? '#c78372' : '#7b9987'; ctx.beginPath(); ctx.arc(x+tile/2,y+tile/2,9,0,Math.PI*2); ctx.fill();
-      }
-    }
-    ctx.strokeStyle='#b68b64'; ctx.lineWidth=18; ctx.strokeRect(20,20,canvas.width-40,canvas.height-40);
-  } else if (style.includes('botanical')) {
-    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 24);
-    ctx.fillStyle='#dfe5d5'; ctx.fill();
-    ctx.strokeStyle='#66806a'; ctx.lineWidth=7;
-    for (let i=0;i<18;i++) {
-      const x=55+random()*(canvas.width-110), y=45+random()*(canvas.height-90), len=55+random()*90, a=-1.2+random()*2.4;
-      ctx.beginPath(); ctx.moveTo(x,y); ctx.quadraticCurveTo(x+Math.cos(a)*len*.5-20,y+Math.sin(a)*len*.5,x+Math.cos(a)*len,y+Math.sin(a)*len); ctx.stroke();
-      for (let j=1;j<5;j++) { const px=x+Math.cos(a)*len*j/5, py=y+Math.sin(a)*len*j/5; ctx.fillStyle=j%2?'#8ca17e':'#b28f7e'; ctx.beginPath(); ctx.ellipse(px+Math.cos(a+Math.PI/2)*13,py+Math.sin(a+Math.PI/2)*13,17,7,a,0,Math.PI*2); ctx.fill(); }
-    }
-    ctx.strokeStyle='#8a9b7d'; ctx.lineWidth=15; ctx.strokeRect(20,20,canvas.width-40,canvas.height-40);
-  } else if (style.includes('gingham')) {
-    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 20);
-    ctx.fillStyle='#f5e7e8'; ctx.fill();
-    const cell=72;
-    ctx.globalAlpha=.48;
-    for(let x=18;x<canvas.width-18;x+=cell){ctx.fillStyle='#cf8fa0';ctx.fillRect(x,18,cell/2,canvas.height-36);}
-    for(let y=18;y<canvas.height-18;y+=cell){ctx.fillStyle='#c78295';ctx.fillRect(18,y,canvas.width-36,cell/2);}
-    ctx.globalAlpha=1; ctx.strokeStyle='#9d6474';ctx.lineWidth=14;ctx.strokeRect(20,20,canvas.width-40,canvas.height-40);
-  } else if (style.includes('jute')) {
-    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 16);
-    ctx.fillStyle='#b89468';ctx.fill();
-    for(let y=22;y<canvas.height-22;y+=7){ctx.strokeStyle=y%14?'#cfb089':'#8e6b49';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(22,y);for(let x=22;x<canvas.width-22;x+=14)ctx.lineTo(x,y+(random()-.5)*3);ctx.stroke();}
-    for(let x=22;x<canvas.width-22;x+=18){ctx.strokeStyle='rgba(92,66,43,.35)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,22);ctx.lineTo(x+(random()-.5)*5,canvas.height-22);ctx.stroke();}
-    ctx.strokeStyle='#7d5d3e';ctx.lineWidth=16;ctx.strokeRect(20,20,canvas.width-40,canvas.height-40);
-  } else if (style.includes('braided')) {
-    ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.scale(1, .76);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, canvas.width * .46, canvas.height * .57, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#b9855c';
-    ctx.fill();
-    const colors = ['#ead9bf', '#a66d4d', '#d3b28d', '#7f8e77', '#c98f69'];
-    for (let i = 0; i < 16; i++) {
-      ctx.beginPath();
-      ctx.ellipse(0, 0, canvas.width * (.43 - i * .022), canvas.height * (.53 - i * .027), 0, 0, Math.PI * 2);
-      ctx.strokeStyle = colors[i % colors.length];
-      ctx.lineWidth = 12;
-      ctx.stroke();
-    }
-    ctx.restore();
-  } else if (style.includes('checker')) {
-    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 22);
-    ctx.fillStyle = '#e9ddc8';
-    ctx.fill();
-    const cell = 64;
-    for (let y = 24; y < canvas.height - 24; y += cell) {
-      for (let x = 24; x < canvas.width - 24; x += cell) {
-        ctx.fillStyle = ((x / cell + y / cell) % 2) ? '#8c9d82' : '#d39b72';
-        ctx.fillRect(x, y, Math.min(cell, canvas.width - 24 - x), Math.min(cell, canvas.height - 24 - y));
-      }
-    }
-    ctx.strokeStyle = '#6f765f';
-    ctx.lineWidth = 18;
-    ctx.strokeRect(18, 18, canvas.width - 36, canvas.height - 36);
-  } else if (style.includes('floral')) {
-    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 20);
-    ctx.fillStyle = '#d7c3a5';
-    ctx.fill();
-    ctx.strokeStyle = '#775e58';
-    ctx.lineWidth = 20;
-    ctx.strokeRect(22, 22, canvas.width - 44, canvas.height - 44);
-    ctx.strokeStyle = '#9a795f';
-    ctx.lineWidth = 8;
-    ctx.strokeRect(48, 48, canvas.width - 96, canvas.height - 96);
-    const flowers = [
-      [150,130,'#a95f62'], [310,185,'#71876b'], [520,125,'#be8460'], [640,245,'#8f6878'],
-      [190,350,'#c08a66'], [390,320,'#a35f62'], [560,380,'#6f8d70']
-    ];
-    for (const [x,y,color] of flowers) {
-      ctx.strokeStyle = '#62785f';
-      ctx.lineWidth = 9;
-      ctx.beginPath(); ctx.moveTo(x, y + 18); ctx.quadraticCurveTo(x - 35, y + 55, x - 18, y + 90); ctx.stroke();
-      for (let i = 0; i < 6; i++) {
-        const a = i * Math.PI / 3;
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.ellipse(x + Math.cos(a) * 22, y + Math.sin(a) * 22, 18, 10, a, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.fillStyle = '#e5c87b';
-      ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fill();
-    }
-  } else {
-    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 18);
-    ctx.fillStyle = '#cbbca7';
-    ctx.fill();
-    for (let y = 30; y < canvas.height - 30; y += 14) {
-      ctx.strokeStyle = y % 28 === 0 ? '#998b78' : '#dfd4c4';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.moveTo(30, y);
-      for (let x = 30; x < canvas.width - 30; x += 20) ctx.lineTo(x, y + Math.sin(x * .08 + y) * 2.5);
-      ctx.stroke();
-    }
-    ctx.strokeStyle = '#8e806f';
-    ctx.lineWidth = 14;
-    ctx.strokeRect(22, 22, canvas.width - 44, canvas.height - 44);
+  } else if (key === 'jute' || key === 'woven') {
+    const gapY=Math.max(3,py(key==='jute'?.55:.75));
+    for(let y=0;y<canvas.height;y+=gapY){ctx.strokeStyle=(Math.round(y/gapY)%3)?colors[1]:colors[2];ctx.globalAlpha=key==='jute'?.72:.48;ctx.lineWidth=Math.max(1,py(.14));ctx.beginPath();ctx.moveTo(0,y);for(let x=0;x<=canvas.width;x+=Math.max(8,px(1.5)))ctx.lineTo(x,y+Math.sin(x*.035+y*.02)*Math.max(1,py(.08)));ctx.stroke();}
+    ctx.globalAlpha=.22;for(let x=0;x<canvas.width;x+=Math.max(5,px(1.2))){ctx.strokeStyle=colors[1];ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+(random()-.5)*px(.6),canvas.height);ctx.stroke();}ctx.globalAlpha=1;
+  } else if (key === 'braided') {
+    ctx.save();ctx.translate(canvas.width/2,canvas.height/2);const rx=canvas.width*.48,ry=canvas.height*.47;ctx.lineCap='round';const rings=Math.max(8,Math.floor(Math.min(widthIn,depthIn)/3));for(let i=0;i<rings;i++){ctx.beginPath();ctx.ellipse(0,0,rx*(1-i/rings*.92),ry*(1-i/rings*.92),0,0,Math.PI*2);ctx.strokeStyle=colors[i%colors.length];ctx.lineWidth=Math.max(3,Math.min(canvas.width,canvas.height)/rings*.62);ctx.stroke();}ctx.restore();
+  } else if (key === 'fauxfur') {
+    const grad=ctx.createRadialGradient(canvas.width*.42,canvas.height*.35,4,canvas.width*.5,canvas.height*.5,Math.max(canvas.width,canvas.height)*.7);grad.addColorStop(0,colors[0]);grad.addColorStop(.68,colors[1]);grad.addColorStop(1,colors[2]);ctx.fillStyle=grad;ctx.fillRect(0,0,canvas.width,canvas.height);ctx.globalAlpha=.42;for(let i=0;i<Math.min(9000,canvas.width*canvas.height/65);i++){const x=random()*canvas.width,y=random()*canvas.height,l=1+random()*5;ctx.strokeStyle=i%3?colors[0]:colors[2];ctx.lineWidth=.5+random();ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+(random()-.5)*l,y+(random()-.5)*l);ctx.stroke();}ctx.globalAlpha=1;
   }
 
-  // Fine fibers prevent the texture from looking like a flat printed card.
-  ctx.globalAlpha = .14;
-  for (let i = 0; i < 1400; i++) {
-    ctx.fillStyle = i % 2 ? '#ffffff' : '#4f463c';
-    ctx.fillRect(random() * canvas.width, random() * canvas.height, 1.5, .7);
-  }
-  ctx.globalAlpha = 1;
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  const tileWidthInches = Math.max(12, Number(item.rugPatternScale) || 60);
-  const tileHeightInches = tileWidthInches * (canvas.height / canvas.width);
-  texture.repeat.set(Math.max(.20, Number(item.w || 60) / tileWidthInches), Math.max(.20, Number(item.d || 48) / tileHeightInches));
-  texture.anisotropy = Math.min(12, threeRuntime?.renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+  // Draw a single bound edge; unlike the previous implementation it never repeats or tiles the border.
+  const edge=Math.max(4,Math.min(canvas.width,canvas.height)*.025);ctx.strokeStyle=colors[1];ctx.globalAlpha=.78;ctx.lineWidth=edge;ctx.strokeRect(edge/2,edge/2,canvas.width-edge,canvas.height-edge);ctx.globalAlpha=1;
+  // Fine fibers at physical scale.
+  ctx.globalAlpha=.10;for(let i=0;i<Math.min(6000,canvas.width*canvas.height/90);i++){ctx.fillStyle=i%2?'#fff':'#3d352d';ctx.fillRect(random()*canvas.width,random()*canvas.height,1.2,.7);}ctx.globalAlpha=1;
+
+  const texture=new THREE.CanvasTexture(canvas);
+  texture.colorSpace=THREE.SRGBColorSpace;
+  texture.wrapS=THREE.ClampToEdgeWrapping; texture.wrapT=THREE.ClampToEdgeWrapping;
+  texture.repeat.set(1,1); texture.offset.set(0,0);
+  texture.minFilter=THREE.LinearMipmapLinearFilter; texture.magFilter=THREE.LinearFilter;
+  texture.generateMipmaps=true;
+  texture.anisotropy=Math.min(16,threeRuntime?.renderer?.capabilities?.getMaxAnisotropy?.()||1);
+  texture.needsUpdate=true;
   return texture;
 }
 
@@ -4398,10 +4741,21 @@ function createFurnitureModel(item) {
       const shape = item.rugShape || (String(item.rugStyle || '').includes('braided') ? 'oval' : 'rect');
       let geometry;
       if (shape === 'oval' || shape === 'round') geometry = new THREE.CircleGeometry(.5, 96);
-      else geometry = new THREE.PlaneGeometry(w, d, 8, 8);
+      else if (shape === 'organic') {
+        const organic = new THREE.Shape();
+        const points = 48;
+        for (let i = 0; i <= points; i++) {
+          const a = i / points * Math.PI * 2;
+          const radius = .46 + Math.sin(a * 3 + .4) * .055 + Math.sin(a * 5 - .8) * .035;
+          const x = Math.cos(a) * radius;
+          const y = Math.sin(a) * radius;
+          if (i === 0) organic.moveTo(x, y); else organic.lineTo(x, y);
+        }
+        geometry = new THREE.ShapeGeometry(organic, 12);
+      } else geometry = new THREE.PlaneGeometry(w, d, 8, 8);
       const rug = new THREE.Mesh(geometry, rugMaterial);
       rug.rotation.x = -Math.PI / 2;
-      if (shape === 'oval' || shape === 'round') rug.scale.set(shape === 'round' ? Math.min(w,d) : w, shape === 'round' ? Math.min(w,d) : d, 1);
+      if (shape === 'oval' || shape === 'round' || shape === 'organic') rug.scale.set(shape === 'round' ? Math.min(w,d) : w, shape === 'round' ? Math.min(w,d) : d, 1);
       rug.position.y = rugHeight; rug.receiveShadow = true; rug.userData.itemId = item.id; group.add(rug);
       if (item.rugFringe !== false && !['oval','round','organic'].includes(shape)) {
         const fringeMaterial = new THREE.MeshStandardMaterial({ color: item.finish === 'blush' ? 0xd7b8bd : 0xd8cbb7, roughness: 1 });
@@ -4848,25 +5202,29 @@ function rebuild3D() {
 function updateWallFade() {
   if (!threeRuntime?.wallObjects?.length) return;
   const { camera, roomW, roomD } = threeRuntime;
-  const distances = {
-    left: Math.abs(camera.position.x + roomW / 2),
-    right: Math.abs(camera.position.x - roomW / 2),
-    top: Math.abs(camera.position.z + roomD / 2),
-    bottom: Math.abs(camera.position.z - roomD / 2)
+  const cullEnabled = state.meta.wallCulling !== false && $('threeCullWallsToggle')?.checked !== false;
+  const outsideScores = {
+    left: Math.max(0, -camera.position.x - roomW / 2), right: Math.max(0, camera.position.x - roomW / 2),
+    top: Math.max(0, -camera.position.z - roomD / 2), bottom: Math.max(0, camera.position.z - roomD / 2)
   };
-  const nearX = distances.left < distances.right ? 'left' : 'right';
-  const nearZ = distances.top < distances.bottom ? 'top' : 'bottom';
-  const apply = group => group.traverse(object => {
-    if (!object.material || !object.userData.wall) return;
-    const faded = object.userData.wall === nearX || object.userData.wall === nearZ;
-    const materials = Array.isArray(object.material) ? object.material : [object.material];
-    for (const material of materials) {
-      if (!('opacity' in material)) continue;
-      material.transparent = true;
-      const isGlass = material.opacity < .7 && object.userData.openingId;
-      material.opacity = isGlass ? (faded ? .10 : .46) : (faded ? .10 : 1);
-      material.depthWrite = !faded;
+  const ranked = Object.entries(outsideScores).sort((a,b)=>b[1]-a[1]);
+  const culled = new Set();
+  if (cullEnabled) {
+    if (ranked[0][1] > .05) culled.add(ranked[0][0]);
+    if (ranked[1][1] > .35 && (ranked[0][0] === 'left' || ranked[0][0] === 'right') !== (ranked[1][0] === 'left' || ranked[1][0] === 'right')) culled.add(ranked[1][0]);
+    if (!culled.size) {
+      const distances={left:Math.abs(camera.position.x+roomW/2),right:Math.abs(camera.position.x-roomW/2),top:Math.abs(camera.position.z+roomD/2),bottom:Math.abs(camera.position.z-roomD/2)};
+      culled.add(Object.entries(distances).sort((a,b)=>a[1]-b[1])[0][0]);
     }
+  }
+  const apply = group => group.traverse(object => {
+    if (!object.userData?.wall) return;
+    const hide = culled.has(object.userData.wall);
+    object.visible = !hide;
+    object.userData.culledByCamera = hide;
+    if (!object.material) return;
+    const materials=Array.isArray(object.material)?object.material:[object.material];
+    for(const material of materials){ if('opacity' in material){ material.transparent=Boolean(material.transparent || material.opacity<1); material.depthWrite=true; } }
   });
   apply(threeRuntime.roomGroup);
   apply(threeRuntime.openingGroup);
@@ -4955,7 +5313,8 @@ PRESETS.forEach(preset => {
   const button = document.createElement('button');
   button.type = 'button';
   button.className = 'preset';
-  button.innerHTML = `<span>${preset.icon}</span><span>${escapeHtml(preset.name)}</span>`;
+  const presetIndex = PRESETS.indexOf(preset);
+  button.innerHTML = `<img class="preset-model-preview" data-model-preview="${presetIndex}" src="${fallbackPreviewSvg(preset)}" alt="" /><span>${escapeHtml(preset.name)}</span>`;
   button.addEventListener('click', () => {
     if (preset.kind === 'custom') $('customPanel').classList.remove('hidden');
     else addFurniture(preset);
@@ -4978,6 +5337,9 @@ $('copyBtn').addEventListener('click', copyShareLink);
 $('leaveBtn').addEventListener('click', leaveRoom);
 $('applyRoomBtn').addEventListener('click', updateRoom);
 $('photoRoomBtn').addEventListener('click', applyPhotoRoom);
+$('layoutIdeaSelect').addEventListener('change', updateLayoutIdeaDescription);
+$('applyLayoutIdeaBtn').addEventListener('click', applyRoomLayoutIdea);
+updateLayoutIdeaDescription();
 $('snapToggle').addEventListener('change', updateRoom);
 $('wallSnapToggle').addEventListener('change', () => setWallSnap($('wallSnapToggle').checked));
 $('starterBtn').addEventListener('click', addStarterSet);
@@ -5106,6 +5468,11 @@ function setWallSnap(enabled) {
   toast(state.meta.wallSnap ? 'Wall snapping enabled.' : 'Wall snapping disabled.');
 }
 $('threeWallSnapToggle').addEventListener('change', () => setWallSnap($('threeWallSnapToggle').checked));
+$('threeCullWallsToggle').addEventListener('change', () => {
+  state.meta.wallCulling = $('threeCullWallsToggle').checked;
+  state.meta.rev = nextRev(); saveLocal(); actions?.meta.send(state.meta); updateWallFade();
+  toast(state.meta.wallCulling ? 'Front-wall culling enabled.' : 'Wall culling disabled; walls now block taps.');
+});
 function adjustSelected3D(patchFurniture, patchWindow = null) {
   if (selectedType === 'furniture' && selectedId) {
     const item = state.furniture[selectedId];
