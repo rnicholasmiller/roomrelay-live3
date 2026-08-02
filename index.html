@@ -170,6 +170,13 @@
     .custom-grid { display: grid; grid-template-columns: 1.2fr repeat(3, .7fr); gap: 8px; }
     .three-panel { padding: 12px; }
     .three-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .three-controls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; margin-top: 8px; }
+    .three-controls label { font-size: .78rem; }
+    .three-controls .row { grid-column: 1 / -1; }
+    .three-controls select { min-height: 42px; padding: 8px 10px; }
+    .three-controls .form-switch { min-height: 42px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel2); justify-content: center; }
+    .three-adjust { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; width: 100%; }
+    .three-adjust .btn { padding-inline: 6px; }
     .three-host { height: min(66vh, 650px); min-height: 420px; border-radius: 14px; overflow: hidden; background: linear-gradient(#dbe8f7, #f7f4ea); border: 1px solid var(--border); position: relative; touch-action: none; }
     @media (prefers-color-scheme: dark) { .three-host { background: linear-gradient(#202b3e, #171a20); } }
     .three-host canvas { width: 100%; height: 100%; display: block; touch-action: none; }
@@ -222,6 +229,10 @@
       .action-grid { grid-template-columns: 1fr 1fr; }
       .action-grid .danger { grid-column: 1 / -1; }
       .three-host { min-height: 470px; height: 64vh; }
+      .three-controls { grid-template-columns: 1fr 1fr; }
+      .three-controls .form-switch { grid-column: 1 / -1; }
+      .three-adjust { grid-template-columns: repeat(3, 1fr); }
+      .three-adjust .wide-mobile { grid-column: span 2; }
     }
   </style>
 </head>
@@ -346,6 +357,7 @@
               <label>Width (in)<input id="itemWidth" inputmode="decimal" type="number" min="6" max="240" step="1" /></label>
               <label>Depth (in)<input id="itemDepth" inputmode="decimal" type="number" min="6" max="240" step="1" /></label>
               <label>Height (in)<input id="itemHeight" inputmode="decimal" type="number" min="2" max="120" step="1" /></label>
+              <label>Elevation (in)<input id="itemElevation" inputmode="decimal" type="number" min="0" max="120" step="0.5" /></label>
             </div>
             <div class="row spread">
               <span class="small muted">Nudge 3 inches</span>
@@ -404,17 +416,40 @@
         <div class="three-toolbar">
           <div>
             <h2 style="margin-bottom:2px">3D room preview</h2>
-            <div id="threeSelection" class="small muted">Drag to orbit · pinch to zoom · drag furniture directly to move it</div>
+            <div id="threeSelection" class="small muted">Drag objects freely · drag doors/windows along walls · pinch to zoom</div>
             <div id="threePresence" class="three-presence">Only you in 3D</div>
           </div>
           <div class="row">
             <button id="topViewBtn" class="btn compact" type="button">Top view</button>
             <button id="resetViewBtn" class="btn compact primary" type="button">Room view</button>
           </div>
+          <div class="three-controls">
+            <label>Lighting
+              <select id="lightingMode">
+                <option value="day">Daylight</option>
+                <option value="warm">Warm evening</option>
+                <option value="studio">Bright studio</option>
+              </select>
+            </label>
+            <label>Drag mode
+              <select id="threeMoveMode">
+                <option value="floor">Across floor / wall</option>
+                <option value="height">Up and down</option>
+              </select>
+            </label>
+            <label class="form-switch"><input id="threeSnapToggle" type="checkbox" /> Snap 3 in while dragging</label>
+            <div class="three-adjust">
+              <button id="threeRotateLeftBtn" class="btn compact" type="button">↶ 15°</button>
+              <button id="threeRotateRightBtn" class="btn compact" type="button">↷ 15°</button>
+              <button id="threeLowerBtn" class="btn compact" type="button">Lower 1 in</button>
+              <button id="threeRaiseBtn" class="btn compact" type="button">Raise 1 in</button>
+              <button id="threeFloorBtn" class="btn compact wide-mobile" type="button">Place on floor</button>
+            </div>
+          </div>
         </div>
         <div id="threeHost" class="three-host">
           <div id="threeStatus" class="three-status">Open this tab to load the 3D room.</div>
-          <div class="three-hint">Empty space: orbit · furniture: move · two fingers: zoom</div>
+          <div class="three-hint">Empty space: orbit · object: free move · door/window: slide on wall · height mode: drag vertically</div>
         </div>
       </section>
 
@@ -513,8 +548,8 @@ function photoOpenings() {
 
 function freshState() {
   return {
-    version: 3,
-    meta: { width: 150, depth: 126, wallHeight: 96, snap: true, rev: { n: 0, a: '' } },
+    version: 4,
+    meta: { width: 150, depth: 126, wallHeight: 96, snap: true, threeSnap: false, lighting: 'day', rev: { n: 0, a: '' } },
     furniture: {},
     openings: photoOpenings(),
     messages: {}
@@ -554,7 +589,7 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function storageKey() { return `roomrelay:v3:${currentCode}`; }
+function storageKey() { return `roomrelay:v4:${currentCode}`; }
 
 function safeGet(key) {
   try { return localStorage.getItem(key); } catch (_) { return null; }
@@ -591,6 +626,8 @@ function normalizeItem(raw) {
   item.w = Number(item.w ?? 36);
   item.x = Number(item.x ?? 0);
   item.y = Number(item.y ?? 0);
+  item.elevation = Number(item.elevation ?? 0);
+  item.rotation = Number(item.rotation ?? 0);
   item.kind = item.kind || inferKind(item.name);
   item.deleted = Boolean(item.deleted);
   item.rev = item.rev || { n: 0, a: '' };
@@ -620,6 +657,8 @@ function normalizeState(raw) {
   base.meta.depth = Number(oldMeta.depth ?? oldMeta.height ?? 126);
   base.meta.wallHeight = Number(oldMeta.wallHeight || 96);
   base.meta.snap = oldMeta.snap !== false;
+  base.meta.threeSnap = oldMeta.threeSnap === true;
+  base.meta.lighting = ['day', 'warm', 'studio'].includes(oldMeta.lighting) ? oldMeta.lighting : 'day';
   base.meta.rev = oldMeta.rev || base.meta.rev;
   base.furniture = {};
   for (const [id, rawItem] of Object.entries(raw.furniture || {})) base.furniture[id] = normalizeItem({ id, ...rawItem });
@@ -637,7 +676,7 @@ function saveLocal() {
 
 function loadLocal() {
   try {
-    const keys = [storageKey(), `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
+    const keys = [storageKey(), `roomrelay:v3:${currentCode}`, `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
     for (const key of keys) {
       const stored = safeGet(key);
       if (stored) {
@@ -677,6 +716,8 @@ function clampItem(input) {
   item.w = Math.max(6, Math.min(Number(item.w) || 6, state.meta.width));
   item.d = Math.max(6, Math.min(Number(item.d) || 6, state.meta.depth));
   item.height = Math.max(2, Math.min(Number(item.height) || 30, 120));
+  item.elevation = Math.max(0, Math.min(Number(item.elevation) || 0, Math.max(120, state.meta.wallHeight)));
+  item.rotation = ((Number(item.rotation) || 0) % 360 + 360) % 360;
   item.x = Math.max(0, Math.min(Number(item.x) || 0, state.meta.width - item.w));
   item.y = Math.max(0, Math.min(Number(item.y) || 0, state.meta.depth - item.d));
   return item;
@@ -700,6 +741,10 @@ function snapValue(value) {
   return state.meta.snap ? Math.round(value / 3) * 3 : Math.round(value * 2) / 2;
 }
 
+function threeSnapValue(value) {
+  return $('threeSnapToggle')?.checked ? Math.round(value / 3) * 3 : Math.round(value * 10) / 10;
+}
+
 function addFurniture(preset, x = null, y = null) {
   const id = uid();
   const item = clampItem({
@@ -711,6 +756,8 @@ function addFurniture(preset, x = null, y = null) {
     height: preset.height,
     x: x ?? Math.max(0, (state.meta.width - preset.w) / 2),
     y: y ?? Math.max(0, (state.meta.depth - preset.d) / 2),
+    elevation: Number(preset.elevation || 0),
+    rotation: Number(preset.rotation || 0),
     deleted: false,
     rev: nextRev(),
     updatedBy: myName
@@ -812,7 +859,7 @@ function removeOpening(id) {
 function updateRoom() {
   const width = Math.max(48, Math.min(480, Number($('roomWidth').value) * 12 || state.meta.width));
   const depth = Math.max(48, Math.min(480, Number($('roomDepth').value) * 12 || state.meta.depth));
-  const meta = { ...state.meta, width, depth, snap: $('snapToggle').checked, rev: nextRev() };
+  const meta = { ...state.meta, width, depth, snap: $('snapToggle').checked, threeSnap: $('threeSnapToggle')?.checked === true, lighting: $('lightingMode')?.value || state.meta.lighting || 'day', rev: nextRev() };
   state.meta = meta;
   for (const item of activeFurniture()) state.furniture[item.id] = { ...clampItem(item), rev: nextRev(), updatedBy: myName };
   for (const opening of activeOpenings()) state.openings[opening.id] = { ...clampOpening(opening), rev: nextRev(), updatedBy: myName };
@@ -863,6 +910,8 @@ function updateInputs() {
   $('roomWidth').value = formatFeet(state.meta.width);
   $('roomDepth').value = formatFeet(state.meta.depth);
   $('snapToggle').checked = state.meta.snap !== false;
+  if ($('threeSnapToggle')) $('threeSnapToggle').checked = state.meta.threeSnap === true;
+  if ($('lightingMode')) $('lightingMode').value = state.meta.lighting || 'day';
   const furnitureCount = activeFurniture().length;
   const openingCount = activeOpenings().length;
   $('itemCount').textContent = `${furnitureCount} furniture · ${openingCount} openings`;
@@ -928,6 +977,8 @@ function positionFurnitureElement(el, item) {
   el.style.top = `${item.y / state.meta.depth * 100}%`;
   el.style.width = `${item.w / state.meta.width * 100}%`;
   el.style.height = `${item.d / state.meta.depth * 100}%`;
+  el.style.transform = `rotate(${item.rotation || 0}deg)`;
+  el.style.transformOrigin = 'center';
 }
 
 function positionOpeningElement(el, opening) {
@@ -973,7 +1024,8 @@ function renderSelection() {
     $('itemWidth').value = Math.round(furniture.w);
     $('itemDepth').value = Math.round(furniture.d);
     $('itemHeight').value = Math.round(furniture.height);
-    $('positionLabel').textContent = `${Math.round(furniture.x)} in from left · ${Math.round(furniture.y)} in from top`;
+    $('itemElevation').value = Math.round(furniture.elevation * 10) / 10;
+    $('positionLabel').textContent = `${Math.round(furniture.x * 10) / 10} in from left · ${Math.round(furniture.y * 10) / 10} in from top · ${Math.round(furniture.elevation * 10) / 10} in high`;
   }
 
   if (openingVisible) {
@@ -1395,6 +1447,8 @@ async function init3D() {
     controls.maxPolarAngle = Math.PI / 2.01;
     controls.target.set(0, 2.6, 0);
 
+    const ambient = new THREE.AmbientLight(0xfff1dc, .55);
+    scene.add(ambient);
     const hemi = new THREE.HemisphereLight(0xfff9ed, 0x6c7278, 2.25);
     scene.add(hemi);
     const warm = new THREE.DirectionalLight(0xfff4df, 3.1);
@@ -1416,7 +1470,8 @@ async function init3D() {
     const openingGroup = new THREE.Group();
     const furnitureGroup = new THREE.Group();
     const presenceGroup = new THREE.Group();
-    scene.add(roomGroup, openingGroup, furnitureGroup, presenceGroup);
+    const lightingGroup = new THREE.Group();
+    scene.add(roomGroup, openingGroup, furnitureGroup, presenceGroup, lightingGroup);
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -1424,8 +1479,8 @@ async function init3D() {
     const planePoint = new THREE.Vector3();
 
     threeRuntime = {
-      THREE, scene, camera, renderer, controls, roomGroup, openingGroup, furnitureGroup, presenceGroup,
-      raycaster, pointer, floorPlane, planePoint, furnitureObjects: new Map(), wallObjects: [], drag: null,
+      THREE, scene, camera, renderer, controls, roomGroup, openingGroup, furnitureGroup, presenceGroup, lightingGroup,
+      ambient, hemi, warm, fill, raycaster, pointer, floorPlane, planePoint, furnitureObjects: new Map(), openingObjects: new Map(), wallObjects: [], drag: null,
       pointerStart: null, animationId: null, roomW: 12.5, roomD: 10.5
     };
 
@@ -1436,6 +1491,9 @@ async function init3D() {
     renderer.domElement.addEventListener('pointercancel', handle3DPointerUp, true);
 
     $('threeStatus').classList.add('hidden');
+    $('threeSnapToggle').checked = state.meta.threeSnap === true;
+    $('lightingMode').value = state.meta.lighting || 'day';
+    applyLightingMode();
     resize3D();
     rebuild3D();
     reset3DView(false);
@@ -1474,68 +1532,138 @@ function findEntityOnObject(object) {
   return null;
 }
 
+function wallDragPlane(opening) {
+  const { THREE, roomW, roomD } = threeRuntime;
+  if (opening.wall === 'top') return new THREE.Plane(new THREE.Vector3(0, 0, 1), roomD / 2);
+  if (opening.wall === 'bottom') return new THREE.Plane(new THREE.Vector3(0, 0, 1), -roomD / 2);
+  if (opening.wall === 'left') return new THREE.Plane(new THREE.Vector3(1, 0, 0), roomW / 2);
+  return new THREE.Plane(new THREE.Vector3(1, 0, 0), -roomW / 2);
+}
+
+function openingAlongFeet(opening, point) {
+  return opening.wall === 'top' || opening.wall === 'bottom'
+    ? point.x + threeRuntime.roomW / 2
+    : point.z + threeRuntime.roomD / 2;
+}
+
 function handle3DPointerDown(event) {
   if (!threeRuntime || event.button > 0) return;
   setRayFromEvent(event);
-  const furnitureHits = threeRuntime.raycaster.intersectObjects(threeRuntime.furnitureGroup.children, true)
-    .filter(hit => findEntityOnObject(hit.object)?.type === 'furniture');
+  const hits = threeRuntime.raycaster.intersectObjects([threeRuntime.furnitureGroup, threeRuntime.openingGroup], true);
+  const first = hits.find(hit => findEntityOnObject(hit.object));
   threeRuntime.pointerStart = { x: event.clientX, y: event.clientY };
-  if (!furnitureHits.length) return;
-  const entity = findEntityOnObject(furnitureHits[0].object);
-  const item = state.furniture[entity.id];
-  const object = threeRuntime.furnitureObjects.get(entity.id);
-  if (!item || !object) return;
+  if (!first) return;
+  const entity = findEntityOnObject(first.object);
+  const object = entity.type === 'furniture'
+    ? threeRuntime.furnitureObjects.get(entity.id)
+    : threeRuntime.openingObjects.get(entity.id);
+  const data = entity.type === 'furniture' ? state.furniture[entity.id] : state.openings[entity.id];
+  if (!data || !object) return;
   event.preventDefault();
   event.stopPropagation();
-  setRayFromEvent(event);
-  threeRuntime.raycaster.ray.intersectPlane(threeRuntime.floorPlane, threeRuntime.planePoint);
-  threeRuntime.drag = {
+  const mode = $('threeMoveMode')?.value || 'floor';
+  const dragData = {
+    type: entity.type,
     id: entity.id,
     pointerId: event.pointerId,
     object,
-    offsetX: object.position.x - threeRuntime.planePoint.x,
-    offsetZ: object.position.z - threeRuntime.planePoint.z,
+    mode,
     moved: false,
     startX: event.clientX,
-    startY: event.clientY
+    startY: event.clientY,
+    originalX: data.x,
+    originalY: data.y,
+    originalElevation: data.elevation || 0,
+    originalOffset: data.offset || 0,
+    originalSill: data.sill || 0
   };
+  if (entity.type === 'furniture' && mode === 'floor') {
+    if (!threeRuntime.raycaster.ray.intersectPlane(threeRuntime.floorPlane, threeRuntime.planePoint)) return;
+    dragData.offsetX = object.position.x - threeRuntime.planePoint.x;
+    dragData.offsetZ = object.position.z - threeRuntime.planePoint.z;
+  } else if (entity.type === 'opening' && mode === 'floor') {
+    const plane = wallDragPlane(data);
+    if (!threeRuntime.raycaster.ray.intersectPlane(plane, threeRuntime.planePoint)) return;
+    dragData.wallPlane = plane;
+    dragData.pointerAlongOffset = (data.offset + data.width / 2) / 12 - openingAlongFeet(data, threeRuntime.planePoint);
+  }
+  threeRuntime.drag = dragData;
   threeRuntime.controls.enabled = false;
   threeRuntime.renderer.domElement.setPointerCapture(event.pointerId);
-  selectEntity('furniture', entity.id);
+  selectedType = entity.type;
+  selectedId = entity.id;
+  renderPlan();
+  renderSelection();
+  const label = entity.type === 'furniture' ? state.furniture[entity.id]?.name : state.openings[entity.id]?.name;
+  $('threeSelection').textContent = entity.type === 'furniture'
+    ? `Selected: ${label} · drag freely or switch to height mode`
+    : `Selected: ${label} · drag directly along its wall${state.openings[entity.id]?.type === 'window' ? ' or switch to height mode' : ''}`;
 }
 
 function handle3DPointerMove(event) {
   const runtime = threeRuntime;
-  if (!runtime?.drag || runtime.drag.pointerId !== event.pointerId) return;
+  const drag = runtime?.drag;
+  if (!drag || drag.pointerId !== event.pointerId) return;
   event.preventDefault();
   event.stopPropagation();
   setRayFromEvent(event);
-  if (!runtime.raycaster.ray.intersectPlane(runtime.floorPlane, runtime.planePoint)) return;
-  const item = state.furniture[runtime.drag.id];
-  if (!item) return;
-  const roomW = state.meta.width / 12;
-  const roomD = state.meta.depth / 12;
-  const centerX = runtime.planePoint.x + runtime.drag.offsetX;
-  const centerZ = runtime.planePoint.z + runtime.drag.offsetZ;
-  const next = clampItem({
-    ...item,
-    x: snapValue((centerX + roomW / 2) * 12 - item.w / 2),
-    y: snapValue((centerZ + roomD / 2) * 12 - item.d / 2)
-  });
-  item.x = next.x;
-  item.y = next.y;
-  runtime.drag.object.position.set(
-    -roomW / 2 + (item.x + item.w / 2) / 12,
-    0,
-    -roomD / 2 + (item.y + item.d / 2) / 12
-  );
-  runtime.drag.moved = runtime.drag.moved || Math.hypot(event.clientX - runtime.drag.startX, event.clientY - runtime.drag.startY) > 2;
+  const dy = event.clientY - drag.startY;
+
+  if (drag.type === 'furniture') {
+    const item = state.furniture[drag.id];
+    if (!item) return;
+    if (drag.mode === 'height') {
+      const next = clampItem({ ...item, elevation: threeSnapValue(drag.originalElevation - dy * .25) });
+      item.elevation = next.elevation;
+      drag.object.position.y = item.elevation / 12;
+    } else {
+      if (!runtime.raycaster.ray.intersectPlane(runtime.floorPlane, runtime.planePoint)) return;
+      const centerX = runtime.planePoint.x + drag.offsetX;
+      const centerZ = runtime.planePoint.z + drag.offsetZ;
+      const next = clampItem({
+        ...item,
+        x: threeSnapValue((centerX + runtime.roomW / 2) * 12 - item.w / 2),
+        y: threeSnapValue((centerZ + runtime.roomD / 2) * 12 - item.d / 2)
+      });
+      item.x = next.x;
+      item.y = next.y;
+      drag.object.position.x = -runtime.roomW / 2 + (item.x + item.w / 2) / 12;
+      drag.object.position.z = -runtime.roomD / 2 + (item.y + item.d / 2) / 12;
+    }
+    drag.moved = drag.moved || Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 2;
+    const now = performance.now();
+    if (now - lastDragSend > 75) {
+      item.rev = nextRev();
+      item.updatedBy = myName;
+      actions?.item.send({ ...item });
+      actions?.active.send({ type: 'furniture', id: item.id });
+      lastDragSend = now;
+    }
+    return;
+  }
+
+  const opening = state.openings[drag.id];
+  if (!opening) return;
+  if (drag.mode === 'height' && opening.type === 'window') {
+    const next = clampOpening({ ...opening, sill: threeSnapValue(drag.originalSill - dy * .25) });
+    opening.sill = next.sill;
+    drag.object.position.y = (opening.sill - drag.originalSill) / 12;
+  } else {
+    if (!drag.wallPlane || !runtime.raycaster.ray.intersectPlane(drag.wallPlane, runtime.planePoint)) return;
+    const centerFeet = openingAlongFeet(opening, runtime.planePoint) + drag.pointerAlongOffset;
+    const next = clampOpening({ ...opening, offset: threeSnapValue(centerFeet * 12 - opening.width / 2) });
+    opening.offset = next.offset;
+    const delta = (opening.offset - drag.originalOffset) / 12;
+    if (opening.wall === 'top' || opening.wall === 'bottom') drag.object.position.x = delta;
+    else drag.object.position.z = delta;
+  }
+  drag.moved = drag.moved || Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 2;
   const now = performance.now();
   if (now - lastDragSend > 75) {
-    item.rev = nextRev();
-    item.updatedBy = myName;
-    actions?.item.send({ ...item });
-    actions?.active.send({ type: 'furniture', id: item.id });
+    opening.rev = nextRev();
+    opening.updatedBy = myName;
+    actions?.opening.send({ ...opening });
+    actions?.active.send({ type: 'opening', id: opening.id });
     lastDragSend = now;
   }
 }
@@ -1546,12 +1674,14 @@ function handle3DPointerUp(event) {
   if (runtime.drag && runtime.drag.pointerId === event.pointerId) {
     event.preventDefault();
     event.stopPropagation();
-    const item = state.furniture[runtime.drag.id];
-    if (item) {
-      item.rev = nextRev();
-      item.updatedBy = myName;
+    const drag = runtime.drag;
+    const data = drag.type === 'furniture' ? state.furniture[drag.id] : state.openings[drag.id];
+    if (data) {
+      data.rev = nextRev();
+      data.updatedBy = myName;
       saveLocal();
-      actions?.item.send({ ...item });
+      if (drag.type === 'furniture') actions?.item.send({ ...data });
+      else actions?.opening.send({ ...data });
     }
     if (runtime.renderer.domElement.hasPointerCapture(event.pointerId)) runtime.renderer.domElement.releasePointerCapture(event.pointerId);
     runtime.controls.enabled = true;
@@ -1573,8 +1703,8 @@ function handle3DPointerUp(event) {
     selectEntity(entity.type, entity.id);
     const label = entity.type === 'furniture' ? state.furniture[entity.id]?.name : state.openings[entity.id]?.name;
     $('threeSelection').textContent = entity.type === 'furniture'
-      ? `Selected: ${label} · drag it directly in 3D`
-      : `Selected: ${label} · move it along its wall in 2D`;
+      ? `Selected: ${label} · drag freely or switch to height mode`
+      : `Selected: ${label} · drag directly along its wall${state.openings[entity.id]?.type === 'window' ? ' or switch to height mode' : ''}`;
     break;
   }
 }
@@ -1690,6 +1820,7 @@ function addOpeningVisual(opening, wallH, frameMaterial, doorMaterial, glassMate
   group.userData.openingId = opening.id;
   group.userData.wall = opening.wall;
   openingGroup.add(group);
+  threeRuntime.openingObjects?.set(opening.id, group);
   const start = opening.offset / 12;
   const width = opening.width / 12;
   const height = opening.height / 12;
@@ -2030,6 +2161,76 @@ function createTextSprite(THREE, text, textColor = 0xffffff, backgroundColor = 0
   return sprite;
 }
 
+function applyLightingMode() {
+  if (!threeRuntime) return;
+  const mode = $('lightingMode')?.value || state.meta.lighting || 'day';
+  state.meta.lighting = mode;
+  const { scene, renderer, ambient, hemi, warm, fill } = threeRuntime;
+  if (mode === 'warm') {
+    scene.background.set(0x35302b);
+    scene.fog.color.set(0x35302b);
+    ambient.intensity = .28;
+    hemi.intensity = .55;
+    warm.intensity = .65;
+    fill.intensity = 10;
+    renderer.toneMappingExposure = .92;
+  } else if (mode === 'studio') {
+    scene.background.set(0xe9edf2);
+    scene.fog.color.set(0xe9edf2);
+    ambient.intensity = .85;
+    hemi.intensity = 3.0;
+    warm.intensity = 4.0;
+    fill.intensity = 48;
+    renderer.toneMappingExposure = 1.18;
+  } else {
+    scene.background.set(0xe5e0d5);
+    scene.fog.color.set(0xe5e0d5);
+    ambient.intensity = .55;
+    hemi.intensity = 2.25;
+    warm.intensity = 3.1;
+    fill.intensity = 35;
+    renderer.toneMappingExposure = 1.05;
+  }
+  buildRoomLighting();
+  saveLocal();
+}
+
+function buildRoomLighting() {
+  if (!threeRuntime) return;
+  const { THREE, lightingGroup, roomW, roomD } = threeRuntime;
+  clearGroup(lightingGroup);
+  const mode = $('lightingMode')?.value || state.meta.lighting || 'day';
+  const wallH = state.meta.wallHeight / 12;
+  const positions = [
+    [-roomW * .24, -roomD * .24],
+    [ roomW * .24, -roomD * .24],
+    [-roomW * .24,  roomD * .24],
+    [ roomW * .24,  roomD * .24]
+  ];
+  const fixtureMaterial = new THREE.MeshStandardMaterial({
+    color: 0xfff7dc,
+    emissive: mode === 'warm' ? 0xffad4c : 0xffdf9a,
+    emissiveIntensity: mode === 'studio' ? 1.5 : 1.0,
+    roughness: .45
+  });
+  const rimMaterial = new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: .72, metalness: .08 });
+  const intensity = mode === 'warm' ? 22 : mode === 'studio' ? 30 : 16;
+  for (const [x, z] of positions) {
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(.20, .20, .055, 24), rimMaterial);
+    rim.position.set(x, wallH - .035, z);
+    rim.userData.environmentLight = true;
+    lightingGroup.add(rim);
+    const lens = new THREE.Mesh(new THREE.CylinderGeometry(.15, .15, .03, 24), fixtureMaterial);
+    lens.position.set(x, wallH - .07, z);
+    lens.userData.environmentLight = true;
+    lightingGroup.add(lens);
+    const light = new THREE.PointLight(mode === 'warm' ? 0xffc06b : 0xffedc7, intensity, Math.max(roomW, roomD) * .95, 2);
+    light.position.set(x, wallH - .18, z);
+    light.castShadow = false;
+    lightingGroup.add(light);
+  }
+}
+
 function rebuild3D() {
   if (!threeRuntime) return;
   const { THREE, roomGroup, openingGroup, furnitureGroup } = threeRuntime;
@@ -2037,12 +2238,14 @@ function rebuild3D() {
   clearGroup(openingGroup);
   clearGroup(furnitureGroup);
   threeRuntime.furnitureObjects = new Map();
+  threeRuntime.openingObjects = new Map();
   threeRuntime.wallObjects = [];
   const roomW = state.meta.width / 12;
   const roomD = state.meta.depth / 12;
   const wallH = state.meta.wallHeight / 12;
   threeRuntime.roomW = roomW;
   threeRuntime.roomD = roomD;
+  buildRoomLighting();
 
   const woodTexture = createWoodTexture(THREE, roomW, roomD);
   const floorMaterial = new THREE.MeshStandardMaterial({ map: woodTexture, color: 0xe9e2d7, roughness: .83, metalness: 0 });
@@ -2073,6 +2276,8 @@ function rebuild3D() {
       0,
       -roomD / 2 + (item.y + item.d / 2) / 12
     );
+    model.position.y = (item.elevation || 0) / 12;
+    model.rotation.y = THREE.MathUtils.degToRad(item.rotation || 0);
     furnitureGroup.add(model);
     threeRuntime.furnitureObjects.set(item.id, model);
   }
@@ -2152,12 +2357,12 @@ function update3DSelection() {
   rebuild3D();
   if (selectedType === 'furniture') {
     const item = state.furniture[selectedId];
-    $('threeSelection').textContent = item ? `Selected: ${item.name} · drag it directly in 3D` : 'Drag to orbit · pinch to zoom · drag furniture to move it';
+    $('threeSelection').textContent = item ? `Selected: ${item.name} · drag freely or use height mode` : 'Drag objects freely · doors/windows move directly on walls';
   } else if (selectedType === 'opening') {
     const opening = state.openings[selectedId];
-    $('threeSelection').textContent = opening ? `Selected: ${opening.name} · move it along its wall in 2D` : 'Drag to orbit · pinch to zoom · drag furniture to move it';
+    $('threeSelection').textContent = opening ? `Selected: ${opening.name} · drag directly along its wall${opening.type === 'window' ? ' or use height mode' : ''}` : 'Drag objects freely · doors/windows move directly on walls';
   } else {
-    $('threeSelection').textContent = 'Drag to orbit · pinch to zoom · drag furniture to move it';
+    $('threeSelection').textContent = 'Drag objects freely · doors/windows move directly on walls';
   }
 }
 
@@ -2250,13 +2455,15 @@ function commitSelectedFields() {
     kind: inferKind($('itemName').value),
     w: Number($('itemWidth').value) || 12,
     d: Number($('itemDepth').value) || 12,
-    height: Number($('itemHeight').value) || 30
+    height: Number($('itemHeight').value) || 30,
+    elevation: Number($('itemElevation').value) || 0
   });
 }
 $('itemName').addEventListener('change', commitSelectedFields);
 $('itemWidth').addEventListener('change', commitSelectedFields);
 $('itemDepth').addEventListener('change', commitSelectedFields);
 $('itemHeight').addEventListener('change', commitSelectedFields);
+$('itemElevation').addEventListener('change', commitSelectedFields);
 $('rotateBtn').addEventListener('click', () => {
   const item = selectedType === 'furniture' && selectedId ? state.furniture[selectedId] : null;
   if (item) patchItem(selectedId, { w: item.d, d: item.w });
@@ -2309,6 +2516,35 @@ $('sendIdeaBtn').addEventListener('click', () => addMessage($('ideaInput').value
 $('ideaInput').addEventListener('keydown', event => {
   if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') addMessage(event.target.value);
 });
+$('lightingMode').addEventListener('change', () => {
+  state.meta.lighting = $('lightingMode').value;
+  state.meta.rev = nextRev();
+  saveLocal();
+  applyLightingMode();
+  actions?.meta.send(state.meta);
+});
+$('threeSnapToggle').addEventListener('change', () => {
+  state.meta.threeSnap = $('threeSnapToggle').checked;
+  state.meta.rev = nextRev();
+  saveLocal();
+  actions?.meta.send(state.meta);
+});
+function adjustSelected3D(patchFurniture, patchWindow = null) {
+  if (selectedType === 'furniture' && selectedId) {
+    const item = state.furniture[selectedId];
+    if (item) patchItem(selectedId, typeof patchFurniture === 'function' ? patchFurniture(item) : patchFurniture);
+    return;
+  }
+  if (selectedType === 'opening' && selectedId && patchWindow) {
+    const opening = state.openings[selectedId];
+    if (opening?.type === 'window') patchOpening(selectedId, typeof patchWindow === 'function' ? patchWindow(opening) : patchWindow);
+  }
+}
+$('threeRotateLeftBtn').addEventListener('click', () => adjustSelected3D(item => ({ rotation: item.rotation - 15 })));
+$('threeRotateRightBtn').addEventListener('click', () => adjustSelected3D(item => ({ rotation: item.rotation + 15 })));
+$('threeLowerBtn').addEventListener('click', () => adjustSelected3D(item => ({ elevation: item.elevation - 1 }), opening => ({ sill: opening.sill - 1 })));
+$('threeRaiseBtn').addEventListener('click', () => adjustSelected3D(item => ({ elevation: item.elevation + 1 }), opening => ({ sill: opening.sill + 1 })));
+$('threeFloorBtn').addEventListener('click', () => adjustSelected3D({ elevation: 0 }, { sill: 0 }));
 $('resetViewBtn').addEventListener('click', () => reset3DView(false));
 $('topViewBtn').addEventListener('click', () => reset3DView(true));
 window.addEventListener('resize', () => { if (currentTab === 'plan') renderPlan(); resize3D(); });
