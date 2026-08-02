@@ -1,11 +1,11 @@
 <!doctype html>
-<!-- RoomRelay Build v17.0.0 -->
+<!-- RoomRelay Build v17.1.0 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#172033" />
-  <title>RoomRelay 3D v17.0.0 — Shared Room Planner</title>
+  <title>RoomRelay 3D v17.1.0 — Shared Room Planner</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -116,6 +116,8 @@
     .dot { width: 9px; height: 9px; border-radius: 50%; background: #9ca3af; }
     .dot.live { background: #22c55e; }
     .dot.connecting { background: #f59e0b; }
+    .connection-detail { display: inline-flex; align-items: center; gap: 5px; margin-left: 2px; font-size: .72rem; color: var(--muted); }
+    .connection-detail strong { color: var(--text); font-weight: 750; }
     .sharebox { padding: 9px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; margin-bottom: 10px; }
     .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-bottom: 10px; position: sticky; top: 84px; z-index: 25; background: var(--bg); padding: 2px 0; }
     .tab { border: 1px solid var(--border); background: var(--panel); border-radius: 12px; min-height: 45px; font-weight: 700; }
@@ -452,7 +454,7 @@
     <section id="joinView" class="panel join stack">
       <div>
         <div class="join-mark">⌂</div>
-        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v17.0.0</span></div>
+        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v17.1.0</span></div>
         <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, realistic seating, IKEA-inspired storage, lighting, and cozy decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
@@ -466,7 +468,7 @@
         <button id="newCodeBtn" class="btn" type="button">New code</button>
         <button id="joinBtn" class="btn primary" type="button">Open room</button>
       </div>
-      <div class="notice"><strong>How to use it:</strong> both people open the same hosted link, enter the same code, and keep the page open while arranging the room.</div>
+      <div class="notice"><strong>How to use it:</strong> both people open the same hosted link, enter the same code, and keep the page open while arranging the room. Auto connection now tries two independent relay networks for better Brave and mobile compatibility.</div>
     </section>
 
     <section id="plannerView" class="hidden">
@@ -474,12 +476,14 @@
         <div>
           <div class="brandline">
             <span class="brand">RoomRelay 3D</span>
-            <span class="version-badge" data-app-version>v17.0.0</span>
+            <span class="version-badge" data-app-version>v17.1.0</span>
             <span class="status"><span id="statusDot" class="dot connecting"></span><span id="statusText">Starting</span></span>
           </div>
           <div class="small muted">Room <span id="roomCodeLabel" class="code"></span> · <span id="peopleLabel">1 person</span></div>
+          <div id="connectionDetail" class="connection-detail"><strong>Auto link</strong><span>starting MQTT + Nostr</span></div>
         </div>
         <div class="row">
+          <button id="reconnectBtn" class="btn compact" type="button">Reconnect</button>
           <button id="shareBtn" class="btn compact primary" type="button">Share</button>
           <button id="leaveBtn" class="btn compact" type="button">Leave</button>
         </div>
@@ -651,7 +655,7 @@
       <section id="threeTab" class="hidden panel three-panel three-v12">
         <div id="threeHost" class="three-host">
           <div class="three-viewport-head" aria-live="polite">
-            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v17.0.0</span></div>
+            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v17.1.0</span></div>
             <div id="threeSelection" class="three-statusline">Tap to select · hold to move · triple-tap selected item to delete</div>
           </div>
           <div id="threePresence" class="three-presence">Only you in 3D</div>
@@ -838,7 +842,7 @@ const $ = id => document.getElementById(id);
 const canvas = $('roomCanvas');
 const joinView = $('joinView');
 const plannerView = $('plannerView');
-const APP_VERSION = '17.0.0';
+const APP_VERSION = '17.1.0';
 const WALL_SNAP_DISTANCE = 12;
 const WALL_ROTATIONS = { top: 0, right: 270, bottom: 180, left: 90 };
 const HOLD_TO_MOVE_MS = 420;
@@ -1016,8 +1020,16 @@ let lastDragSend = 0;
 let backGuardArmed = false;
 let allowBackNavigation = false;
 let roomConnection = null;
+let roomConnections = [];
+let transportActions = [];
 let actions = null;
-let connectionModule = null;
+const connectionModules = new Map();
+const transportStatus = new Map();
+const connectionErrors = new Map();
+const peerLinks = new Map();
+const deviceLinks = new Map();
+let connectionGeneration = 0;
+let connectionStatusTimer = null;
 let currentTab = 'plan';
 let threeRuntime = null;
 let threePlacementPreset = null;
@@ -2567,6 +2579,36 @@ function peerIdFromMeta(meta) {
   return meta?.peerId || meta?.id || meta?.senderId || 'partner';
 }
 
+function transportLinkKey(strategy, peerId) {
+  return `${strategy}:${peerId}`;
+}
+
+function strategyLabel(strategy) {
+  return strategy === 'mqtt' ? 'MQTT' : strategy === 'nostr' ? 'Nostr' : strategy;
+}
+
+function connectionDetailText() {
+  const detail = $('connectionDetail');
+  if (!detail) return;
+  const linkedStrategies = new Set();
+  for (const links of deviceLinks.values()) {
+    for (const link of links) linkedStrategies.add(link.split(':', 1)[0]);
+  }
+  if (peers.size > 0 && linkedStrategies.size) {
+    detail.innerHTML = `<strong>Connected</strong><span>${[...linkedStrategies].map(strategyLabel).join(' + ')}</span>`;
+    return;
+  }
+  const ready = [...transportStatus.entries()].filter(([, status]) => status === 'ready').map(([name]) => strategyLabel(name));
+  const failed = [...transportStatus.entries()].filter(([, status]) => status === 'error').map(([name]) => strategyLabel(name));
+  if (ready.length) {
+    detail.innerHTML = `<strong>Auto link</strong><span>waiting on ${ready.join(' + ')}${failed.length ? ` · ${failed.join(' + ')} retrying` : ''}</span>`;
+  } else if (failed.length) {
+    detail.innerHTML = `<strong>Connection paused</strong><span>tap Reconnect</span>`;
+  } else {
+    detail.innerHTML = '<strong>Auto link</strong><span>starting MQTT + Nostr</span>';
+  }
+}
+
 function updatePresence(mode = null) {
   const count = peers.size + 1;
   $('peopleLabel').textContent = `${count} ${count === 1 ? 'person' : 'people'}`;
@@ -2579,131 +2621,285 @@ function updatePresence(mode = null) {
     dot.classList.add('live');
     $('statusText').textContent = 'Live together';
   } else if (actions) {
+    dot.classList.add('connecting');
     $('statusText').textContent = 'Waiting for partner';
   } else {
     $('statusText').textContent = 'Offline editing';
   }
   const names = [myName, ...peers.values()].filter(Boolean);
   $('peopleNames').textContent = names.length > 1 ? `${names.join(' and ')} are here` : 'Only you are here';
+  connectionDetailText();
   update3DPresence();
 }
 
-async function ensureConnectionModule() {
-  if (!connectionModule) connectionModule = await import('https://cdn.jsdelivr.net/npm/trystero@0.25.3/+esm');
-  return connectionModule;
+async function ensureConnectionModule(strategy) {
+  if (connectionModules.has(strategy)) return connectionModules.get(strategy);
+  const url = strategy === 'mqtt'
+    ? 'https://cdn.jsdelivr.net/npm/@trystero-p2p/mqtt@0.25.3/+esm'
+    : 'https://cdn.jsdelivr.net/npm/trystero@0.25.3/+esm';
+  const promise = import(url);
+  connectionModules.set(strategy, promise);
+  try {
+    return await promise;
+  } catch (error) {
+    connectionModules.delete(strategy);
+    throw error;
+  }
 }
 
-async function connectLive() {
-  updatePresence('connecting');
-  try {
-    const { joinRoom, selfId } = await ensureConnectionModule();
-    actorId = selfId || actorId;
-    roomConnection = joinRoom(
-      { appId: 'roomrelay-3d-v7', password: `roomrelay-${currentCode}` },
-      `room-${currentCode}`,
-      { onJoinError: ({ error }) => toast(`Connection issue: ${error?.message || 'try another network'}`) }
-    );
-    actions = {
-      snapshot: roomConnection.makeAction('snapshot'),
-      item: roomConnection.makeAction('item'),
-      opening: roomConnection.makeAction('opening'),
-      meta: roomConnection.makeAction('meta'),
-      message: roomConnection.makeAction('message'),
-      hello: roomConnection.makeAction('hello'),
-      active: roomConnection.makeAction('active'),
-      presence: roomConnection.makeAction('presence')
-    };
+function createCompositeActions() {
+  const names = ['snapshot', 'item', 'opening', 'meta', 'message', 'hello', 'active', 'presence'];
+  return Object.fromEntries(names.map(name => [name, {
+    send(payload, options = undefined) {
+      let sent = 0;
+      for (const bundle of transportActions) {
+        try {
+          const result = bundle.channels[name].send(payload, options);
+          sent += 1;
+          if (result?.catch) result.catch(() => {});
+        } catch (_) {}
+      }
+      return sent;
+    }
+  }]));
+}
 
-    actions.snapshot.onMessage = incoming => {
-      state = mergeSnapshot(state, incoming);
+function registerPeerLink(strategy, peerId, data = {}) {
+  const link = transportLinkKey(strategy, peerId);
+  const deviceId = String(data.deviceId || peerLinks.get(link) || link);
+  const previousDevice = peerLinks.get(link);
+  if (previousDevice && previousDevice !== deviceId) {
+    const previousLinks = deviceLinks.get(previousDevice);
+    previousLinks?.delete(link);
+    if (!previousLinks?.size) {
+      deviceLinks.delete(previousDevice);
+      peers.delete(previousDevice);
+      remotePresence.delete(previousDevice);
+    }
+  }
+  peerLinks.set(link, deviceId);
+  if (!deviceLinks.has(deviceId)) deviceLinks.set(deviceId, new Set());
+  deviceLinks.get(deviceId).add(link);
+  if (deviceId !== actorId) peers.set(deviceId, data.name || peers.get(deviceId) || 'Partner');
+  return deviceId;
+}
+
+function removePeerLink(strategy, peerId) {
+  const link = transportLinkKey(strategy, peerId);
+  const deviceId = peerLinks.get(link);
+  peerLinks.delete(link);
+  if (!deviceId) return false;
+  const links = deviceLinks.get(deviceId);
+  links?.delete(link);
+  if (links?.size) return false;
+  deviceLinks.delete(deviceId);
+  peers.delete(deviceId);
+  remotePresence.delete(deviceId);
+  return true;
+}
+
+function leaveConnections() {
+  clearTimeout(connectionStatusTimer);
+  connectionStatusTimer = null;
+  for (const bundle of roomConnections) {
+    try { bundle.room.leave(); } catch (_) {}
+  }
+  roomConnections = [];
+  transportActions = [];
+  roomConnection = null;
+  transportStatus.clear();
+  connectionErrors.clear();
+  peerLinks.clear();
+  deviceLinks.clear();
+}
+
+function buildPresencePayload() {
+  const camera = threeRuntime?.camera;
+  const targetVector = threeRuntime?.controls?.target;
+  return {
+    deviceId: actorId,
+    version: APP_VERSION,
+    name: myName,
+    mode: currentTab === 'three' && camera ? 'three' : 'plan',
+    color: actorColor(actorId),
+    camera: camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z } : null,
+    target: targetVector ? { x: targetVector.x, y: targetVector.y, z: targetVector.z } : null,
+    sentAt: Date.now()
+  };
+}
+
+function wireTransport(bundle) {
+  const { strategy, room, channels } = bundle;
+  const linkFromMeta = meta => transportLinkKey(strategy, peerIdFromMeta(meta));
+
+  channels.snapshot.onMessage = incoming => {
+    state = mergeSnapshot(state, incoming);
+    saveLocal();
+    renderAll();
+  };
+  channels.item.onMessage = rawItem => {
+    const item = normalizeItem(rawItem);
+    if (drag?.type === 'furniture' && drag.id === item.id) return;
+    if (threeRuntime?.drag?.id === item.id) return;
+    observeRev(item.rev);
+    if (newer(item.rev, state.furniture[item.id]?.rev)) {
+      state.furniture[item.id] = item;
+      const key = entityKey('furniture', item.id);
+      remoteActive.set(key, Date.now());
+      setTimeout(() => { remoteActive.delete(key); renderPlan(); }, 550);
+      reconcileAttachments();
       saveLocal();
       renderAll();
-    };
-    actions.item.onMessage = rawItem => {
-      const item = normalizeItem(rawItem);
-      if (drag?.type === 'furniture' && drag.id === item.id) return;
-      if (threeRuntime?.drag?.id === item.id) return;
-      observeRev(item.rev);
-      if (newer(item.rev, state.furniture[item.id]?.rev)) {
-        state.furniture[item.id] = item;
-        const key = entityKey('furniture', item.id);
-        remoteActive.set(key, Date.now());
-        setTimeout(() => { remoteActive.delete(key); renderPlan(); }, 550);
-        reconcileAttachments();
-        saveLocal();
-        renderAll();
-      }
-    };
-    actions.opening.onMessage = rawOpening => {
-      const opening = normalizeOpening(rawOpening);
-      if (drag?.type === 'opening' && drag.id === opening.id) return;
-      observeRev(opening.rev);
-      if (newer(opening.rev, state.openings[opening.id]?.rev)) {
-        state.openings[opening.id] = opening;
-        const key = entityKey('opening', opening.id);
-        remoteActive.set(key, Date.now());
-        setTimeout(() => { remoteActive.delete(key); renderPlan(); }, 550);
-        saveLocal();
-        renderAll();
-      }
-    };
-    actions.meta.onMessage = meta => {
-      observeRev(meta.rev);
-      if (newer(meta.rev, state.meta.rev)) {
-        state.meta = { ...state.meta, ...meta };
-        for (const item of activeFurniture()) state.furniture[item.id] = clampItem(item);
-        for (const opening of activeOpenings()) state.openings[opening.id] = clampOpening(opening);
-        saveLocal();
-        renderAll();
-      }
-    };
-    actions.message.onMessage = msg => {
-      observeRev(msg.rev);
-      if (newer(msg.rev, state.messages[msg.id]?.rev)) {
-        state.messages[msg.id] = msg;
-        saveLocal();
-        renderIdeas();
-      }
-    };
-    actions.hello.onMessage = (data, meta) => {
-      const peerId = peerIdFromMeta(meta);
-      peers.set(peerId, data.name || 'Partner');
-      updatePresence();
-    };
-    actions.active.onMessage = ({ type = 'furniture', id }) => {
-      const key = entityKey(type, id);
+    }
+  };
+  channels.opening.onMessage = rawOpening => {
+    const opening = normalizeOpening(rawOpening);
+    if (drag?.type === 'opening' && drag.id === opening.id) return;
+    observeRev(opening.rev);
+    if (newer(opening.rev, state.openings[opening.id]?.rev)) {
+      state.openings[opening.id] = opening;
+      const key = entityKey('opening', opening.id);
       remoteActive.set(key, Date.now());
-      setTimeout(() => { remoteActive.delete(key); renderPlan(); }, 500);
-    };
-    actions.presence.onMessage = (data, meta) => {
-      const peerId = peerIdFromMeta(meta);
-      remotePresence.set(peerId, { ...data, lastSeen: Date.now() });
-      if (data?.name) peers.set(peerId, data.name);
-      update3DPresence();
-    };
-    roomConnection.onPeerJoin = peerId => {
-      peers.set(peerId, 'Partner');
-      updatePresence();
-      actions.hello.send({ name: myName }, { target: peerId });
-      actions.snapshot.send(state, { target: peerId });
-      send3DPresence(true, peerId);
-      toast('Your partner connected.');
-    };
-    roomConnection.onPeerLeave = peerId => {
-      peers.delete(peerId);
-      remotePresence.delete(peerId);
-      updatePresence();
-      toast('Your partner disconnected. Changes remain saved on this phone.');
-    };
-    actions.hello.send({ name: myName });
-    send3DPresence(true);
+      setTimeout(() => { remoteActive.delete(key); renderPlan(); }, 550);
+      saveLocal();
+      renderAll();
+    }
+  };
+  channels.meta.onMessage = meta => {
+    observeRev(meta.rev);
+    if (newer(meta.rev, state.meta.rev)) {
+      state.meta = { ...state.meta, ...meta };
+      for (const item of activeFurniture()) state.furniture[item.id] = clampItem(item);
+      for (const opening of activeOpenings()) state.openings[opening.id] = clampOpening(opening);
+      saveLocal();
+      renderAll();
+    }
+  };
+  channels.message.onMessage = msg => {
+    observeRev(msg.rev);
+    if (newer(msg.rev, state.messages[msg.id]?.rev)) {
+      state.messages[msg.id] = msg;
+      saveLocal();
+      renderIdeas();
+    }
+  };
+  channels.hello.onMessage = (data = {}, meta) => {
+    const peerId = peerIdFromMeta(meta);
+    const deviceId = registerPeerLink(strategy, peerId, data);
+    if (deviceId !== actorId && data.name) peers.set(deviceId, data.name);
+    updatePresence();
+  };
+  channels.active.onMessage = ({ type = 'furniture', id }) => {
+    const key = entityKey(type, id);
+    remoteActive.set(key, Date.now());
+    setTimeout(() => { remoteActive.delete(key); renderPlan(); }, 500);
+  };
+  channels.presence.onMessage = (data = {}, meta) => {
+    const peerId = peerIdFromMeta(meta);
+    const deviceId = registerPeerLink(strategy, peerId, data);
+    remotePresence.set(deviceId, { ...data, lastSeen: Date.now() });
+    if (data?.name) peers.set(deviceId, data.name);
+    updatePresence();
+  };
+
+  room.onPeerJoin = peerId => {
+    registerPeerLink(strategy, peerId, {});
+    const hello = { name: myName, deviceId: actorId, version: APP_VERSION };
+    channels.hello.send(hello, { target: peerId });
+    channels.snapshot.send(state, { target: peerId });
+    channels.presence.send(buildPresencePayload(), { target: peerId });
+    updatePresence();
+  };
+  room.onPeerLeave = peerId => {
+    const fullyDisconnected = removePeerLink(strategy, peerId);
+    updatePresence();
+    if (fullyDisconnected) toast('Your partner disconnected. Auto reconnect remains active.');
+  };
+
+  channels.hello.send({ name: myName, deviceId: actorId, version: APP_VERSION });
+  channels.presence.send(buildPresencePayload());
+}
+
+async function startTransport(strategy, generation) {
+  transportStatus.set(strategy, 'loading');
+  connectionDetailText();
+  try {
+    const module = await ensureConnectionModule(strategy);
+    if (generation !== connectionGeneration || plannerView.classList.contains('hidden')) return;
+    const room = module.joinRoom(
+      {
+        appId: 'roomrelay-3d-v7',
+        password: `roomrelay-${currentCode}`,
+        relayConfig: { warnOnRelayFailure: false }
+      },
+      `room-${currentCode}`,
+      {
+        onJoinError: ({ error }) => {
+          connectionErrors.set(strategy, error?.message || 'peer handshake failed');
+          connectionDetailText();
+          if (!peers.size) {
+            clearTimeout(connectionStatusTimer);
+            connectionStatusTimer = setTimeout(() => {
+              if (!peers.size) toast('Still trying both connection paths. In Brave, disable Shields for this page and tap Reconnect.');
+            }, 1800);
+          }
+        }
+      }
+    );
+    if (generation !== connectionGeneration) {
+      room.leave();
+      return;
+    }
+    const channels = Object.fromEntries(
+      ['snapshot', 'item', 'opening', 'meta', 'message', 'hello', 'active', 'presence'].map(name => [name, room.makeAction(name)])
+    );
+    const bundle = { strategy, room, channels };
+    roomConnections.push(bundle);
+    transportActions.push(bundle);
+    if (!roomConnection) roomConnection = room;
+    transportStatus.set(strategy, 'ready');
+    wireTransport(bundle);
     updatePresence();
   } catch (error) {
+    if (generation !== connectionGeneration) return;
+    transportStatus.set(strategy, 'error');
+    connectionErrors.set(strategy, error?.message || String(error));
+    updatePresence();
+    console.error(`${strategyLabel(strategy)} connection failed`, error);
+  }
+}
+
+async function connectLive(reconnect = false) {
+  const generation = ++connectionGeneration;
+  leaveConnections();
+  peers.clear();
+  remotePresence.clear();
+  actions = createCompositeActions();
+  updatePresence('connecting');
+  if (reconnect) toast('Reconnecting through MQTT and Nostr…');
+
+  // MQTT is especially useful when Brave or a network blocks Nostr relay sockets.
+  // Nostr remains active as a second independent discovery path.
+  const results = await Promise.allSettled([
+    startTransport('mqtt', generation),
+    new Promise(resolve => setTimeout(resolve, 250)).then(() => startTransport('nostr', generation))
+  ]);
+  if (generation !== connectionGeneration) return;
+  const usable = transportStatus.get('mqtt') === 'ready' || transportStatus.get('nostr') === 'ready';
+  if (!usable) {
     actions = null;
     updatePresence();
-    toast('Live connection could not start. You can still edit this device.');
-    console.error(error);
+    toast('Live connection could not start. Check internet access, disable Brave Shields for this site, then tap Reconnect.');
+  } else {
+    updatePresence();
+    clearTimeout(connectionStatusTimer);
+    connectionStatusTimer = setTimeout(() => {
+      if (!peers.size && !plannerView.classList.contains('hidden')) {
+        toast('No partner found yet. Confirm the same room code and v17.1.0 on both phones, then tap Reconnect.');
+      }
+    }, 12000);
   }
+  return results;
 }
 
 async function openRoom() {
@@ -2732,8 +2928,7 @@ function leaveRoom() {
   cancelThreePlacement(false);
   closeThreeCatalog();
   send3DPresence(true);
-  roomConnection?.leave();
-  roomConnection = null;
+  leaveConnections();
   actions = null;
   peers.clear();
   remotePresence.clear();
@@ -2839,23 +3034,12 @@ function actorColor(value) {
   return colors[hash % colors.length];
 }
 
-function send3DPresence(force = false, target = null) {
+function send3DPresence(force = false) {
   if (!actions?.presence) return;
   const now = performance.now();
   if (!force && now - lastPresenceSend < 120) return;
   lastPresenceSend = now;
-  const camera = threeRuntime?.camera;
-  const targetVector = threeRuntime?.controls?.target;
-  const data = {
-    name: myName,
-    mode: currentTab === 'three' && camera ? 'three' : 'plan',
-    color: actorColor(actorId),
-    camera: camera ? { x: camera.position.x, y: camera.position.y, z: camera.position.z } : null,
-    target: targetVector ? { x: targetVector.x, y: targetVector.y, z: targetVector.z } : null,
-    sentAt: Date.now()
-  };
-  if (target) actions.presence.send(data, { target });
-  else actions.presence.send(data);
+  actions.presence.send(buildPresencePayload());
 }
 
 async function init3D() {
@@ -5730,6 +5914,7 @@ $('newCodeBtn').addEventListener('click', () => $('codeInput').value = generateC
 $('joinBtn').addEventListener('click', openRoom);
 $('codeInput').addEventListener('input', event => event.target.value = cleanCode(event.target.value));
 $('codeInput').addEventListener('keydown', event => { if (event.key === 'Enter') openRoom(); });
+$('reconnectBtn').addEventListener('click', () => connectLive(true));
 $('shareBtn').addEventListener('click', shareRoom);
 $('copyBtn').addEventListener('click', copyShareLink);
 $('leaveBtn').addEventListener('click', leaveRoom);
@@ -5892,6 +6077,14 @@ $('threeFloorBtn').addEventListener('click', () => adjustSelected3D(item => ({ e
 $('resetViewBtn').addEventListener('click', () => reset3DView(false));
 $('topViewBtn').addEventListener('click', () => reset3DView(true));
 window.addEventListener('resize', () => { if (currentTab === 'plan') renderPlan(); fitThreeHostToViewport(); resize3D(); });
+window.addEventListener('online', () => {
+  if (!plannerView.classList.contains('hidden') && !peers.size) connectLive(true);
+});
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && !plannerView.classList.contains('hidden') && !peers.size && navigator.onLine) {
+    setTimeout(() => { if (!peers.size) connectLive(true); }, 900);
+  }
+});
 window.addEventListener('popstate', () => {
   if (allowBackNavigation || plannerView.classList.contains('hidden')) return;
   const confirmed = window.confirm('Leave this RoomRelay room? The layout is saved on this phone, but the live connection will close.');
@@ -5907,7 +6100,7 @@ window.addEventListener('popstate', () => {
 
 window.addEventListener('beforeunload', event => {
   send3DPresence(true);
-  roomConnection?.leave();
+  leaveConnections();
   if (!plannerView.classList.contains('hidden')) {
     event.preventDefault();
     event.returnValue = '';
