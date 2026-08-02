@@ -1,10 +1,11 @@
 <!doctype html>
+<!-- RoomRelay Build v5.0.0 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#172033" />
-  <title>RoomRelay 3D — Shared Room Planner</title>
+  <title>RoomRelay 3D v5.0.0 — Shared Room Planner</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -104,6 +105,7 @@
     .topbar { padding: 12px 14px; display: grid; gap: 10px; margin-bottom: 10px; position: sticky; top: 0; z-index: 30; }
     .brandline { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
     .brand { font-weight: 800; letter-spacing: -.02em; }
+    .version-badge { display: inline-flex; align-items: center; width: fit-content; border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border)); background: var(--soft); color: var(--accent); border-radius: 999px; padding: 4px 8px; font: 750 .72rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .02em; }
     .status { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 999px; padding: 5px 9px; font-size: .78rem; background: var(--panel2); }
     .dot { width: 9px; height: 9px; border-radius: 50%; background: #9ca3af; }
     .dot.live { background: #22c55e; }
@@ -241,8 +243,8 @@
     <section id="joinView" class="panel join stack">
       <div>
         <div class="join-mark">⌂</div>
-        <h1>RoomRelay 3D</h1>
-        <p class="muted">Build the room shell, place doors and windows, then arrange detailed furniture, shelves, lights, and decor together in 2D or 3D.</p>
+        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v5.0.0</span></div>
+        <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, shelves, lights, and decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
       <label>Your name
@@ -263,6 +265,7 @@
         <div>
           <div class="brandline">
             <span class="brand">RoomRelay 3D</span>
+            <span class="version-badge" data-app-version>v5.0.0</span>
             <span class="status"><span id="statusDot" class="dot connecting"></span><span id="statusText">Starting</span></span>
           </div>
           <div class="small muted">Room <span id="roomCodeLabel" class="code"></span> · <span id="peopleLabel">1 person</span></div>
@@ -291,7 +294,10 @@
               <h3>1. Set the room size</h3>
               <div class="small muted">Use inside wall measurements.</div>
             </div>
-            <label class="form-switch"><input id="snapToggle" type="checkbox" checked /> Snap to 3 in</label>
+            <div class="row">
+              <label class="form-switch"><input id="snapToggle" type="checkbox" checked /> Snap to 3 in</label>
+              <label class="form-switch"><input id="wallSnapToggle" type="checkbox" checked /> Snap near walls + face room</label>
+            </div>
           </div>
           <div class="mini-row">
             <label>Width (ft)<input id="roomWidth" inputmode="decimal" type="number" min="4" max="40" step="0.1" /></label>
@@ -301,7 +307,7 @@
           <div class="row spread shell-note">
             <div>
               <strong>Photo-room preset</strong>
-              <div class="small muted">12.5 × 10.5 ft, warm beige walls, light wood floor, white trim, two doors and one window.</div>
+              <div class="small muted">12.5 × 10.5 ft, warm beige walls, light wood floor, white trim, top-left/top-right doors and a centered left-wall window.</div>
             </div>
             <button id="photoRoomBtn" class="btn compact primary" type="button">Use this room</button>
           </div>
@@ -309,7 +315,7 @@
             <div class="row spread" style="margin-bottom:8px">
               <div>
                 <h3 style="margin-bottom:2px">2. Add doors and windows</h3>
-                <div class="small muted">The preset positions are placeholders. Drag each opening along its wall, then edit the wall and size.</div>
+                <div class="small muted">Defaults match the requested layout: two doors on the top wall and one centered window on the left wall. Drag any opening to refine it.</div>
               </div>
             </div>
             <div class="architecture-strip">
@@ -438,6 +444,7 @@
               </select>
             </label>
             <label class="form-switch"><input id="threeSnapToggle" type="checkbox" /> Snap 3 in while dragging</label>
+            <label class="form-switch"><input id="threeWallSnapToggle" type="checkbox" checked /> Snap near walls + face room</label>
             <div class="three-adjust">
               <button id="threeRotateLeftBtn" class="btn compact" type="button">↶ 15°</button>
               <button id="threeRotateRightBtn" class="btn compact" type="button">↷ 15°</button>
@@ -449,7 +456,7 @@
         </div>
         <div id="threeHost" class="three-host">
           <div id="threeStatus" class="three-status">Open this tab to load the 3D room.</div>
-          <div class="three-hint">Empty space: orbit · object: free move · door/window: slide on wall · height mode: drag vertically</div>
+          <div class="three-hint">Empty space: orbit · object: free move · near a wall: snaps flush and faces into room · door/window: slide on wall</div>
         </div>
       </section>
 
@@ -481,6 +488,9 @@ const $ = id => document.getElementById(id);
 const canvas = $('roomCanvas');
 const joinView = $('joinView');
 const plannerView = $('plannerView');
+const APP_VERSION = '5.0.0';
+const WALL_SNAP_DISTANCE = 12;
+const WALL_ROTATIONS = { top: 0, right: 270, bottom: 180, left: 90 };
 
 const PRESETS = [
   { name: 'Daybed', kind: 'sofa', icon: '🛋', w: 78, d: 36, height: 34 },
@@ -532,15 +542,15 @@ const remotePresence = new Map();
 function photoOpenings() {
   return {
     'photo-entry-door': {
-      id: 'photo-entry-door', type: 'door', name: 'Entry door', wall: 'left', offset: 88,
+      id: 'photo-entry-door', type: 'door', name: 'Top-left door', wall: 'top', offset: 16,
       width: 32, height: 80, sill: 0, deleted: false, rev: { n: 0, a: '' }
     },
     'photo-second-door': {
-      id: 'photo-second-door', type: 'door', name: 'Second door', wall: 'bottom', offset: 108,
+      id: 'photo-second-door', type: 'door', name: 'Top-right door', wall: 'top', offset: 104,
       width: 30, height: 80, sill: 0, deleted: false, rev: { n: 0, a: '' }
     },
     'photo-window': {
-      id: 'photo-window', type: 'window', name: 'Window', wall: 'bottom', offset: 28,
+      id: 'photo-window', type: 'window', name: 'Left-wall window', wall: 'left', offset: 39,
       width: 48, height: 48, sill: 30, deleted: false, rev: { n: 0, a: '' }
     }
   };
@@ -548,8 +558,8 @@ function photoOpenings() {
 
 function freshState() {
   return {
-    version: 4,
-    meta: { width: 150, depth: 126, wallHeight: 96, snap: true, threeSnap: false, lighting: 'day', rev: { n: 0, a: '' } },
+    version: 5,
+    meta: { width: 150, depth: 126, wallHeight: 96, snap: true, threeSnap: false, wallSnap: true, lighting: 'day', rev: { n: 0, a: '' } },
     furniture: {},
     openings: photoOpenings(),
     messages: {}
@@ -589,7 +599,7 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function storageKey() { return `roomrelay:v4:${currentCode}`; }
+function storageKey() { return `roomrelay:v5:${currentCode}`; }
 
 function safeGet(key) {
   try { return localStorage.getItem(key); } catch (_) { return null; }
@@ -658,6 +668,7 @@ function normalizeState(raw) {
   base.meta.wallHeight = Number(oldMeta.wallHeight || 96);
   base.meta.snap = oldMeta.snap !== false;
   base.meta.threeSnap = oldMeta.threeSnap === true;
+  base.meta.wallSnap = oldMeta.wallSnap !== false;
   base.meta.lighting = ['day', 'warm', 'studio'].includes(oldMeta.lighting) ? oldMeta.lighting : 'day';
   base.meta.rev = oldMeta.rev || base.meta.rev;
   base.furniture = {};
@@ -676,7 +687,7 @@ function saveLocal() {
 
 function loadLocal() {
   try {
-    const keys = [storageKey(), `roomrelay:v3:${currentCode}`, `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
+    const keys = [storageKey(), `roomrelay:v4:${currentCode}`, `roomrelay:v3:${currentCode}`, `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
     for (const key of keys) {
       const stored = safeGet(key);
       if (stored) {
@@ -711,6 +722,16 @@ function activeFurniture() { return Object.values(state.furniture).filter(item =
 function activeOpenings() { return Object.values(state.openings).filter(item => !item.deleted); }
 function entityKey(type, id) { return `${type}:${id}`; }
 
+function rotatedHalfExtents(item, rotation = item.rotation) {
+  const radians = ((Number(rotation) || 0) * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(radians));
+  const sin = Math.abs(Math.sin(radians));
+  return {
+    x: (item.w * cos + item.d * sin) / 2,
+    y: (item.w * sin + item.d * cos) / 2
+  };
+}
+
 function clampItem(input) {
   const item = { ...input };
   item.w = Math.max(6, Math.min(Number(item.w) || 6, state.meta.width));
@@ -718,9 +739,54 @@ function clampItem(input) {
   item.height = Math.max(2, Math.min(Number(item.height) || 30, 120));
   item.elevation = Math.max(0, Math.min(Number(item.elevation) || 0, Math.max(120, state.meta.wallHeight)));
   item.rotation = ((Number(item.rotation) || 0) % 360 + 360) % 360;
-  item.x = Math.max(0, Math.min(Number(item.x) || 0, state.meta.width - item.w));
-  item.y = Math.max(0, Math.min(Number(item.y) || 0, state.meta.depth - item.d));
+  const extents = rotatedHalfExtents(item);
+  let centerX = (Number(item.x) || 0) + item.w / 2;
+  let centerY = (Number(item.y) || 0) + item.d / 2;
+  centerX = extents.x * 2 >= state.meta.width
+    ? state.meta.width / 2
+    : Math.max(extents.x, Math.min(centerX, state.meta.width - extents.x));
+  centerY = extents.y * 2 >= state.meta.depth
+    ? state.meta.depth / 2
+    : Math.max(extents.y, Math.min(centerY, state.meta.depth - extents.y));
+  item.x = centerX - item.w / 2;
+  item.y = centerY - item.d / 2;
   return item;
+}
+
+function nearestWallForItem(item) {
+  const centerX = item.x + item.w / 2;
+  const centerY = item.y + item.d / 2;
+  const extents = rotatedHalfExtents(item);
+  const gaps = {
+    left: centerX - extents.x,
+    right: state.meta.width - centerX - extents.x,
+    top: centerY - extents.y,
+    bottom: state.meta.depth - centerY - extents.y
+  };
+  return Object.entries(gaps).sort((a, b) => a[1] - b[1])[0];
+}
+
+function snapItemToWall(input, threshold = WALL_SNAP_DISTANCE) {
+  let item = clampItem(input);
+  if (state.meta.wallSnap === false) return item;
+  const [wall, gap] = nearestWallForItem(item);
+  if (gap > threshold) return item;
+  item.rotation = WALL_ROTATIONS[wall];
+  const extents = rotatedHalfExtents(item);
+  let centerX = item.x + item.w / 2;
+  let centerY = item.y + item.d / 2;
+  if (wall === 'left') centerX = extents.x;
+  if (wall === 'right') centerX = state.meta.width - extents.x;
+  if (wall === 'top') centerY = extents.y;
+  if (wall === 'bottom') centerY = state.meta.depth - extents.y;
+  item.x = centerX - item.w / 2;
+  item.y = centerY - item.d / 2;
+  return clampItem(item);
+}
+
+function snappedWallLabel(item) {
+  const [wall, gap] = nearestWallForItem(item);
+  return gap <= 0.6 ? `${WALL_LABELS[wall]} · facing into room` : '';
 }
 
 function wallLength(wall) {
@@ -774,7 +840,10 @@ function patchItem(id, patch, options = {}) {
   const { broadcast = true, rerender = true } = options;
   const existing = state.furniture[id];
   if (!existing || existing.deleted) return null;
-  const item = clampItem({ ...existing, ...patch, rev: nextRev(), updatedBy: myName });
+  const candidate = clampItem({ ...existing, ...patch, rev: nextRev(), updatedBy: myName });
+  const item = Object.prototype.hasOwnProperty.call(patch, 'x') || Object.prototype.hasOwnProperty.call(patch, 'y')
+    ? snapItemToWall(candidate)
+    : candidate;
   state.furniture[id] = item;
   saveLocal();
   if (rerender) renderAll();
@@ -859,7 +928,7 @@ function removeOpening(id) {
 function updateRoom() {
   const width = Math.max(48, Math.min(480, Number($('roomWidth').value) * 12 || state.meta.width));
   const depth = Math.max(48, Math.min(480, Number($('roomDepth').value) * 12 || state.meta.depth));
-  const meta = { ...state.meta, width, depth, snap: $('snapToggle').checked, threeSnap: $('threeSnapToggle')?.checked === true, lighting: $('lightingMode')?.value || state.meta.lighting || 'day', rev: nextRev() };
+  const meta = { ...state.meta, width, depth, snap: $('snapToggle').checked, threeSnap: $('threeSnapToggle')?.checked === true, wallSnap: $('wallSnapToggle')?.checked !== false, lighting: $('lightingMode')?.value || state.meta.lighting || 'day', rev: nextRev() };
   state.meta = meta;
   for (const item of activeFurniture()) state.furniture[item.id] = { ...clampItem(item), rev: nextRev(), updatedBy: myName };
   for (const opening of activeOpenings()) state.openings[opening.id] = { ...clampOpening(opening), rev: nextRev(), updatedBy: myName };
@@ -872,7 +941,7 @@ function updateRoom() {
 
 function applyPhotoRoom() {
   const hasEditedShell = activeOpenings().some(o => o.rev?.n > 0);
-  if (hasEditedShell && !window.confirm('Replace the current door and window layout with the photo-room placeholders? Furniture will stay.')) return;
+  if (hasEditedShell && !window.confirm('Replace the current door and window layout with the v5 default positions? Furniture will stay.')) return;
   state.meta = { ...state.meta, width: 150, depth: 126, wallHeight: 96, rev: nextRev() };
   const defaults = photoOpenings();
   state.openings = {};
@@ -883,7 +952,7 @@ function applyPhotoRoom() {
   saveLocal();
   renderAll();
   actions?.snapshot.send(state);
-  toast('Loaded the 12.5 × 10.5 photo-inspired room. Door and window positions are placeholders.');
+  toast('Loaded the 12.5 × 10.5 room with doors 16 inches from each top corner and a centered left-wall window.');
 }
 
 function addStarterSet() {
@@ -910,6 +979,8 @@ function updateInputs() {
   $('roomWidth').value = formatFeet(state.meta.width);
   $('roomDepth').value = formatFeet(state.meta.depth);
   $('snapToggle').checked = state.meta.snap !== false;
+  if ($('wallSnapToggle')) $('wallSnapToggle').checked = state.meta.wallSnap !== false;
+  if ($('threeWallSnapToggle')) $('threeWallSnapToggle').checked = state.meta.wallSnap !== false;
   if ($('threeSnapToggle')) $('threeSnapToggle').checked = state.meta.threeSnap === true;
   if ($('lightingMode')) $('lightingMode').value = state.meta.lighting || 'day';
   const furnitureCount = activeFurniture().length;
@@ -1025,7 +1096,8 @@ function renderSelection() {
     $('itemDepth').value = Math.round(furniture.d);
     $('itemHeight').value = Math.round(furniture.height);
     $('itemElevation').value = Math.round(furniture.elevation * 10) / 10;
-    $('positionLabel').textContent = `${Math.round(furniture.x * 10) / 10} in from left · ${Math.round(furniture.y * 10) / 10} in from top · ${Math.round(furniture.elevation * 10) / 10} in high`;
+    const wallStatus = snappedWallLabel(furniture);
+    $('positionLabel').textContent = `${Math.round(furniture.x * 10) / 10} in from left · ${Math.round(furniture.y * 10) / 10} in from top · ${Math.round(furniture.elevation * 10) / 10} in high${wallStatus ? ` · ${wallStatus}` : ''}`;
   }
 
   if (openingVisible) {
@@ -1080,11 +1152,13 @@ function moveDrag(event) {
   if (drag.type === 'furniture') {
     const item = state.furniture[drag.id];
     if (!item) return;
-    const next = clampItem({ ...item, x: snapValue(drag.startValueX + dx), y: snapValue(drag.startValueY + dy) });
+    const next = snapItemToWall({ ...item, x: snapValue(drag.startValueX + dx), y: snapValue(drag.startValueY + dy) });
     item.x = next.x;
     item.y = next.y;
+    item.rotation = next.rotation;
     positionFurnitureElement(drag.element, item);
-    $('positionLabel').textContent = `${Math.round(item.x)} in from left · ${Math.round(item.y)} in from top`;
+    const wallStatus = snappedWallLabel(item);
+    $('positionLabel').textContent = `${Math.round(item.x)} in from left · ${Math.round(item.y)} in from top${wallStatus ? ` · ${wallStatus}` : ''}`;
     const now = performance.now();
     if (now - lastDragSend > 75) {
       item.rev = nextRev();
@@ -1205,7 +1279,7 @@ async function connectLive() {
     const { joinRoom, selfId } = await ensureConnectionModule();
     actorId = selfId || actorId;
     roomConnection = joinRoom(
-      { appId: 'roomrelay-3d-v3', password: `roomrelay-${currentCode}` },
+      { appId: 'roomrelay-3d-v5', password: `roomrelay-${currentCode}` },
       `room-${currentCode}`,
       { onJoinError: ({ error }) => toast(`Connection issue: ${error?.message || 'try another network'}`) }
     );
@@ -1596,7 +1670,7 @@ function handle3DPointerDown(event) {
   renderSelection();
   const label = entity.type === 'furniture' ? state.furniture[entity.id]?.name : state.openings[entity.id]?.name;
   $('threeSelection').textContent = entity.type === 'furniture'
-    ? `Selected: ${label} · drag freely or switch to height mode`
+    ? `Selected: ${label} · drag freely; move near a wall to snap and face into the room`
     : `Selected: ${label} · drag directly along its wall${state.openings[entity.id]?.type === 'window' ? ' or switch to height mode' : ''}`;
 }
 
@@ -1620,15 +1694,17 @@ function handle3DPointerMove(event) {
       if (!runtime.raycaster.ray.intersectPlane(runtime.floorPlane, runtime.planePoint)) return;
       const centerX = runtime.planePoint.x + drag.offsetX;
       const centerZ = runtime.planePoint.z + drag.offsetZ;
-      const next = clampItem({
+      const next = snapItemToWall({
         ...item,
         x: threeSnapValue((centerX + runtime.roomW / 2) * 12 - item.w / 2),
         y: threeSnapValue((centerZ + runtime.roomD / 2) * 12 - item.d / 2)
       });
       item.x = next.x;
       item.y = next.y;
+      item.rotation = next.rotation;
       drag.object.position.x = -runtime.roomW / 2 + (item.x + item.w / 2) / 12;
       drag.object.position.z = -runtime.roomD / 2 + (item.y + item.d / 2) / 12;
+      drag.object.rotation.y = runtime.THREE.MathUtils.degToRad(item.rotation || 0);
     }
     drag.moved = drag.moved || Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 2;
     const now = performance.now();
@@ -1703,7 +1779,7 @@ function handle3DPointerUp(event) {
     selectEntity(entity.type, entity.id);
     const label = entity.type === 'furniture' ? state.furniture[entity.id]?.name : state.openings[entity.id]?.name;
     $('threeSelection').textContent = entity.type === 'furniture'
-      ? `Selected: ${label} · drag freely or switch to height mode`
+      ? `Selected: ${label} · drag freely; move near a wall to snap and face into the room`
       : `Selected: ${label} · drag directly along its wall${state.openings[entity.id]?.type === 'window' ? ' or switch to height mode' : ''}`;
     break;
   }
@@ -2357,12 +2433,12 @@ function update3DSelection() {
   rebuild3D();
   if (selectedType === 'furniture') {
     const item = state.furniture[selectedId];
-    $('threeSelection').textContent = item ? `Selected: ${item.name} · drag freely or use height mode` : 'Drag objects freely · doors/windows move directly on walls';
+    $('threeSelection').textContent = item ? `Selected: ${item.name} · drag freely; move near a wall to snap and face into the room` : 'Drag objects freely · near a wall they snap flush and face into the room · doors/windows move directly on walls';
   } else if (selectedType === 'opening') {
     const opening = state.openings[selectedId];
-    $('threeSelection').textContent = opening ? `Selected: ${opening.name} · drag directly along its wall${opening.type === 'window' ? ' or use height mode' : ''}` : 'Drag objects freely · doors/windows move directly on walls';
+    $('threeSelection').textContent = opening ? `Selected: ${opening.name} · drag directly along its wall${opening.type === 'window' ? ' or use height mode' : ''}` : 'Drag objects freely · near a wall they snap flush and face into the room · doors/windows move directly on walls';
   } else {
-    $('threeSelection').textContent = 'Drag objects freely · doors/windows move directly on walls';
+    $('threeSelection').textContent = 'Drag objects freely · near a wall they snap flush and face into the room · doors/windows move directly on walls';
   }
 }
 
@@ -2419,6 +2495,7 @@ $('leaveBtn').addEventListener('click', leaveRoom);
 $('applyRoomBtn').addEventListener('click', updateRoom);
 $('photoRoomBtn').addEventListener('click', applyPhotoRoom);
 $('snapToggle').addEventListener('change', updateRoom);
+$('wallSnapToggle').addEventListener('change', () => setWallSnap($('wallSnapToggle').checked));
 $('starterBtn').addEventListener('click', addStarterSet);
 $('addDoorBtn').addEventListener('click', () => addOpening('door'));
 $('addWindowBtn').addEventListener('click', () => addOpening('window'));
@@ -2529,6 +2606,16 @@ $('threeSnapToggle').addEventListener('change', () => {
   saveLocal();
   actions?.meta.send(state.meta);
 });
+function setWallSnap(enabled) {
+  state.meta.wallSnap = Boolean(enabled);
+  state.meta.rev = nextRev();
+  if ($('wallSnapToggle')) $('wallSnapToggle').checked = state.meta.wallSnap;
+  if ($('threeWallSnapToggle')) $('threeWallSnapToggle').checked = state.meta.wallSnap;
+  saveLocal();
+  actions?.meta.send(state.meta);
+  toast(state.meta.wallSnap ? 'Wall snapping enabled.' : 'Wall snapping disabled.');
+}
+$('threeWallSnapToggle').addEventListener('change', () => setWallSnap($('threeWallSnapToggle').checked));
 function adjustSelected3D(patchFurniture, patchWindow = null) {
   if (selectedType === 'furniture' && selectedId) {
     const item = state.furniture[selectedId];
@@ -2552,6 +2639,9 @@ window.addEventListener('beforeunload', () => {
   send3DPresence(true);
   roomConnection?.leave();
 });
+
+document.querySelectorAll('[data-app-version]').forEach(element => { element.textContent = `v${APP_VERSION}`; });
+document.documentElement.dataset.roomrelayVersion = APP_VERSION;
 
 const params = new URLSearchParams(location.search);
 $('nameInput').value = safeGet('roomrelay:name') || '';
