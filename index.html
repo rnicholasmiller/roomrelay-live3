@@ -1,11 +1,11 @@
 <!doctype html>
-<!-- RoomRelay Build v5.0.0 -->
+<!-- RoomRelay Build v6.0.0 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#172033" />
-  <title>RoomRelay 3D v5.0.0 — Shared Room Planner</title>
+  <title>RoomRelay 3D v6.0.0 — Shared Room Planner</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -106,6 +106,10 @@
     .brandline { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
     .brand { font-weight: 800; letter-spacing: -.02em; }
     .version-badge { display: inline-flex; align-items: center; width: fit-content; border: 1px solid color-mix(in srgb, var(--accent) 42%, var(--border)); background: var(--soft); color: var(--accent); border-radius: 999px; padding: 4px 8px; font: 750 .72rem/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .02em; }
+    .hold-tip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 5px 9px; background: color-mix(in srgb, var(--accent) 10%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); font-size: .76rem; color: var(--muted); }
+    .furniture.hold-pending, .opening.hold-pending { animation: holdPulse .42s ease-in-out infinite alternate; outline: 3px solid color-mix(in srgb, var(--accent) 58%, transparent); outline-offset: 2px; }
+    .surface-badge { display: inline-block; margin-top: 2px; border-radius: 999px; padding: 2px 5px; background: rgba(255,255,255,.72); color: #273044; font-size: .62em; line-height: 1; }
+    @keyframes holdPulse { from { filter: brightness(1); transform: scale(1) rotate(var(--item-rotation, 0deg)); } to { filter: brightness(1.08); transform: scale(1.025) rotate(var(--item-rotation, 0deg)); } }
     .status { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--border); border-radius: 999px; padding: 5px 9px; font-size: .78rem; background: var(--panel2); }
     .dot { width: 9px; height: 9px; border-radius: 50%; background: #9ca3af; }
     .dot.live { background: #22c55e; }
@@ -243,7 +247,7 @@
     <section id="joinView" class="panel join stack">
       <div>
         <div class="join-mark">⌂</div>
-        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v5.0.0</span></div>
+        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v6.0.0</span></div>
         <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, shelves, lights, and decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
@@ -265,7 +269,7 @@
         <div>
           <div class="brandline">
             <span class="brand">RoomRelay 3D</span>
-            <span class="version-badge" data-app-version>v5.0.0</span>
+            <span class="version-badge" data-app-version>v6.0.0</span>
             <span class="status"><span id="statusDot" class="dot connecting"></span><span id="statusText">Starting</span></span>
           </div>
           <div class="small muted">Room <span id="roomCodeLabel" class="code"></span> · <span id="peopleLabel">1 person</span></div>
@@ -327,7 +331,7 @@
             <div class="row spread" style="margin-bottom:8px">
               <div>
                 <h3 style="margin-bottom:2px">3. Add furniture</h3>
-                <div class="small muted">Tap an item to add it, then drag it in the room. Shelves and lights are included below. You can also drag furniture directly in 3D.</div>
+                <div class="small muted">Tap an item to add it. Tap selects; hold briefly, then drag to move. Small décor snaps onto desks and moves with them. Wall-mounted TVs, pegboards and shelves can be raised in 3D.</div>
               </div>
               <button id="starterBtn" class="btn compact" type="button">Add starter set</button>
             </div>
@@ -337,8 +341,8 @@
 
         <section class="panel room-card">
           <div class="room-heading">
-            <div><strong>4. Drag everything into place</strong><div class="tiny muted">Furniture moves inside the room · doors/windows slide along walls</div></div>
-            <span id="itemCount" class="selected-chip">0 pieces</span>
+            <div><strong>4. Hold, then move everything into place</strong><div class="tiny muted">Tap selects · hold 0.4 seconds, then drag · small décor lands on desks</div></div>
+            <div class="row"><span class="hold-tip">Hold to move</span><span id="itemCount" class="selected-chip">0 pieces</span></div>
           </div>
           <div class="room-shell">
             <div class="room-wrap">
@@ -422,7 +426,7 @@
         <div class="three-toolbar">
           <div>
             <h2 style="margin-bottom:2px">3D room preview</h2>
-            <div id="threeSelection" class="small muted">Drag objects freely · drag doors/windows along walls · pinch to zoom</div>
+            <div id="threeSelection" class="small muted">Tap to select · hold briefly to move · small décor snaps onto desks · pinch to zoom</div>
             <div id="threePresence" class="three-presence">Only you in 3D</div>
           </div>
           <div class="row">
@@ -456,7 +460,7 @@
         </div>
         <div id="threeHost" class="three-host">
           <div id="threeStatus" class="three-status">Open this tab to load the 3D room.</div>
-          <div class="three-hint">Empty space: orbit · object: free move · near a wall: snaps flush and faces into room · door/window: slide on wall</div>
+          <div class="three-hint">Tap selects · hold 0.4 s to move · small décor snaps onto desks · mounted items move across and up/down walls · empty space orbits</div>
         </div>
       </section>
 
@@ -488,9 +492,11 @@ const $ = id => document.getElementById(id);
 const canvas = $('roomCanvas');
 const joinView = $('joinView');
 const plannerView = $('plannerView');
-const APP_VERSION = '5.0.0';
+const APP_VERSION = '6.0.0';
 const WALL_SNAP_DISTANCE = 12;
 const WALL_ROTATIONS = { top: 0, right: 270, bottom: 180, left: 90 };
+const HOLD_TO_MOVE_MS = 420;
+const HOLD_CANCEL_PX = 9;
 
 const PRESETS = [
   { name: 'Daybed', kind: 'sofa', icon: '🛋', w: 78, d: 36, height: 34 },
@@ -501,16 +507,45 @@ const PRESETS = [
   { name: 'Bookcase', kind: 'storage', icon: '🗄', w: 32, d: 12, height: 72 },
   { name: 'Storage console', kind: 'storage', icon: '▥', w: 60, d: 16, height: 30 },
   { name: 'Dresser', kind: 'dresser', icon: '▤', w: 36, d: 20, height: 36 },
+
   { name: 'Accent chair', kind: 'chair', icon: '🪑', w: 32, d: 32, height: 34 },
+  { name: 'Swivel office chair', kind: 'chair', icon: '♙', w: 27, d: 27, height: 42 },
+  { name: 'Lounge chair', kind: 'chair', icon: '◒', w: 34, d: 36, height: 35 },
+  { name: 'Dining chair', kind: 'chair', icon: '▱', w: 20, d: 22, height: 36 },
+  { name: 'Stool', kind: 'chair', icon: '◉', w: 18, d: 18, height: 24 },
   { name: 'Ottoman', kind: 'chair', icon: '◼', w: 24, d: 24, height: 18 },
+
   { name: 'Floor lamp', kind: 'light', icon: '💡', w: 18, d: 18, height: 68 },
-  { name: 'Table lamp', kind: 'light', icon: '🕯', w: 14, d: 14, height: 24 },
-  { name: 'Pendant light', kind: 'light', icon: '◔', w: 18, d: 18, height: 84 },
-  { name: 'Floating shelf', kind: 'shelf', icon: '═', w: 36, d: 8, height: 12 },
-  { name: 'Pegboard', kind: 'shelf', icon: '☷', w: 30, d: 4, height: 36 },
+  { name: 'Table lamp', kind: 'light', icon: '🕯', w: 12, d: 12, height: 22, surfaceItem: true },
+  { name: 'Pendant light', kind: 'light', icon: '◔', w: 18, d: 18, height: 84, elevation: 0 },
+
+  { name: 'Mounted TV', kind: 'tv', icon: '▰', w: 55, d: 4, height: 32, wallMounted: true, wall: 'top', elevation: 44 },
+  { name: 'Pegboard', kind: 'shelf', icon: '☷', w: 36, d: 4, height: 36, wallMounted: true, wall: 'top', elevation: 45 },
+  { name: 'Wide pegboard', kind: 'shelf', icon: '▦', w: 60, d: 4, height: 36, wallMounted: true, wall: 'top', elevation: 45 },
+  { name: 'Floating shelf', kind: 'shelf', icon: '═', w: 36, d: 8, height: 8, wallMounted: true, wall: 'top', elevation: 54 },
+  { name: 'Wall art', kind: 'decor', icon: '▧', w: 30, d: 3, height: 24, wallMounted: true, wall: 'top', elevation: 48 },
+  { name: 'Wall mirror', kind: 'decor', icon: '◫', w: 24, d: 3, height: 36, wallMounted: true, wall: 'top', elevation: 38 },
+
+  { name: 'Floor plant', kind: 'decor', icon: '🪴', w: 20, d: 20, height: 34 },
+  { name: 'Tall plant', kind: 'decor', icon: '🌿', w: 24, d: 24, height: 60 },
+  { name: 'Desk plant', kind: 'decor', icon: '🌱', w: 10, d: 10, height: 14, surfaceItem: true },
+  { name: 'Small succulent', kind: 'decor', icon: '🌵', w: 7, d: 7, height: 8, surfaceItem: true },
+  { name: 'Hanging plant', kind: 'decor', icon: '☘', w: 16, d: 16, height: 28, elevation: 62 },
+
+  { name: 'Monitor', kind: 'other', icon: '🖥', w: 24, d: 8, height: 18, surfaceItem: true },
+  { name: 'Laptop', kind: 'other', icon: '⌨', w: 14, d: 10, height: 7, surfaceItem: true },
+  { name: 'Mug', kind: 'decor', icon: '☕', w: 5, d: 5, height: 5, surfaceItem: true },
+  { name: 'Pen cup', kind: 'decor', icon: '✎', w: 5, d: 5, height: 6, surfaceItem: true },
+  { name: 'Desk organizer', kind: 'storage', icon: '▤', w: 12, d: 8, height: 6, surfaceItem: true },
+  { name: 'Stack of books', kind: 'decor', icon: '▥', w: 12, d: 9, height: 6, surfaceItem: true },
+  { name: 'Vase', kind: 'decor', icon: '♢', w: 7, d: 7, height: 12, surfaceItem: true },
+  { name: 'Photo frame', kind: 'decor', icon: '▣', w: 9, d: 4, height: 11, surfaceItem: true },
+  { name: 'Desk clock', kind: 'decor', icon: '◷', w: 8, d: 4, height: 8, surfaceItem: true },
+  { name: 'Storage basket', kind: 'storage', icon: '▢', w: 16, d: 12, height: 10, surfaceItem: true },
+
   { name: 'Rolling cart', kind: 'storage', icon: '▣', w: 16, d: 12, height: 32 },
   { name: 'TV stand', kind: 'tv', icon: '▰', w: 48, d: 16, height: 24 },
-  { name: 'Plant', kind: 'decor', icon: '🪴', w: 16, d: 16, height: 28 },
+  { name: 'Area rug', kind: 'decor', icon: '▭', w: 72, d: 48, height: 1 },
   { name: 'Bed', kind: 'bed', icon: '🛏', w: 60, d: 80, height: 24 },
   { name: 'Custom', kind: 'custom', icon: '+', w: 36, d: 24, height: 30 }
 ];
@@ -527,6 +562,8 @@ let selectedType = null;
 let clock = 0;
 let drag = null;
 let lastDragSend = 0;
+let backGuardArmed = false;
+let allowBackNavigation = false;
 let roomConnection = null;
 let actions = null;
 let connectionModule = null;
@@ -558,7 +595,7 @@ function photoOpenings() {
 
 function freshState() {
   return {
-    version: 5,
+    version: 6,
     meta: { width: 150, depth: 126, wallHeight: 96, snap: true, threeSnap: false, wallSnap: true, lighting: 'day', rev: { n: 0, a: '' } },
     furniture: {},
     openings: photoOpenings(),
@@ -599,7 +636,7 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function storageKey() { return `roomrelay:v5:${currentCode}`; }
+function storageKey() { return `roomrelay:v6:${currentCode}`; }
 
 function safeGet(key) {
   try { return localStorage.getItem(key); } catch (_) { return null; }
@@ -629,16 +666,50 @@ function defaultHeight(name = '') {
   return ({ bed: 24, sofa: 34, desk: 30, dresser: 40, storage: 42, tv: 24, chair: 34, shelf: 18, light: 60, decor: 24, other: 30 })[kind];
 }
 
+function isSurfaceItemName(name = '') {
+  const text = name.toLowerCase();
+  return ['table lamp', 'desk plant', 'succulent', 'monitor', 'laptop', 'mug', 'pen cup', 'organizer', 'books', 'vase', 'photo frame', 'desk clock', 'basket'].some(token => text.includes(token));
+}
+
+function isWallMountedName(name = '') {
+  const text = name.toLowerCase();
+  return text.includes('mounted tv') || text.includes('pegboard') || text.includes('floating shelf') || text.includes('wall art') || text.includes('wall mirror');
+}
+
+function defaultWallElevation(name = '') {
+  const text = name.toLowerCase();
+  if (text.includes('mounted tv')) return 44;
+  if (text.includes('pegboard')) return 45;
+  if (text.includes('floating shelf')) return 54;
+  if (text.includes('mirror')) return 38;
+  return 48;
+}
+
+function isSurfaceHost(item) {
+  const text = String(item?.name || '').toLowerCase();
+  return Boolean(item && !item.deleted && (item.kind === 'desk' || text.includes('craft island') || text.includes('work table') || text.includes('worktable')));
+}
+
 function normalizeItem(raw) {
   const item = { ...raw };
+  item.name = String(item.name || 'Furniture').slice(0, 30);
   item.d = Number(item.d ?? item.h ?? 24);
   item.height = Number(item.height ?? defaultHeight(item.name));
   item.w = Number(item.w ?? 36);
   item.x = Number(item.x ?? 0);
   item.y = Number(item.y ?? 0);
-  item.elevation = Number(item.elevation ?? 0);
-  item.rotation = Number(item.rotation ?? 0);
+  item.surfaceItem = Boolean(item.surfaceItem ?? isSurfaceItemName(item.name));
+  item.wallMounted = Boolean(item.wallMounted ?? isWallMountedName(item.name));
+  item.wall = WALLS.includes(item.wall) ? item.wall : (item.wallMounted ? 'top' : null);
+  const rawElevation = item.elevation;
+  item.elevation = Number(rawElevation ?? (item.wallMounted ? defaultWallElevation(item.name) : 0));
+  if (item.wallMounted && item.elevation === 0) item.elevation = defaultWallElevation(item.name);
+  item.rotation = Number(item.rotation ?? (item.wall ? WALL_ROTATIONS[item.wall] : 0));
   item.kind = item.kind || inferKind(item.name);
+  item.parentId = item.parentId || null;
+  item.parentOffsetX = Number(item.parentOffsetX || 0);
+  item.parentOffsetY = Number(item.parentOffsetY || 0);
+  item.parentRotationOffset = Number(item.parentRotationOffset || 0);
   item.deleted = Boolean(item.deleted);
   item.rev = item.rev || { n: 0, a: '' };
   delete item.h;
@@ -687,11 +758,12 @@ function saveLocal() {
 
 function loadLocal() {
   try {
-    const keys = [storageKey(), `roomrelay:v4:${currentCode}`, `roomrelay:v3:${currentCode}`, `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
+    const keys = [storageKey(), `roomrelay:v5:${currentCode}`, `roomrelay:v4:${currentCode}`, `roomrelay:v3:${currentCode}`, `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
     for (const key of keys) {
       const stored = safeGet(key);
       if (stored) {
         state = mergeSnapshot(state, normalizeState(JSON.parse(stored)));
+        reconcileAttachments();
         break;
       }
     }
@@ -732,12 +804,117 @@ function rotatedHalfExtents(item, rotation = item.rotation) {
   };
 }
 
+
+function itemCenter(item) {
+  return { x: item.x + item.w / 2, y: item.y + item.d / 2 };
+}
+
+function rotatePoint(x, y, degrees) {
+  const radians = degrees * Math.PI / 180;
+  return { x: x * Math.cos(radians) - y * Math.sin(radians), y: x * Math.sin(radians) + y * Math.cos(radians) };
+}
+
+function surfaceHostAt(item) {
+  if (!item?.surfaceItem || item.wallMounted) return null;
+  const center = itemCenter(item);
+  const hosts = activeFurniture().filter(host => host.id !== item.id && isSurfaceHost(host));
+  let best = null;
+  for (const host of hosts) {
+    const hostCenter = itemCenter(host);
+    const local = rotatePoint(center.x - hostCenter.x, center.y - hostCenter.y, -(host.rotation || 0));
+    const marginX = Math.min(item.w, host.w) * .35;
+    const marginY = Math.min(item.d, host.d) * .35;
+    if (Math.abs(local.x) <= host.w / 2 - marginX && Math.abs(local.y) <= host.d / 2 - marginY) {
+      const distance = Math.hypot(local.x, local.y);
+      if (!best || distance < best.distance) best = { host, local, distance };
+    }
+  }
+  return best;
+}
+
+function attachItemToSurface(item, match) {
+  if (!match?.host) return item;
+  const host = match.host;
+  item.parentId = host.id;
+  item.parentOffsetX = match.local.x;
+  item.parentOffsetY = match.local.y;
+  item.parentRotationOffset = ((item.rotation || 0) - (host.rotation || 0) + 360) % 360;
+  item.elevation = (host.elevation || 0) + host.height;
+  return item;
+}
+
+function detachItemFromSurface(item, placeOnFloor = true) {
+  item.parentId = null;
+  item.parentOffsetX = 0;
+  item.parentOffsetY = 0;
+  item.parentRotationOffset = 0;
+  if (placeOnFloor) item.elevation = 0;
+  return item;
+}
+
+function syncItemToParent(item, parent) {
+  if (!item || !parent) return item;
+  const rotated = rotatePoint(item.parentOffsetX || 0, item.parentOffsetY || 0, parent.rotation || 0);
+  const parentCenter = itemCenter(parent);
+  item.x = parentCenter.x + rotated.x - item.w / 2;
+  item.y = parentCenter.y + rotated.y - item.d / 2;
+  item.elevation = (parent.elevation || 0) + parent.height;
+  item.rotation = ((parent.rotation || 0) + (item.parentRotationOffset || 0) + 360) % 360;
+  return clampItem(item);
+}
+
+function syncAttachedChildren(parentId, broadcast = false) {
+  const parent = state.furniture[parentId];
+  if (!parent || parent.deleted) return [];
+  const changed = [];
+  for (const child of activeFurniture()) {
+    if (child.parentId !== parentId) continue;
+    const next = syncItemToParent({ ...child }, parent);
+    next.rev = nextRev();
+    next.updatedBy = myName;
+    state.furniture[child.id] = next;
+    changed.push(next);
+    const el = canvas.querySelector(`[data-entity="furniture"][data-id="${CSS.escape(child.id)}"]`);
+    if (el) positionFurnitureElement(el, next);
+    const model = threeRuntime?.furnitureObjects?.get(child.id);
+    if (model) {
+      model.position.set(
+        -threeRuntime.roomW / 2 + (next.x + next.w / 2) / 12,
+        next.elevation / 12,
+        -threeRuntime.roomD / 2 + (next.y + next.d / 2) / 12
+      );
+      model.rotation.y = threeRuntime.THREE.MathUtils.degToRad(next.rotation || 0);
+    }
+    if (broadcast) actions?.item.send({ ...next });
+  }
+  return changed;
+}
+
+function reconcileAttachments() {
+  for (const item of activeFurniture()) {
+    if (!item.parentId) continue;
+    const parent = state.furniture[item.parentId];
+    if (!parent || parent.deleted || !isSurfaceHost(parent)) detachItemFromSurface(item, true);
+    else state.furniture[item.id] = syncItemToParent(item, parent);
+  }
+}
+
+function placeSurfaceItem(input) {
+  let item = { ...input };
+  if (!item.surfaceItem || item.wallMounted) return item;
+  const match = surfaceHostAt(item);
+  if (match) return attachItemToSurface(item, match);
+  if (item.parentId) return detachItemFromSurface(item, true);
+  return item;
+}
+
 function clampItem(input) {
   const item = { ...input };
   item.w = Math.max(6, Math.min(Number(item.w) || 6, state.meta.width));
   item.d = Math.max(6, Math.min(Number(item.d) || 6, state.meta.depth));
   item.height = Math.max(2, Math.min(Number(item.height) || 30, 120));
-  item.elevation = Math.max(0, Math.min(Number(item.elevation) || 0, Math.max(120, state.meta.wallHeight)));
+  const maxElevation = item.wallMounted ? Math.max(0, state.meta.wallHeight - item.height) : Math.max(120, state.meta.wallHeight);
+  item.elevation = Math.max(0, Math.min(Number(item.elevation) || 0, maxElevation));
   item.rotation = ((Number(item.rotation) || 0) % 360 + 360) % 360;
   const extents = rotatedHalfExtents(item);
   let centerX = (Number(item.x) || 0) + item.w / 2;
@@ -768,9 +945,21 @@ function nearestWallForItem(item) {
 
 function snapItemToWall(input, threshold = WALL_SNAP_DISTANCE) {
   let item = clampItem(input);
-  if (state.meta.wallSnap === false) return item;
-  const [wall, gap] = nearestWallForItem(item);
-  if (gap > threshold) return item;
+  if (item.surfaceItem && item.parentId) return item;
+  if (state.meta.wallSnap === false && !item.wallMounted) return item;
+  let wall;
+  let gap;
+  if (item.wallMounted && item.wall && WALLS.includes(item.wall)) {
+    wall = item.wall;
+    gap = 0;
+  } else {
+    [wall, gap] = nearestWallForItem(item);
+  }
+  if (!item.wallMounted && gap > threshold) {
+    item.wall = null;
+    return item;
+  }
+  item.wall = wall;
   item.rotation = WALL_ROTATIONS[wall];
   const extents = rotatedHalfExtents(item);
   let centerX = item.x + item.w / 2;
@@ -813,42 +1002,59 @@ function threeSnapValue(value) {
 
 function addFurniture(preset, x = null, y = null) {
   const id = uid();
-  const item = clampItem({
+  const wallMounted = Boolean(preset.wallMounted ?? isWallMountedName(preset.name));
+  const surfaceItem = Boolean(preset.surfaceItem ?? isSurfaceItemName(preset.name));
+  const wall = wallMounted ? (WALLS.includes(preset.wall) ? preset.wall : 'top') : null;
+  const defaultX = x ?? Math.max(0, (state.meta.width - preset.w) / 2);
+  const defaultY = y ?? (wall === 'top' ? -preset.d / 2 : Math.max(0, (state.meta.depth - preset.d) / 2));
+  let item = clampItem({
     id,
     name: preset.name,
     kind: preset.kind === 'custom' ? 'other' : preset.kind,
     w: preset.w,
     d: preset.d,
     height: preset.height,
-    x: x ?? Math.max(0, (state.meta.width - preset.w) / 2),
-    y: y ?? Math.max(0, (state.meta.depth - preset.d) / 2),
-    elevation: Number(preset.elevation || 0),
-    rotation: Number(preset.rotation || 0),
+    x: defaultX,
+    y: defaultY,
+    elevation: Number(preset.elevation ?? (wallMounted ? defaultWallElevation(preset.name) : 0)),
+    rotation: Number(preset.rotation ?? (wall ? WALL_ROTATIONS[wall] : 0)),
+    surfaceItem,
+    wallMounted,
+    wall,
+    parentId: null,
+    parentOffsetX: 0,
+    parentOffsetY: 0,
+    parentRotationOffset: 0,
     deleted: false,
     rev: nextRev(),
     updatedBy: myName
   });
+  if (wallMounted) item = snapItemToWall(item, Infinity);
   state.furniture[id] = item;
-  selectEntity('furniture', id, false);
+  selectedType = 'furniture';
+  selectedId = id;
   saveLocal();
   renderAll();
   actions?.item.send(item);
-  toast(`${preset.name} added. Drag it into place.`);
+  toast(surfaceItem ? `${item.name} added. Hold and move it over a desk to place it on top.` : wallMounted ? `${item.name} added on the ${WALL_LABELS[item.wall].toLowerCase()}. Hold it in 3D to move across or up the wall.` : `${item.name} added. Hold it briefly, then drag to move.`);
+  return item;
 }
 
 function patchItem(id, patch, options = {}) {
   const { broadcast = true, rerender = true } = options;
   const existing = state.furniture[id];
   if (!existing || existing.deleted) return null;
-  const candidate = clampItem({ ...existing, ...patch, rev: nextRev(), updatedBy: myName });
-  const item = Object.prototype.hasOwnProperty.call(patch, 'x') || Object.prototype.hasOwnProperty.call(patch, 'y')
-    ? snapItemToWall(candidate)
-    : candidate;
-  state.furniture[id] = item;
+  let candidate = clampItem({ ...existing, ...patch, rev: nextRev(), updatedBy: myName });
+  if (Object.prototype.hasOwnProperty.call(patch, 'x') || Object.prototype.hasOwnProperty.call(patch, 'y')) {
+    candidate = placeSurfaceItem(candidate);
+    if (!candidate.parentId) candidate = snapItemToWall(candidate);
+  }
+  state.furniture[id] = candidate;
+  const children = syncAttachedChildren(id, broadcast);
   saveLocal();
   if (rerender) renderAll();
-  if (broadcast) actions?.item.send(item);
-  return item;
+  if (broadcast) actions?.item.send(candidate);
+  return candidate;
 }
 
 function removeItem(id) {
@@ -856,6 +1062,9 @@ function removeItem(id) {
   if (!existing) return;
   const item = { ...existing, deleted: true, rev: nextRev(), updatedBy: myName };
   state.furniture[id] = item;
+  for (const child of activeFurniture()) {
+    if (child.parentId === id) state.furniture[child.id] = { ...detachItemFromSurface({ ...child }, true), rev: nextRev(), updatedBy: myName };
+  }
   selectedId = null;
   selectedType = null;
   saveLocal();
@@ -941,7 +1150,7 @@ function updateRoom() {
 
 function applyPhotoRoom() {
   const hasEditedShell = activeOpenings().some(o => o.rev?.n > 0);
-  if (hasEditedShell && !window.confirm('Replace the current door and window layout with the v5 default positions? Furniture will stay.')) return;
+  if (hasEditedShell && !window.confirm('Replace the current door and window layout with the v6 default positions? Furniture will stay.')) return;
   state.meta = { ...state.meta, width: 150, depth: 126, wallHeight: 96, rev: nextRev() };
   const defaults = photoOpenings();
   state.openings = {};
@@ -952,12 +1161,12 @@ function applyPhotoRoom() {
   saveLocal();
   renderAll();
   actions?.snapshot.send(state);
-  toast('Loaded the 12.5 × 10.5 room with doors 16 inches from each top corner and a centered left-wall window.');
+  toast('Loaded the v6 12.5 × 10.5 room with doors 16 inches from each top corner and a centered left-wall window.');
 }
 
 function addStarterSet() {
   const existingNames = new Set(activeFurniture().map(item => item.name.toLowerCase()));
-  const starter = PRESETS.filter(p => ['Craft desk', 'Daybed', 'Cube shelf', 'Storage console', 'Floor lamp', 'Plant'].includes(p.name) && !existingNames.has(p.name.toLowerCase()));
+  const starter = PRESETS.filter(p => ['Craft desk', 'Daybed', 'Cube shelf', 'Storage console', 'Floor lamp', 'Floor plant'].includes(p.name) && !existingNames.has(p.name.toLowerCase()));
   if (!starter.length) return toast('The starter furniture is already in the room.');
   starter.forEach((preset, index) => {
     const x = Math.min(state.meta.width - preset.w, 6 + (index % 2) * 58);
@@ -1038,7 +1247,9 @@ function renderPlan() {
     el.setAttribute('role', 'button');
     el.setAttribute('aria-label', `${item.name}, ${Math.round(item.w)} by ${Math.round(item.d)} inches`);
     positionFurnitureElement(el, item);
-    el.innerHTML = `<span>${escapeHtml(item.name)}<span class="size-label">${Math.round(item.w)}×${Math.round(item.d)} in</span></span>`;
+    const parent = item.parentId ? state.furniture[item.parentId] : null;
+    const placementBadge = parent ? `<span class="surface-badge">on ${escapeHtml(parent.name)}</span>` : item.wallMounted ? `<span class="surface-badge">wall · ${Math.round(item.elevation)} in high</span>` : '';
+    el.innerHTML = `<span>${escapeHtml(item.name)}<span class="size-label">${Math.round(item.w)}×${Math.round(item.d)} in</span>${placementBadge}</span>`;
     canvas.appendChild(el);
   }
 }
@@ -1048,6 +1259,7 @@ function positionFurnitureElement(el, item) {
   el.style.top = `${item.y / state.meta.depth * 100}%`;
   el.style.width = `${item.w / state.meta.width * 100}%`;
   el.style.height = `${item.d / state.meta.depth * 100}%`;
+  el.style.setProperty('--item-rotation', `${item.rotation || 0}deg`);
   el.style.transform = `rotate(${item.rotation || 0}deg)`;
   el.style.transformOrigin = 'center';
 }
@@ -1097,7 +1309,9 @@ function renderSelection() {
     $('itemHeight').value = Math.round(furniture.height);
     $('itemElevation').value = Math.round(furniture.elevation * 10) / 10;
     const wallStatus = snappedWallLabel(furniture);
-    $('positionLabel').textContent = `${Math.round(furniture.x * 10) / 10} in from left · ${Math.round(furniture.y * 10) / 10} in from top · ${Math.round(furniture.elevation * 10) / 10} in high${wallStatus ? ` · ${wallStatus}` : ''}`;
+    const parent = furniture.parentId ? state.furniture[furniture.parentId] : null;
+    const placement = parent ? ` · placed on ${parent.name}` : furniture.wallMounted ? ` · mounted on ${WALL_LABELS[furniture.wall || nearestWallForItem(furniture)[0]].toLowerCase()}` : wallStatus ? ` · ${wallStatus}` : '';
+    $('positionLabel').textContent = `${Math.round(furniture.x * 10) / 10} in from left · ${Math.round(furniture.y * 10) / 10} in from top · ${Math.round(furniture.elevation * 10) / 10} in high${placement}`;
   }
 
   if (openingVisible) {
@@ -1114,14 +1328,34 @@ function renderSelection() {
   }
 }
 
+function clear2DHold(releasePointer = false) {
+  if (!drag) return;
+  clearTimeout(drag.holdTimer);
+  drag.element?.classList.remove('hold-pending', 'drag-now');
+  if (releasePointer && canvas.hasPointerCapture(drag.pointerId)) canvas.releasePointerCapture(drag.pointerId);
+  document.body.classList.remove('dragging');
+}
+
+function activate2DDrag() {
+  if (!drag || drag.active) return;
+  const entity = drag.type === 'opening' ? state.openings[drag.id] : state.furniture[drag.id];
+  if (!entity || entity.deleted) { clear2DHold(true); drag = null; return; }
+  drag.active = true;
+  drag.element.classList.remove('hold-pending');
+  drag.element.classList.add('drag-now');
+  document.body.classList.add('dragging');
+  navigator.vibrate?.(18);
+  toast(`Moving ${entity.name}. Keep holding and drag.`);
+}
+
 function beginDrag(event) {
   const target = event.target.closest('[data-entity]');
-  if (!target || !canvas.contains(target)) return;
-  event.preventDefault();
+  if (!target || !canvas.contains(target) || event.button > 0) return;
   const id = target.dataset.id;
   const type = target.dataset.entity;
   const entity = type === 'opening' ? state.openings[id] : state.furniture[id];
   if (!entity || entity.deleted) return;
+  event.preventDefault();
   selectEntity(type, id, false);
   const rect = canvas.getBoundingClientRect();
   drag = {
@@ -1135,36 +1369,50 @@ function beginDrag(event) {
     wall: type === 'opening' ? entity.wall : null,
     rect,
     element: target,
-    moved: false
+    moved: false,
+    active: false,
+    holdTimer: null
   };
-  target.classList.add('drag-now');
+  target.classList.add('hold-pending');
   canvas.setPointerCapture(event.pointerId);
-  document.body.classList.add('dragging');
+  drag.holdTimer = setTimeout(activate2DDrag, HOLD_TO_MOVE_MS);
 }
 
 function moveDrag(event) {
   if (!drag || drag.pointerId !== event.pointerId) return;
+  const pixelDistance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+  if (!drag.active) {
+    if (pixelDistance > HOLD_CANCEL_PX) {
+      clear2DHold(false);
+      clearTimeout(drag.holdTimer);
+      drag.element.classList.remove('hold-pending');
+    }
+    return;
+  }
   event.preventDefault();
   const dx = (event.clientX - drag.startX) / drag.rect.width * state.meta.width;
   const dy = (event.clientY - drag.startY) / drag.rect.height * state.meta.depth;
-  drag.moved = drag.moved || Math.abs(dx) > 1 || Math.abs(dy) > 1;
+  drag.moved = drag.moved || Math.abs(dx) > .5 || Math.abs(dy) > .5;
 
   if (drag.type === 'furniture') {
     const item = state.furniture[drag.id];
     if (!item) return;
-    const next = snapItemToWall({ ...item, x: snapValue(drag.startValueX + dx), y: snapValue(drag.startValueY + dy) });
-    item.x = next.x;
-    item.y = next.y;
-    item.rotation = next.rotation;
+    let next = clampItem({ ...item, x: snapValue(drag.startValueX + dx), y: snapValue(drag.startValueY + dy) });
+    next = placeSurfaceItem(next);
+    if (!next.parentId) next = snapItemToWall(next);
+    Object.assign(item, next);
     positionFurnitureElement(drag.element, item);
-    const wallStatus = snappedWallLabel(item);
-    $('positionLabel').textContent = `${Math.round(item.x)} in from left · ${Math.round(item.y)} in from top${wallStatus ? ` · ${wallStatus}` : ''}`;
+    syncAttachedChildren(item.id, false);
+    const parent = item.parentId ? state.furniture[item.parentId] : null;
+    const placement = parent ? ` · on ${parent.name}` : item.wallMounted ? ` · ${WALL_LABELS[item.wall].toLowerCase()}` : snappedWallLabel(item) ? ` · ${snappedWallLabel(item)}` : '';
+    $('positionLabel').textContent = `${Math.round(item.x)} in from left · ${Math.round(item.y)} in from top · ${Math.round(item.elevation)} in high${placement}`;
     const now = performance.now();
     if (now - lastDragSend > 75) {
       item.rev = nextRev();
       item.updatedBy = myName;
       actions?.item.send({ ...item });
       actions?.active.send({ type: 'furniture', id: item.id });
+      syncAttachedChildren(item.id, true);
       lastDragSend = now;
     }
   } else {
@@ -1189,20 +1437,27 @@ function moveDrag(event) {
 
 function endDrag(event) {
   if (!drag || drag.pointerId !== event.pointerId) return;
-  drag.element.classList.remove('drag-now');
-  if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
-  document.body.classList.remove('dragging');
-  const entity = drag.type === 'opening' ? state.openings[drag.id] : state.furniture[drag.id];
+  const wasActive = drag.active;
+  const completed = drag;
+  clear2DHold(true);
+  drag = null;
+  if (!wasActive) return;
+  const entity = completed.type === 'opening' ? state.openings[completed.id] : state.furniture[completed.id];
   if (entity) {
     entity.rev = nextRev();
     entity.updatedBy = myName;
     saveLocal();
-    if (drag.type === 'opening') actions?.opening.send({ ...entity });
-    else actions?.item.send({ ...entity });
+    if (completed.type === 'opening') actions?.opening.send({ ...entity });
+    else {
+      actions?.item.send({ ...entity });
+      syncAttachedChildren(entity.id, true);
+      const parent = entity.parentId ? state.furniture[entity.parentId] : null;
+      if (parent) toast(`${entity.name} placed on ${parent.name}. It will move with the desk.`);
+    }
   }
-  const moved = drag.moved;
-  drag = null;
-  if (moved && threeRuntime) rebuild3D();
+  if (completed.moved && threeRuntime) rebuild3D();
+  renderPlan();
+  renderSelection();
 }
 
 function addMessage(text) {
@@ -1279,7 +1534,7 @@ async function connectLive() {
     const { joinRoom, selfId } = await ensureConnectionModule();
     actorId = selfId || actorId;
     roomConnection = joinRoom(
-      { appId: 'roomrelay-3d-v5', password: `roomrelay-${currentCode}` },
+      { appId: 'roomrelay-3d-v6', password: `roomrelay-${currentCode}` },
       `room-${currentCode}`,
       { onJoinError: ({ error }) => toast(`Connection issue: ${error?.message || 'try another network'}`) }
     );
@@ -1309,6 +1564,7 @@ async function connectLive() {
         const key = entityKey('furniture', item.id);
         remoteActive.set(key, Date.now());
         setTimeout(() => { remoteActive.delete(key); renderPlan(); }, 550);
+        reconcileAttachments();
         saveLocal();
         renderAll();
       }
@@ -1394,7 +1650,10 @@ async function openRoom() {
   loadLocal();
   const url = new URL(location.href);
   url.searchParams.set('room', currentCode);
-  history.replaceState(null, '', url);
+  history.replaceState({ roomrelayBase: true }, '', url);
+  history.pushState({ roomrelayGuard: true }, '', url);
+  backGuardArmed = true;
+  allowBackNavigation = false;
   $('roomCodeLabel').textContent = currentCode;
   $('shareLink').value = url.toString();
   joinView.classList.add('hidden');
@@ -1554,7 +1813,7 @@ async function init3D() {
 
     threeRuntime = {
       THREE, scene, camera, renderer, controls, roomGroup, openingGroup, furnitureGroup, presenceGroup, lightingGroup,
-      ambient, hemi, warm, fill, raycaster, pointer, floorPlane, planePoint, furnitureObjects: new Map(), openingObjects: new Map(), wallObjects: [], drag: null,
+      ambient, hemi, warm, fill, raycaster, pointer, floorPlane, planePoint, furnitureObjects: new Map(), openingObjects: new Map(), wallObjects: [], drag: null, pendingHold: null,
       pointerStart: null, animationId: null, roomW: 12.5, roomD: 10.5
     };
 
@@ -1563,6 +1822,7 @@ async function init3D() {
     renderer.domElement.addEventListener('pointermove', handle3DPointerMove, true);
     renderer.domElement.addEventListener('pointerup', handle3DPointerUp, true);
     renderer.domElement.addEventListener('pointercancel', handle3DPointerUp, true);
+    renderer.domElement.addEventListener('contextmenu', event => event.preventDefault());
 
     $('threeStatus').classList.add('hidden');
     $('threeSnapToggle').checked = state.meta.threeSnap === true;
@@ -1588,13 +1848,15 @@ async function init3D() {
   }
 }
 
-function setRayFromEvent(event) {
+function setRayFromCoords(clientX, clientY) {
   const { renderer, pointer, raycaster, camera } = threeRuntime;
   const rect = renderer.domElement.getBoundingClientRect();
-  pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-  pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
 }
+
+function setRayFromEvent(event) { setRayFromCoords(event.clientX, event.clientY); }
 
 function findEntityOnObject(object) {
   let node = object;
@@ -1606,13 +1868,15 @@ function findEntityOnObject(object) {
   return null;
 }
 
-function wallDragPlane(opening) {
+function planeForWall(wall) {
   const { THREE, roomW, roomD } = threeRuntime;
-  if (opening.wall === 'top') return new THREE.Plane(new THREE.Vector3(0, 0, 1), roomD / 2);
-  if (opening.wall === 'bottom') return new THREE.Plane(new THREE.Vector3(0, 0, 1), -roomD / 2);
-  if (opening.wall === 'left') return new THREE.Plane(new THREE.Vector3(1, 0, 0), roomW / 2);
+  if (wall === 'top') return new THREE.Plane(new THREE.Vector3(0, 0, 1), roomD / 2);
+  if (wall === 'bottom') return new THREE.Plane(new THREE.Vector3(0, 0, 1), -roomD / 2);
+  if (wall === 'left') return new THREE.Plane(new THREE.Vector3(1, 0, 0), roomW / 2);
   return new THREE.Plane(new THREE.Vector3(1, 0, 0), -roomW / 2);
 }
+
+function wallDragPlane(opening) { return planeForWall(opening.wall); }
 
 function openingAlongFeet(opening, point) {
   return opening.wall === 'top' || opening.wall === 'bottom'
@@ -1620,63 +1884,117 @@ function openingAlongFeet(opening, point) {
     : point.z + threeRuntime.roomD / 2;
 }
 
-function handle3DPointerDown(event) {
-  if (!threeRuntime || event.button > 0) return;
-  setRayFromEvent(event);
-  const hits = threeRuntime.raycaster.intersectObjects([threeRuntime.furnitureGroup, threeRuntime.openingGroup], true);
-  const first = hits.find(hit => findEntityOnObject(hit.object));
-  threeRuntime.pointerStart = { x: event.clientX, y: event.clientY };
-  if (!first) return;
-  const entity = findEntityOnObject(first.object);
-  const object = entity.type === 'furniture'
-    ? threeRuntime.furnitureObjects.get(entity.id)
-    : threeRuntime.openingObjects.get(entity.id);
+function clear3DPendingHold() {
+  if (!threeRuntime?.pendingHold) return;
+  clearTimeout(threeRuntime.pendingHold.timer);
+  threeRuntime.pendingHold = null;
+}
+
+function modelPositionForItem(item) {
+  return {
+    x: -threeRuntime.roomW / 2 + (item.x + item.w / 2) / 12,
+    y: (item.elevation || 0) / 12,
+    z: -threeRuntime.roomD / 2 + (item.y + item.d / 2) / 12
+  };
+}
+
+function updateDraggedModel(item, object) {
+  const position = modelPositionForItem(item);
+  object.position.set(position.x, position.y, position.z);
+  object.rotation.y = threeRuntime.THREE.MathUtils.degToRad(item.rotation || 0);
+}
+
+function activate3DHold() {
+  const runtime = threeRuntime;
+  const pending = runtime?.pendingHold;
+  if (!pending || runtime.drag) return;
+  runtime.pendingHold = null;
+  const entity = pending.entity;
   const data = entity.type === 'furniture' ? state.furniture[entity.id] : state.openings[entity.id];
-  if (!data || !object) return;
-  event.preventDefault();
-  event.stopPropagation();
+  const object = entity.type === 'furniture' ? runtime.furnitureObjects.get(entity.id) : runtime.openingObjects.get(entity.id);
+  if (!data || data.deleted || !object) return;
+  setRayFromCoords(pending.startX, pending.startY);
   const mode = $('threeMoveMode')?.value || 'floor';
   const dragData = {
     type: entity.type,
     id: entity.id,
-    pointerId: event.pointerId,
+    pointerId: pending.pointerId,
     object,
     mode,
     moved: false,
-    startX: event.clientX,
-    startY: event.clientY,
+    startX: pending.startX,
+    startY: pending.startY,
     originalX: data.x,
     originalY: data.y,
     originalElevation: data.elevation || 0,
     originalOffset: data.offset || 0,
     originalSill: data.sill || 0
   };
-  if (entity.type === 'furniture' && mode === 'floor') {
-    if (!threeRuntime.raycaster.ray.intersectPlane(threeRuntime.floorPlane, threeRuntime.planePoint)) return;
-    dragData.offsetX = object.position.x - threeRuntime.planePoint.x;
-    dragData.offsetZ = object.position.z - threeRuntime.planePoint.z;
+
+  if (entity.type === 'furniture' && data.wallMounted) {
+    data.wall = data.wall || nearestWallForItem(data)[0];
+    const plane = planeForWall(data.wall);
+    if (!runtime.raycaster.ray.intersectPlane(plane, runtime.planePoint)) return;
+    dragData.wallMounted = true;
+    dragData.wall = data.wall;
+    dragData.wallPlane = plane;
+    dragData.pointerAlongOffset = (data.wall === 'top' || data.wall === 'bottom' ? (data.x + data.w / 2) : (data.y + data.d / 2)) / 12 - openingAlongFeet({ wall: data.wall }, runtime.planePoint);
+    dragData.pointerElevationOffset = (data.elevation || 0) / 12 - runtime.planePoint.y;
+  } else if (entity.type === 'furniture' && mode === 'floor') {
+    const planeHeight = data.parentId ? (data.elevation || 0) / 12 : 0;
+    dragData.movePlane = new runtime.THREE.Plane(new runtime.THREE.Vector3(0, 1, 0), -planeHeight);
+    if (!runtime.raycaster.ray.intersectPlane(dragData.movePlane, runtime.planePoint)) return;
+    dragData.offsetX = object.position.x - runtime.planePoint.x;
+    dragData.offsetZ = object.position.z - runtime.planePoint.z;
   } else if (entity.type === 'opening' && mode === 'floor') {
     const plane = wallDragPlane(data);
-    if (!threeRuntime.raycaster.ray.intersectPlane(plane, threeRuntime.planePoint)) return;
+    if (!runtime.raycaster.ray.intersectPlane(plane, runtime.planePoint)) return;
     dragData.wallPlane = plane;
-    dragData.pointerAlongOffset = (data.offset + data.width / 2) / 12 - openingAlongFeet(data, threeRuntime.planePoint);
+    dragData.pointerAlongOffset = (data.offset + data.width / 2) / 12 - openingAlongFeet(data, runtime.planePoint);
   }
-  threeRuntime.drag = dragData;
-  threeRuntime.controls.enabled = false;
-  threeRuntime.renderer.domElement.setPointerCapture(event.pointerId);
+
+  runtime.drag = dragData;
+  runtime.controls.enabled = false;
+  runtime.renderer.domElement.setPointerCapture(pending.pointerId);
   selectedType = entity.type;
   selectedId = entity.id;
   renderPlan();
   renderSelection();
-  const label = entity.type === 'furniture' ? state.furniture[entity.id]?.name : state.openings[entity.id]?.name;
+  navigator.vibrate?.(18);
+  const label = data.name;
   $('threeSelection').textContent = entity.type === 'furniture'
-    ? `Selected: ${label} · drag freely; move near a wall to snap and face into the room`
-    : `Selected: ${label} · drag directly along its wall${state.openings[entity.id]?.type === 'window' ? ' or switch to height mode' : ''}`;
+    ? data.wallMounted ? `Moving ${label} on the ${WALL_LABELS[data.wall].toLowerCase()} · drag sideways or up/down` : data.surfaceItem ? `Moving ${label} · hover over a desk to place it on top` : `Moving ${label} · release to place`
+    : `Moving ${label} along its wall${data.type === 'window' ? ' · height mode changes sill height' : ''}`;
+}
+
+function handle3DPointerDown(event) {
+  if (!threeRuntime || event.button > 0) return;
+  clear3DPendingHold();
+  setRayFromEvent(event);
+  const hits = threeRuntime.raycaster.intersectObjects([threeRuntime.furnitureGroup, threeRuntime.openingGroup], true);
+  const first = hits.find(hit => findEntityOnObject(hit.object));
+  threeRuntime.pointerStart = { x: event.clientX, y: event.clientY };
+  if (!first) return;
+  const entity = findEntityOnObject(first.object);
+  threeRuntime.pendingHold = {
+    entity,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    timer: setTimeout(activate3DHold, HOLD_TO_MOVE_MS)
+  };
+  const data = entity.type === 'furniture' ? state.furniture[entity.id] : state.openings[entity.id];
+  $('threeSelection').textContent = `Selected ${data?.name || 'object'} · keep holding to move`;
 }
 
 function handle3DPointerMove(event) {
   const runtime = threeRuntime;
-  const drag = runtime?.drag;
+  if (!runtime) return;
+  const pending = runtime.pendingHold;
+  if (pending && pending.pointerId === event.pointerId && Math.hypot(event.clientX - pending.startX, event.clientY - pending.startY) > HOLD_CANCEL_PX) {
+    clear3DPendingHold();
+  }
+  const drag = runtime.drag;
   if (!drag || drag.pointerId !== event.pointerId) return;
   event.preventDefault();
   event.stopPropagation();
@@ -1686,26 +2004,32 @@ function handle3DPointerMove(event) {
   if (drag.type === 'furniture') {
     const item = state.furniture[drag.id];
     if (!item) return;
-    if (drag.mode === 'height') {
-      const next = clampItem({ ...item, elevation: threeSnapValue(drag.originalElevation - dy * .25) });
-      item.elevation = next.elevation;
-      drag.object.position.y = item.elevation / 12;
+    let next;
+    if (drag.wallMounted) {
+      if (!runtime.raycaster.ray.intersectPlane(drag.wallPlane, runtime.planePoint)) return;
+      const centerAlong = (openingAlongFeet({ wall: drag.wall }, runtime.planePoint) + drag.pointerAlongOffset) * 12;
+      next = { ...item, wall: drag.wall, elevation: threeSnapValue((runtime.planePoint.y + drag.pointerElevationOffset) * 12) };
+      if (drag.wall === 'top' || drag.wall === 'bottom') next.x = centerAlong - item.w / 2;
+      else next.y = centerAlong - item.d / 2;
+      next = snapItemToWall(clampItem(next), Infinity);
+    } else if (drag.mode === 'height') {
+      next = clampItem({ ...item, elevation: threeSnapValue(drag.originalElevation - dy * .25) });
+      if (next.parentId) detachItemFromSurface(next, false);
     } else {
-      if (!runtime.raycaster.ray.intersectPlane(runtime.floorPlane, runtime.planePoint)) return;
+      if (!runtime.raycaster.ray.intersectPlane(drag.movePlane || runtime.floorPlane, runtime.planePoint)) return;
       const centerX = runtime.planePoint.x + drag.offsetX;
       const centerZ = runtime.planePoint.z + drag.offsetZ;
-      const next = snapItemToWall({
+      next = clampItem({
         ...item,
         x: threeSnapValue((centerX + runtime.roomW / 2) * 12 - item.w / 2),
         y: threeSnapValue((centerZ + runtime.roomD / 2) * 12 - item.d / 2)
       });
-      item.x = next.x;
-      item.y = next.y;
-      item.rotation = next.rotation;
-      drag.object.position.x = -runtime.roomW / 2 + (item.x + item.w / 2) / 12;
-      drag.object.position.z = -runtime.roomD / 2 + (item.y + item.d / 2) / 12;
-      drag.object.rotation.y = runtime.THREE.MathUtils.degToRad(item.rotation || 0);
+      next = placeSurfaceItem(next);
+      if (!next.parentId) next = snapItemToWall(next);
     }
+    Object.assign(item, next);
+    updateDraggedModel(item, drag.object);
+    syncAttachedChildren(item.id, false);
     drag.moved = drag.moved || Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 2;
     const now = performance.now();
     if (now - lastDragSend > 75) {
@@ -1713,6 +2037,7 @@ function handle3DPointerMove(event) {
       item.updatedBy = myName;
       actions?.item.send({ ...item });
       actions?.active.send({ type: 'furniture', id: item.id });
+      syncAttachedChildren(item.id, true);
       lastDragSend = now;
     }
     return;
@@ -1747,6 +2072,14 @@ function handle3DPointerMove(event) {
 function handle3DPointerUp(event) {
   const runtime = threeRuntime;
   if (!runtime) return;
+  const pending = runtime.pendingHold;
+  if (pending && pending.pointerId === event.pointerId) {
+    clear3DPendingHold();
+    const data = pending.entity.type === 'furniture' ? state.furniture[pending.entity.id] : state.openings[pending.entity.id];
+    selectEntity(pending.entity.type, pending.entity.id);
+    $('threeSelection').textContent = `Selected: ${data?.name || 'object'} · hold briefly to move`;
+    return;
+  }
   if (runtime.drag && runtime.drag.pointerId === event.pointerId) {
     event.preventDefault();
     event.stopPropagation();
@@ -1756,8 +2089,12 @@ function handle3DPointerUp(event) {
       data.rev = nextRev();
       data.updatedBy = myName;
       saveLocal();
-      if (drag.type === 'furniture') actions?.item.send({ ...data });
-      else actions?.opening.send({ ...data });
+      if (drag.type === 'furniture') {
+        actions?.item.send({ ...data });
+        syncAttachedChildren(data.id, true);
+        const parent = data.parentId ? state.furniture[data.parentId] : null;
+        if (parent) toast(`${data.name} placed on ${parent.name}.`);
+      } else actions?.opening.send({ ...data });
     }
     if (runtime.renderer.domElement.hasPointerCapture(event.pointerId)) runtime.renderer.domElement.releasePointerCapture(event.pointerId);
     runtime.controls.enabled = true;
@@ -1768,22 +2105,8 @@ function handle3DPointerUp(event) {
     send3DPresence(true);
     return;
   }
-  const start = runtime.pointerStart;
-  runtime.pointerStart = null;
-  if (!start || Math.hypot(event.clientX - start.x, event.clientY - start.y) > 8) return;
-  setRayFromEvent(event);
-  const hits = runtime.raycaster.intersectObjects([runtime.furnitureGroup, runtime.openingGroup], true);
-  for (const hit of hits) {
-    const entity = findEntityOnObject(hit.object);
-    if (!entity) continue;
-    selectEntity(entity.type, entity.id);
-    const label = entity.type === 'furniture' ? state.furniture[entity.id]?.name : state.openings[entity.id]?.name;
-    $('threeSelection').textContent = entity.type === 'furniture'
-      ? `Selected: ${label} · drag freely; move near a wall to snap and face into the room`
-      : `Selected: ${label} · drag directly along its wall${state.openings[entity.id]?.type === 'window' ? ' or switch to height mode' : ''}`;
-    break;
-  }
 }
+
 
 function disposeObject(object) {
   object.traverse?.(child => {
@@ -2114,6 +2437,12 @@ function createFurnitureModel(item) {
       addBox(w, h, d, woodMaterial, 0, h / 2, 0);
     }
   } else if (item.kind === 'tv') {
+    if (name.includes('mounted')) {
+      const screenD = Math.max(.08, Math.min(.22, d));
+      addBox(w, h, screenD, darkMaterial, 0, h / 2, 0);
+      addBox(w * .92, h * .86, screenD + .015, new THREE.MeshStandardMaterial({ color: 0x10151c, roughness: .2, metalness: .15 }), 0, h / 2, screenD * .12);
+      addBox(w * .22, h * .16, .10, metalMaterial, 0, h * .44, -screenD / 2 - .05);
+    } else {
     const standH = Math.max(.25, h * .34);
     addBox(w, standH, d, woodMaterial, 0, standH / 2, 0);
     addBox(w * .74, standH * .56, d * .7, lightMaterial, 0, standH * .28, 0);
@@ -2121,39 +2450,74 @@ function createFurnitureModel(item) {
     const screenD = Math.min(.12, d * .4);
     addBox(w * .82, screenH, screenD, darkMaterial, 0, standH + screenH / 2, 0);
     addBox(w * .75, screenH * .82, screenD + .015, new THREE.MeshStandardMaterial({ color: 0x12171e, roughness: .25, metalness: .2 }), 0, standH + screenH / 2, screenD * .12);
+    }
   } else if (item.kind === 'chair') {
     if (name.includes('ottoman') || name.includes('stool')) {
-      addBox(w, h * .42, d, fabricMaterial, 0, h * .21, 0);
-      addBox(w * .96, .10, d * .96, accentMaterial, 0, h * .42 + .05, 0);
-      const leg = Math.min(.12, w * .1, d * .1);
-      for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, Math.max(.14, h * .2), leg, woodMaterial, x, Math.max(.14, h * .2) / 2, z);
+      const round = name.includes('stool');
+      if (round) {
+        addCylinder(w * .42, w * .46, Math.max(.18, h * .28), fabricMaterial, 0, h * .72, 0, 24);
+        addCylinder(.06, .07, h * .66, metalMaterial, 0, h * .36, 0, 16);
+        addCylinder(w * .30, w * .34, .08, darkMaterial, 0, .04, 0, 24);
+      } else {
+        addBox(w, h * .42, d, fabricMaterial, 0, h * .21, 0);
+        addBox(w * .96, .10, d * .96, accentMaterial, 0, h * .42 + .05, 0);
+        const leg = Math.min(.12, w * .1, d * .1);
+        for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, Math.max(.14, h * .2), leg, woodMaterial, x, Math.max(.14, h * .2) / 2, z);
+      }
+    } else if (name.includes('office') || name.includes('swivel')) {
+      const seatY = Math.min(1.65, h * .46);
+      addBox(w * .84, .18, d * .78, fabricMaterial, 0, seatY, 0);
+      addBox(w * .78, Math.max(.75, h - seatY), .16, fabricMaterial, 0, seatY + (h - seatY) / 2, -d * .34);
+      addCylinder(.055, .065, seatY - .12, metalMaterial, 0, (seatY - .12) / 2, 0, 18);
+      for (let i = 0; i < 5; i++) {
+        const angle = i * Math.PI * 2 / 5;
+        const x = Math.cos(angle) * w * .28;
+        const z = Math.sin(angle) * d * .28;
+        const arm = addBox(w * .28, .045, .055, metalMaterial, x / 2, .14, z / 2);
+        arm.rotation.y = -angle;
+        addCylinder(.055, .055, .05, darkMaterial, x, .035, z, 12);
+      }
+      addBox(.10, .45, .10, metalMaterial, -w * .42, seatY + .16, 0);
+      addBox(.10, .45, .10, metalMaterial,  w * .42, seatY + .16, 0);
+    } else if (name.includes('lounge')) {
+      const seatY = .62;
+      addBox(w * .90, .26, d * .72, fabricMaterial, 0, seatY, .08);
+      const back = addBox(w * .90, h * .62, .22, fabricMaterial, 0, seatY + h * .30, -d * .32);
+      back.rotation.x = -.18;
+      addBox(.18, seatY + .28, d * .72, fabricMaterial, -w * .44, (seatY + .28) / 2, .02);
+      addBox(.18, seatY + .28, d * .72, fabricMaterial,  w * .44, (seatY + .28) / 2, .02);
+      for (const x of [-w * .34, w * .34]) for (const z of [-d * .22, d * .24]) addBox(.08, seatY, .08, woodMaterial, x, seatY / 2, z);
+      addBox(w * .46, .12, d * .36, accentMaterial, 0, seatY + .20, .05);
     } else {
       const seatY = Math.min(h * .44, 1.5);
       addBox(w * .92, .20, d * .90, fabricMaterial, 0, seatY, 0);
       addBox(w * .92, Math.max(.55, h - seatY), .20, fabricMaterial, 0, seatY + (h - seatY) / 2, -d / 2 + .10);
-      addBox(.18, seatY + .12, d * .78, fabricMaterial, -w / 2 + .09, (seatY + .12) / 2, 0);
-      addBox(.18, seatY + .12, d * .78, fabricMaterial,  w / 2 - .09, (seatY + .12) / 2, 0);
+      if (!name.includes('dining')) {
+        addBox(.18, seatY + .12, d * .78, fabricMaterial, -w / 2 + .09, (seatY + .12) / 2, 0);
+        addBox(.18, seatY + .12, d * .78, fabricMaterial,  w / 2 - .09, (seatY + .12) / 2, 0);
+      }
       const leg = Math.min(.11, w * .08, d * .08);
       for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, seatY, leg, woodMaterial, x, seatY / 2, z);
-      addBox(w * .5, .12, d * .42, accentMaterial, 0, seatY + .17, .05);
+      if (!name.includes('dining')) addBox(w * .5, .12, d * .42, accentMaterial, 0, seatY + .17, .05);
     }
   } else if (item.kind === 'shelf') {
     if (name.includes('pegboard')) {
-      addBox(w, h, .08, new THREE.MeshStandardMaterial({ color: 0xb78f62, roughness: .88 }), 0, 4.6 + h / 2, 0);
-      for (let r = -1; r <= 1; r++) {
-        for (let c = -2; c <= 2; c++) addSphere(.03, darkMaterial, c * (w / 6), 4.6 + h * .18 + (r + 1) * (h / 3), .05);
-      }
-      addBox(w * .78, .12, .22, woodMaterial, 0, 4.6 + h * .66, .10);
-      addBox(w * .28, .18, .18, accentMaterial, -w * .18, 4.6 + h * .40, .11);
-      addBox(w * .22, .18, .18, lightMaterial,  w * .16, 4.6 + h * .34, .11);
+      addBox(w, h, .08, new THREE.MeshStandardMaterial({ color: 0xb78f62, roughness: .88 }), 0, h / 2, 0);
+      const columns = Math.max(5, Math.min(10, Math.round(w / .45)));
+      const rows = Math.max(4, Math.min(8, Math.round(h / .48)));
+      for (let r = 1; r < rows; r++) for (let c = 1; c < columns; c++) addSphere(.022, darkMaterial, -w / 2 + c * w / columns, r * h / rows, .05);
+      addBox(w * .78, .12, .22, woodMaterial, 0, h * .28, .10);
+      addBox(w * .28, .18, .18, accentMaterial, -w * .20, h * .60, .11);
+      addBox(w * .22, .18, .18, lightMaterial,  w * .18, h * .54, .11);
+      addBox(w * .16, .24, .14, metalMaterial, w * .34, h * .72, .10);
     } else {
-      addBox(w, .12, d, woodMaterial, 0, 5.1, 0);
-      addBox(.08, .38, .08, metalMaterial, -w * .25, 4.88, 0);
-      addBox(.08, .38, .08, metalMaterial,  w * .25, 4.88, 0);
-      addBox(w * .22, .18, d * .52, lightMaterial, -w * .24, 5.28, 0);
-      addBox(w * .16, .22, d * .44, accentMaterial,  w * .10, 5.3, 0);
-      addSphere(.10, accentMaterial, w * .32, 5.32, 0);
-      addCylinder(.09, .12, .16, woodMaterial, w * .32, 5.08, 0, 14);
+      addBox(w, .12, d, woodMaterial, 0, .06, 0);
+      addBox(.08, .38, .08, metalMaterial, -w * .25, -.15, 0);
+      addBox(.08, .38, .08, metalMaterial,  w * .25, -.15, 0);
+      addBox(w * .22, .18, d * .52, lightMaterial, -w * .24, .24, 0);
+      addBox(w * .16, .22, d * .44, accentMaterial,  w * .10, .26, 0);
+      addSphere(.10, accentMaterial, w * .32, .28, 0);
+      addCylinder(.09, .12, .16, woodMaterial, w * .32, .08, 0, 14);
     }
   } else if (item.kind === 'light') {
     if (name.includes('table')) {
@@ -2176,21 +2540,73 @@ function createFurnitureModel(item) {
       addPointGlow(0, Math.max(4.2, h * .78) + .18, 0, 1.8, 4.2);
     }
   } else if (item.kind === 'decor') {
-    addCylinder(Math.max(.12, w * .18), Math.max(.16, w * .22), Math.max(.18, h * .28), woodMaterial, 0, Math.max(.18, h * .28) / 2, 0, 16);
-    const leafMaterial = new THREE.MeshStandardMaterial({ color: 0x6f9d65, roughness: .86, side: THREE.DoubleSide });
-    for (let i = 0; i < 6; i++) {
-      const leaf = new THREE.Mesh(new THREE.BoxGeometry(.06, .36 + (i % 3) * .05, .18), leafMaterial);
-      const angle = (Math.PI * 2 * i) / 6;
-      leaf.position.set(Math.cos(angle) * .12, Math.max(.18, h * .28) + .22 + (i % 2) * .08, Math.sin(angle) * .12);
-      leaf.rotation.z = Math.sin(angle) * .65;
-      leaf.rotation.y = angle;
-      leaf.castShadow = true;
-      leaf.receiveShadow = true;
-      leaf.userData.itemId = item.id;
-      group.add(leaf);
+    if (name.includes('rug')) {
+      addBox(w, Math.max(.025, h), d, new THREE.MeshStandardMaterial({ color: 0xb8a690, roughness: .98 }), 0, Math.max(.025, h) / 2, 0);
+      addBox(w * .86, .012, d * .78, accentMaterial, 0, Math.max(.025, h) + .008, 0);
+    } else if (name.includes('wall art') || name.includes('photo frame')) {
+      addBox(w, h, Math.max(.05, d), woodMaterial, 0, h / 2, 0);
+      addBox(w * .86, h * .82, Math.max(.055, d) + .01, new THREE.MeshStandardMaterial({ color: name.includes('photo') ? 0x9fb7ca : 0xc8a97b, roughness: .72 }), 0, h / 2, .02);
+    } else if (name.includes('mirror')) {
+      addBox(w, h, Math.max(.05, d), woodMaterial, 0, h / 2, 0);
+      addBox(w * .88, h * .90, Math.max(.055, d) + .01, new THREE.MeshStandardMaterial({ color: 0xbfd5dc, roughness: .12, metalness: .45 }), 0, h / 2, .02);
+    } else if (name.includes('mug')) {
+      addCylinder(w * .38, w * .42, h * .78, new THREE.MeshStandardMaterial({ color: 0xe9e5dc, roughness: .72 }), 0, h * .39, 0, 20);
+      const handle = addCylinder(w * .12, w * .12, h * .48, woodMaterial, w * .48, h * .42, 0, 12);
+      handle.rotation.z = Math.PI / 2;
+    } else if (name.includes('pen cup')) {
+      addCylinder(w * .40, w * .44, h * .65, metalMaterial, 0, h * .325, 0, 18);
+      for (let i = -1; i <= 1; i++) addBox(.025, h * .52, .025, i === 0 ? accentMaterial : woodMaterial, i * .08, h * .67, 0);
+    } else if (name.includes('books')) {
+      const layers = 3;
+      const colors = [accentMaterial, woodMaterial, lightMaterial];
+      for (let i = 0; i < layers; i++) addBox(w * (1 - i * .08), h / layers * .88, d * (1 - i * .05), colors[i], (i - 1) * .025, (i + .5) * h / layers, 0);
+    } else if (name.includes('vase')) {
+      addCylinder(w * .22, w * .42, h * .72, new THREE.MeshStandardMaterial({ color: 0xc7d3d5, roughness: .35 }), 0, h * .36, 0, 22);
+      addCylinder(w * .16, w * .16, h * .28, new THREE.MeshStandardMaterial({ color: 0xc7d3d5, roughness: .35 }), 0, h * .86, 0, 22);
+      for (let i = 0; i < 3; i++) { const stem = addBox(.025, h * .55, .025, accentMaterial, (i - 1) * .08, h * .95, 0); stem.rotation.z = (i - 1) * .18; }
+    } else if (name.includes('clock')) {
+      addBox(w, h, Math.max(.05, d), darkMaterial, 0, h / 2, 0);
+      addCylinder(w * .42, w * .42, .035, lightMaterial, 0, h * .54, d / 2 + .02, 24).rotation.x = Math.PI / 2;
+    } else if (name.includes('plant') || name.includes('succulent')) {
+      const hanging = name.includes('hanging');
+      const tall = name.includes('tall');
+      const potH = Math.max(.16, h * (tall ? .22 : .28));
+      addCylinder(Math.max(.10, w * .18), Math.max(.14, w * .24), potH, woodMaterial, 0, hanging ? h * .62 : potH / 2, 0, 18);
+      if (hanging) {
+        for (let i = 0; i < 3; i++) { const cord = addBox(.015, h * .45, .015, darkMaterial, (i - 1) * .12, h * .83, 0); cord.rotation.z = (i - 1) * .10; }
+      }
+      const leafMaterial = new THREE.MeshStandardMaterial({ color: tall ? 0x557f53 : 0x6f9d65, roughness: .86, side: THREE.DoubleSide });
+      const leafCount = tall ? 10 : name.includes('succulent') ? 7 : 6;
+      for (let i = 0; i < leafCount; i++) {
+        const leafH = (tall ? .72 : .34) + (i % 3) * (tall ? .12 : .05);
+        const leaf = new THREE.Mesh(new THREE.BoxGeometry(tall ? .08 : .05, leafH, tall ? .24 : .16), leafMaterial);
+        const angle = Math.PI * 2 * i / leafCount;
+        const baseY = hanging ? h * .48 : potH;
+        leaf.position.set(Math.cos(angle) * (tall ? .17 : .10), baseY + leafH * .45 + (i % 2) * .08, Math.sin(angle) * (tall ? .17 : .10));
+        leaf.rotation.z = Math.sin(angle) * .58;
+        leaf.rotation.y = angle;
+        leaf.castShadow = true;
+        leaf.receiveShadow = true;
+        leaf.userData.itemId = item.id;
+        group.add(leaf);
+      }
+    } else {
+      addBox(w, h, d, accentMaterial, 0, h / 2, 0);
     }
   } else {
-    addBox(w, h, d, woodMaterial, 0, h / 2, 0);
+    if (name.includes('monitor')) {
+      addBox(w, h * .78, Math.max(.08, d * .18), darkMaterial, 0, h * .58, 0);
+      addBox(w * .90, h * .66, Math.max(.09, d * .18) + .01, new THREE.MeshStandardMaterial({ color: 0x17212b, roughness: .18, metalness: .16 }), 0, h * .58, .02);
+      addBox(.10, h * .30, .10, metalMaterial, 0, h * .15, 0);
+      addBox(w * .34, .06, d * .56, metalMaterial, 0, .03, 0);
+    } else if (name.includes('laptop')) {
+      addBox(w, .07, d, metalMaterial, 0, .035, 0);
+      const screen = addBox(w * .92, h * .76, .06, darkMaterial, 0, h * .42, -d * .42);
+      screen.rotation.x = -.18;
+      addBox(w * .72, .02, d * .58, lightMaterial, 0, .08, .06);
+    } else {
+      addBox(w, h, d, woodMaterial, 0, h / 2, 0);
+    }
   }
 
   if (selectedType === 'furniture' && item.id === selectedId) {
@@ -2433,12 +2849,12 @@ function update3DSelection() {
   rebuild3D();
   if (selectedType === 'furniture') {
     const item = state.furniture[selectedId];
-    $('threeSelection').textContent = item ? `Selected: ${item.name} · drag freely; move near a wall to snap and face into the room` : 'Drag objects freely · near a wall they snap flush and face into the room · doors/windows move directly on walls';
+    $('threeSelection').textContent = item ? `Selected: ${item.name} · hold briefly to move${item.surfaceItem ? '; hover over a desk to place it on top' : item.wallMounted ? '; move across or up/down its wall' : ''}` : 'Tap selects · hold briefly to move · small décor snaps onto desks · mounted items move on walls';
   } else if (selectedType === 'opening') {
     const opening = state.openings[selectedId];
-    $('threeSelection').textContent = opening ? `Selected: ${opening.name} · drag directly along its wall${opening.type === 'window' ? ' or use height mode' : ''}` : 'Drag objects freely · near a wall they snap flush and face into the room · doors/windows move directly on walls';
+    $('threeSelection').textContent = opening ? `Selected: ${opening.name} · drag directly along its wall${opening.type === 'window' ? ' or use height mode' : ''}` : 'Tap selects · hold briefly to move · small décor snaps onto desks · mounted items move on walls';
   } else {
-    $('threeSelection').textContent = 'Drag objects freely · near a wall they snap flush and face into the room · doors/windows move directly on walls';
+    $('threeSelection').textContent = 'Tap selects · hold briefly to move · small décor snaps onto desks · mounted items move on walls';
   }
 }
 
@@ -2484,6 +2900,7 @@ canvas.addEventListener('pointerdown', beginDrag);
 canvas.addEventListener('pointermove', moveDrag);
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
+canvas.addEventListener('contextmenu', event => event.preventDefault());
 
 $('newCodeBtn').addEventListener('click', () => $('codeInput').value = generateCode());
 $('joinBtn').addEventListener('click', openRoom);
@@ -2530,6 +2947,8 @@ function commitSelectedFields() {
   patchItem(selectedId, {
     name: $('itemName').value.trim() || 'Furniture',
     kind: inferKind($('itemName').value),
+    surfaceItem: isSurfaceItemName($('itemName').value),
+    wallMounted: isWallMountedName($('itemName').value),
     w: Number($('itemWidth').value) || 12,
     d: Number($('itemDepth').value) || 12,
     height: Number($('itemHeight').value) || 30,
@@ -2540,7 +2959,11 @@ $('itemName').addEventListener('change', commitSelectedFields);
 $('itemWidth').addEventListener('change', commitSelectedFields);
 $('itemDepth').addEventListener('change', commitSelectedFields);
 $('itemHeight').addEventListener('change', commitSelectedFields);
-$('itemElevation').addEventListener('change', commitSelectedFields);
+$('itemElevation').addEventListener('change', () => {
+  const item = selectedType === 'furniture' && selectedId ? state.furniture[selectedId] : null;
+  if (item?.parentId) detachItemFromSurface(item, false);
+  commitSelectedFields();
+});
 $('rotateBtn').addEventListener('click', () => {
   const item = selectedType === 'furniture' && selectedId ? state.furniture[selectedId] : null;
   if (item) patchItem(selectedId, { w: item.d, d: item.w });
@@ -2635,9 +3058,26 @@ $('threeFloorBtn').addEventListener('click', () => adjustSelected3D({ elevation:
 $('resetViewBtn').addEventListener('click', () => reset3DView(false));
 $('topViewBtn').addEventListener('click', () => reset3DView(true));
 window.addEventListener('resize', () => { if (currentTab === 'plan') renderPlan(); resize3D(); });
-window.addEventListener('beforeunload', () => {
+window.addEventListener('popstate', () => {
+  if (allowBackNavigation || plannerView.classList.contains('hidden')) return;
+  const confirmed = window.confirm('Leave this RoomRelay room? The layout is saved on this phone, but the live connection will close.');
+  if (confirmed) {
+    allowBackNavigation = true;
+    leaveRoom();
+    setTimeout(() => history.back(), 0);
+  } else {
+    history.pushState({ roomrelayGuard: true }, '', location.href);
+    backGuardArmed = true;
+  }
+});
+
+window.addEventListener('beforeunload', event => {
   send3DPresence(true);
   roomConnection?.leave();
+  if (!plannerView.classList.contains('hidden')) {
+    event.preventDefault();
+    event.returnValue = '';
+  }
 });
 
 document.querySelectorAll('[data-app-version]').forEach(element => { element.textContent = `v${APP_VERSION}`; });
