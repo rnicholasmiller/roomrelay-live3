@@ -23,10 +23,15 @@
       --grid: rgba(75, 85, 99, .15);
       --shadow: 0 10px 30px rgba(23, 32, 51, .10);
       --bed: #8bb8f8;
+      --sofa: #d3b9a2;
       --desk: #d7a76f;
       --dresser: #c89562;
+      --storage: #b58d68;
       --tv: #4b5563;
       --chair: #79b89c;
+      --shelf: #d9c08b;
+      --light: #f3cc79;
+      --decor: #8eb488;
       --other: #b9a7e8;
     }
     @media (prefers-color-scheme: dark) {
@@ -46,10 +51,15 @@
         --grid: rgba(220, 226, 238, .12);
         --shadow: none;
         --bed: #4f79b8;
+        --sofa: #9a7e69;
         --desk: #9c7045;
         --dresser: #8d603d;
+        --storage: #8f6c4d;
         --tv: #697386;
         --chair: #4d896f;
+        --shelf: #a68b56;
+        --light: #cfab58;
+        --decor: #5f8a61;
         --other: #7563aa;
       }
     }
@@ -131,10 +141,15 @@
     }
     .furniture:active { cursor: grabbing; }
     .furniture[data-kind="bed"] { background: var(--bed); }
+    .furniture[data-kind="sofa"] { background: var(--sofa); }
     .furniture[data-kind="desk"] { background: var(--desk); }
     .furniture[data-kind="dresser"] { background: var(--dresser); }
+    .furniture[data-kind="storage"] { background: var(--storage); }
     .furniture[data-kind="tv"] { background: var(--tv); color: #fff; }
     .furniture[data-kind="chair"] { background: var(--chair); }
+    .furniture[data-kind="shelf"] { background: var(--shelf); }
+    .furniture[data-kind="light"] { background: var(--light); }
+    .furniture[data-kind="decor"] { background: var(--decor); }
     .furniture[data-kind="other"] { background: var(--other); }
     .furniture.selected { outline: 4px solid var(--accent); outline-offset: 2px; z-index: 8; }
     .furniture.remote { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 40%, transparent), inset 0 0 0 1px rgba(255,255,255,.3); }
@@ -216,7 +231,7 @@
       <div>
         <div class="join-mark">⌂</div>
         <h1>RoomRelay 3D</h1>
-        <p class="muted">Build the room shell, place doors and windows, then arrange furniture together in 2D or 3D.</p>
+        <p class="muted">Build the room shell, place doors and windows, then arrange detailed furniture, shelves, lights, and decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
       <label>Your name
@@ -295,7 +310,7 @@
             <div class="row spread" style="margin-bottom:8px">
               <div>
                 <h3 style="margin-bottom:2px">3. Add furniture</h3>
-                <div class="small muted">Tap an item, then drag it in the room. You can also drag furniture directly in 3D.</div>
+                <div class="small muted">Tap an item to add it, then drag it in the room. Shelves and lights are included below. You can also drag furniture directly in 3D.</div>
               </div>
               <button id="starterBtn" class="btn compact" type="button">Add starter set</button>
             </div>
@@ -433,13 +448,25 @@ const joinView = $('joinView');
 const plannerView = $('plannerView');
 
 const PRESETS = [
-  { name: 'Bed', kind: 'bed', icon: '🛏', w: 60, d: 80, height: 24 },
-  { name: 'Desk', kind: 'desk', icon: '▤', w: 48, d: 24, height: 30 },
-  { name: 'Dresser', kind: 'dresser', icon: '▥', w: 36, d: 20, height: 36 },
-  { name: 'Big dresser', kind: 'dresser', icon: '▦', w: 60, d: 22, height: 48 },
+  { name: 'Daybed', kind: 'sofa', icon: '🛋', w: 78, d: 36, height: 34 },
+  { name: 'Craft desk', kind: 'desk', icon: '🪵', w: 72, d: 28, height: 30 },
+  { name: 'Double desk', kind: 'desk', icon: '⌘', w: 96, d: 30, height: 30 },
+  { name: 'Craft island', kind: 'storage', icon: '▧', w: 60, d: 30, height: 36 },
+  { name: 'Cube shelf', kind: 'storage', icon: '▦', w: 48, d: 16, height: 30 },
+  { name: 'Bookcase', kind: 'storage', icon: '🗄', w: 32, d: 12, height: 72 },
+  { name: 'Storage console', kind: 'storage', icon: '▥', w: 60, d: 16, height: 30 },
+  { name: 'Dresser', kind: 'dresser', icon: '▤', w: 36, d: 20, height: 36 },
+  { name: 'Accent chair', kind: 'chair', icon: '🪑', w: 32, d: 32, height: 34 },
+  { name: 'Ottoman', kind: 'chair', icon: '◼', w: 24, d: 24, height: 18 },
+  { name: 'Floor lamp', kind: 'light', icon: '💡', w: 18, d: 18, height: 68 },
+  { name: 'Table lamp', kind: 'light', icon: '🕯', w: 14, d: 14, height: 24 },
+  { name: 'Pendant light', kind: 'light', icon: '◔', w: 18, d: 18, height: 84 },
+  { name: 'Floating shelf', kind: 'shelf', icon: '═', w: 36, d: 8, height: 12 },
+  { name: 'Pegboard', kind: 'shelf', icon: '☷', w: 30, d: 4, height: 36 },
+  { name: 'Rolling cart', kind: 'storage', icon: '▣', w: 16, d: 12, height: 32 },
   { name: 'TV stand', kind: 'tv', icon: '▰', w: 48, d: 16, height: 24 },
-  { name: 'Nightstand', kind: 'dresser', icon: '▣', w: 24, d: 20, height: 26 },
-  { name: 'Chair', kind: 'chair', icon: '♙', w: 24, d: 24, height: 36 },
+  { name: 'Plant', kind: 'decor', icon: '🪴', w: 16, d: 16, height: 28 },
+  { name: 'Bed', kind: 'bed', icon: '🛏', w: 60, d: 80, height: 24 },
   { name: 'Custom', kind: 'custom', icon: '+', w: 36, d: 24, height: 30 }
 ];
 
@@ -540,16 +567,21 @@ function safeSet(key, value) {
 function inferKind(name = '') {
   const text = name.toLowerCase();
   if (text.includes('bed')) return 'bed';
-  if (text.includes('desk') || text.includes('table')) return 'desk';
-  if (text.includes('dresser') || text.includes('nightstand') || text.includes('cabinet')) return 'dresser';
+  if (text.includes('daybed') || text.includes('sofa') || text.includes('couch') || text.includes('loveseat') || text.includes('settee') || text.includes('bench')) return 'sofa';
+  if (text.includes('desk') || text.includes('worktable') || text.includes('craft desk') || (text.includes('table') && !text.includes('lamp') && !text.includes('side table'))) return 'desk';
+  if (text.includes('dresser') || text.includes('nightstand')) return 'dresser';
+  if (text.includes('bookcase') || text.includes('cube') || text.includes('storage') || text.includes('console') || text.includes('island') || text.includes('cart') || text.includes('cabinet')) return 'storage';
   if (text.includes('tv')) return 'tv';
-  if (text.includes('chair')) return 'chair';
+  if (text.includes('chair') || text.includes('ottoman') || text.includes('stool')) return 'chair';
+  if (text.includes('shelf') || text.includes('pegboard')) return 'shelf';
+  if (text.includes('lamp') || text.includes('light') || text.includes('pendant') || text.includes('sconce')) return 'light';
+  if (text.includes('plant') || text.includes('decor')) return 'decor';
   return 'other';
 }
 
 function defaultHeight(name = '') {
   const kind = inferKind(name);
-  return ({ bed: 24, desk: 30, dresser: 40, tv: 24, chair: 36, other: 30 })[kind];
+  return ({ bed: 24, sofa: 34, desk: 30, dresser: 40, storage: 42, tv: 24, chair: 34, shelf: 18, light: 60, decor: 24, other: 30 })[kind];
 }
 
 function normalizeItem(raw) {
@@ -809,7 +841,7 @@ function applyPhotoRoom() {
 
 function addStarterSet() {
   const existingNames = new Set(activeFurniture().map(item => item.name.toLowerCase()));
-  const starter = PRESETS.filter(p => ['Bed', 'Desk', 'Dresser', 'Big dresser', 'TV stand'].includes(p.name) && !existingNames.has(p.name.toLowerCase()));
+  const starter = PRESETS.filter(p => ['Craft desk', 'Daybed', 'Cube shelf', 'Storage console', 'Floor lamp', 'Plant'].includes(p.name) && !existingNames.has(p.name.toLowerCase()));
   if (!starter.length) return toast('The starter furniture is already in the room.');
   starter.forEach((preset, index) => {
     const x = Math.min(state.meta.width - preset.w, 6 + (index % 2) * 58);
@@ -1734,22 +1766,33 @@ function createFurnitureModel(item) {
   const group = new THREE.Group();
   group.userData.itemId = item.id;
   group.userData.name = item.name;
+  const name = (item.name || '').toLowerCase();
   const w = item.w / 12;
   const d = item.d / 12;
   const h = item.height / 12;
   const palette = {
     bed: 0x8faed2,
-    desk: 0xa9794e,
+    sofa: 0xcab09a,
+    desk: 0xbe9466,
     dresser: 0x9c6d45,
+    storage: 0xb58a61,
     tv: 0x30343a,
-    chair: 0x628a72,
+    chair: 0x7fa88b,
+    shelf: 0xd6bb86,
+    light: 0xf1c975,
+    decor: 0x7da472,
     other: 0x8473a7
   };
   const mainColor = palette[item.kind] || palette.other;
-  const mainMaterial = new THREE.MeshStandardMaterial({ color: mainColor, roughness: .68, metalness: item.kind === 'tv' ? .18 : 0 });
+  const woodMaterial = new THREE.MeshStandardMaterial({ color: mainColor, roughness: .72, metalness: .04 });
   const darkMaterial = new THREE.MeshStandardMaterial({ color: 0x393a3c, roughness: .58, metalness: .12 });
-  const lightMaterial = new THREE.MeshStandardMaterial({ color: 0xe3dfd6, roughness: .86 });
-  const accentMaterial = new THREE.MeshStandardMaterial({ color: 0xc9d4e6, roughness: .82 });
+  const lightMaterial = new THREE.MeshStandardMaterial({ color: 0xe8e1d7, roughness: .86 });
+  const linenMaterial = new THREE.MeshStandardMaterial({ color: 0xd8d1c4, roughness: .92 });
+  const fabricMaterial = new THREE.MeshStandardMaterial({ color: item.kind === 'chair' ? 0xc0d5c8 : 0xd2c2b1, roughness: .94 });
+  const accentMaterial = new THREE.MeshStandardMaterial({ color: 0x8fb088, roughness: .82 });
+  const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x5f646b, roughness: .38, metalness: .55 });
+  const glowMaterial = new THREE.MeshStandardMaterial({ color: 0xffefa8, emissive: 0xffd773, emissiveIntensity: .85, roughness: .4 });
+
   const addBox = (bw, bh, bd, material, x = 0, y = bh / 2, z = 0) => {
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(Math.max(.03, bw), Math.max(.03, bh), Math.max(.03, bd)), material);
     mesh.position.set(x, y, z);
@@ -1759,42 +1802,188 @@ function createFurnitureModel(item) {
     group.add(mesh);
     return mesh;
   };
+  const addCylinder = (rt, rb, height, material, x = 0, y = height / 2, z = 0, radial = 18) => {
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, Math.max(.03, height), radial), material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData.itemId = item.id;
+    group.add(mesh);
+    return mesh;
+  };
+  const addSphere = (radius, material, x = 0, y = radius, z = 0) => {
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(Math.max(.03, radius), 18, 14), material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData.itemId = item.id;
+    group.add(mesh);
+    return mesh;
+  };
+  const addPointGlow = (x, y, z, intensity = 1.8, distance = 4.5) => {
+    const light = new THREE.PointLight(0xffedbf, intensity, distance, 2);
+    light.position.set(x, y, z);
+    group.add(light);
+  };
 
   if (item.kind === 'bed') {
     const frameH = Math.min(.45, h * .26);
-    addBox(w, frameH, d, mainMaterial, 0, frameH / 2, 0);
+    addBox(w, frameH, d, woodMaterial, 0, frameH / 2, 0);
     const mattressH = Math.max(.32, Math.min(.72, h - frameH));
-    addBox(w * .96, mattressH, d * .94, lightMaterial, 0, frameH + mattressH / 2, .02);
+    addBox(w * .96, mattressH, d * .94, linenMaterial, 0, frameH + mattressH / 2, .02);
+    addBox(w * .96, .08, d * .96, fabricMaterial, 0, frameH + mattressH + .06, 0);
     const pillowW = Math.max(.55, w * .36);
     const pillowD = Math.max(.35, d * .14);
-    addBox(pillowW, .16, pillowD, accentMaterial, -w * .23, frameH + mattressH + .08, -d * .36);
-    addBox(pillowW, .16, pillowD, accentMaterial, w * .23, frameH + mattressH + .08, -d * .36);
+    addBox(pillowW, .16, pillowD, lightMaterial, -w * .23, frameH + mattressH + .12, -d * .34);
+    addBox(pillowW, .16, pillowD, lightMaterial,  w * .23, frameH + mattressH + .12, -d * .34);
+    addBox(w, Math.min(.9, h * .38), .14, woodMaterial, 0, Math.min(.9, h * .38) / 2 + frameH, -d / 2 + .07);
+  } else if (item.kind === 'sofa') {
+    const seatH = Math.max(.32, Math.min(.5, h * .32));
+    const armW = Math.max(.18, Math.min(.38, w * .12));
+    const backH = Math.max(.65, h - seatH + .18);
+    addBox(w, seatH, d * .92, fabricMaterial, 0, seatH / 2, 0);
+    addBox(w, .12, d * .96, woodMaterial, 0, .06, 0);
+    addBox(armW, Math.max(.46, seatH + .34), d * .90, fabricMaterial, -w / 2 + armW / 2, Math.max(.46, seatH + .34) / 2, 0);
+    addBox(armW, Math.max(.46, seatH + .34), d * .90, fabricMaterial,  w / 2 - armW / 2, Math.max(.46, seatH + .34) / 2, 0);
+    addBox(w - armW * .7, backH, .18, fabricMaterial, 0, seatH + backH / 2, -d / 2 + .09);
+    const cushionCount = w > 6 ? 3 : 2;
+    for (let i = 0; i < cushionCount; i++) {
+      const x = ((i + .5) / cushionCount - .5) * (w - armW * 1.8);
+      addBox((w - armW * 1.8) / cushionCount - .05, .22, d * .48, linenMaterial, x, seatH + .12, .05);
+      addBox((w - armW * 2.0) / cushionCount - .05, .34, .16, accentMaterial, x, seatH + .42, -.06);
+    }
+    if (name.includes('daybed')) addBox(w * .92, .08, d * .9, accentMaterial, 0, seatH + .28, 0);
   } else if (item.kind === 'desk') {
     const topH = Math.min(.2, Math.max(.12, h * .08));
-    addBox(w, topH, d, mainMaterial, 0, h - topH / 2, 0);
-    const leg = Math.min(.16, w * .08, d * .12);
+    addBox(w, topH, d, new THREE.MeshStandardMaterial({ color: 0xd6b58b, roughness: .72 }), 0, h - topH / 2, 0);
+    const leg = Math.min(.16, Math.max(.08, Math.min(w, d) * .08));
     const legH = Math.max(.2, h - topH);
-    for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, legH, leg, darkMaterial, x, legH / 2, z);
+    for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, legH, leg, lightMaterial, x, legH / 2, z);
+    if (w >= 5.5) {
+      addBox(w * .18, legH * .82, d * .82, lightMaterial, -w * .36, legH * .41, 0);
+      addBox(w * .18, legH * .82, d * .82, lightMaterial,  w * .36, legH * .41, 0);
+    } else if (w >= 4.5) {
+      addBox(w * .18, legH * .82, d * .82, lightMaterial, -w * .32, legH * .41, 0);
+    }
   } else if (item.kind === 'dresser') {
-    addBox(w, h, d, mainMaterial, 0, h / 2, 0);
+    addBox(w, h, d, woodMaterial, 0, h / 2, 0);
     const drawers = Math.max(2, Math.min(5, Math.round(h / .75)));
     for (let i = 1; i < drawers; i++) addBox(w * .90, .025, .035, darkMaterial, 0, h * i / drawers, d / 2 + .025);
-    for (let i = 0; i < drawers; i++) addBox(w * .18, .045, .055, darkMaterial, 0, h * (i + .5) / drawers, d / 2 + .055);
+    for (let i = 0; i < drawers; i++) {
+      addBox(w * .18, .045, .055, metalMaterial, -w * .16, h * (i + .5) / drawers, d / 2 + .055);
+      addBox(w * .18, .045, .055, metalMaterial,  w * .16, h * (i + .5) / drawers, d / 2 + .055);
+    }
+  } else if (item.kind === 'storage') {
+    if (name.includes('bookcase')) {
+      addBox(w, h, d, woodMaterial, 0, h / 2, 0);
+      addBox(w * .88, h * .94, d * .74, new THREE.MeshStandardMaterial({ color: 0xefe6d7, roughness: .96 }), 0, h / 2, -.03);
+      const shelves = Math.max(3, Math.min(5, Math.floor(h / 1.2)));
+      for (let i = 1; i <= shelves; i++) addBox(w * .88, .06, d * .76, woodMaterial, 0, h * i / (shelves + 1), 0);
+    } else if (name.includes('cube')) {
+      addBox(w, h, d, woodMaterial, 0, h / 2, 0);
+      addBox(w * .86, h * .86, d * .8, new THREE.MeshStandardMaterial({ color: 0xf0e7d8, roughness: .96 }), 0, h / 2, -.02);
+      const cols = Math.max(2, Math.min(4, Math.round(w / 1.5)));
+      const rows = Math.max(2, Math.min(3, Math.round(h / 1.2)));
+      for (let c = 1; c < cols; c++) addBox(.07, h * .86, d * .78, woodMaterial, -w/2 + c * w / cols, h / 2, 0);
+      for (let r = 1; r < rows; r++) addBox(w * .86, .07, d * .78, woodMaterial, 0, h * r / rows, 0);
+    } else if (name.includes('rolling cart')) {
+      const post = .06;
+      for (const x of [-w / 2 + post, w / 2 - post]) for (const z of [-d / 2 + post, d / 2 - post]) addBox(post, h - .12, post, metalMaterial, x, (h - .12) / 2 + .06, z);
+      for (let i = 0; i < 3; i++) addBox(w, .12, d, accentMaterial, 0, .42 + i * ((h - .72) / 2), 0);
+      for (const x of [-w / 2 + .08, w / 2 - .08]) for (const z of [-d / 2 + .08, d / 2 - .08]) addCylinder(.06, .06, .04, darkMaterial, x, .02, z, 12);
+    } else if (name.includes('island')) {
+      const topH = .16;
+      addBox(w, topH, d, new THREE.MeshStandardMaterial({ color: 0xc9a272, roughness: .65 }), 0, h - topH / 2, 0);
+      addBox(w * .90, h - topH, d * .84, woodMaterial, 0, (h - topH) / 2, 0);
+      const cols = Math.max(2, Math.min(4, Math.floor(w / 1.6)));
+      for (let c = 1; c < cols; c++) addBox(.06, h * .62, d * .76, darkMaterial, -w/2 + c * w / cols, h * .33, 0);
+      addBox(w * .82, .07, d * .74, darkMaterial, 0, h * .35, 0);
+    } else if (name.includes('console')) {
+      addBox(w, h * .12, d, new THREE.MeshStandardMaterial({ color: 0xc9a272, roughness: .65 }), 0, h - h * .06, 0);
+      addBox(w, h * .78, d * .92, woodMaterial, 0, h * .39, 0);
+      const cols = Math.max(2, Math.min(4, Math.round(w / 1.4)));
+      for (let c = 1; c < cols; c++) addBox(.06, h * .7, d * .84, darkMaterial, -w/2 + c * w / cols, h * .35, 0);
+    } else {
+      addBox(w, h, d, woodMaterial, 0, h / 2, 0);
+    }
   } else if (item.kind === 'tv') {
     const standH = Math.max(.25, h * .34);
-    addBox(w, standH, d, mainMaterial, 0, standH / 2, 0);
+    addBox(w, standH, d, woodMaterial, 0, standH / 2, 0);
+    addBox(w * .74, standH * .56, d * .7, lightMaterial, 0, standH * .28, 0);
     const screenH = Math.max(.45, h - standH + .35);
     const screenD = Math.min(.12, d * .4);
     addBox(w * .82, screenH, screenD, darkMaterial, 0, standH + screenH / 2, 0);
     addBox(w * .75, screenH * .82, screenD + .015, new THREE.MeshStandardMaterial({ color: 0x12171e, roughness: .25, metalness: .2 }), 0, standH + screenH / 2, screenD * .12);
   } else if (item.kind === 'chair') {
-    const seatY = Math.min(h * .48, 1.6);
-    addBox(w, .18, d, mainMaterial, 0, seatY, 0);
-    addBox(w, Math.max(.4, h - seatY), .16, mainMaterial, 0, seatY + (h - seatY) / 2, -d / 2 + .08);
-    const leg = Math.min(.12, w * .1, d * .1);
-    for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, seatY, leg, darkMaterial, x, seatY / 2, z);
+    if (name.includes('ottoman') || name.includes('stool')) {
+      addBox(w, h * .42, d, fabricMaterial, 0, h * .21, 0);
+      addBox(w * .96, .10, d * .96, accentMaterial, 0, h * .42 + .05, 0);
+      const leg = Math.min(.12, w * .1, d * .1);
+      for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, Math.max(.14, h * .2), leg, woodMaterial, x, Math.max(.14, h * .2) / 2, z);
+    } else {
+      const seatY = Math.min(h * .44, 1.5);
+      addBox(w * .92, .20, d * .90, fabricMaterial, 0, seatY, 0);
+      addBox(w * .92, Math.max(.55, h - seatY), .20, fabricMaterial, 0, seatY + (h - seatY) / 2, -d / 2 + .10);
+      addBox(.18, seatY + .12, d * .78, fabricMaterial, -w / 2 + .09, (seatY + .12) / 2, 0);
+      addBox(.18, seatY + .12, d * .78, fabricMaterial,  w / 2 - .09, (seatY + .12) / 2, 0);
+      const leg = Math.min(.11, w * .08, d * .08);
+      for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, seatY, leg, woodMaterial, x, seatY / 2, z);
+      addBox(w * .5, .12, d * .42, accentMaterial, 0, seatY + .17, .05);
+    }
+  } else if (item.kind === 'shelf') {
+    if (name.includes('pegboard')) {
+      addBox(w, h, .08, new THREE.MeshStandardMaterial({ color: 0xb78f62, roughness: .88 }), 0, 4.6 + h / 2, 0);
+      for (let r = -1; r <= 1; r++) {
+        for (let c = -2; c <= 2; c++) addSphere(.03, darkMaterial, c * (w / 6), 4.6 + h * .18 + (r + 1) * (h / 3), .05);
+      }
+      addBox(w * .78, .12, .22, woodMaterial, 0, 4.6 + h * .66, .10);
+      addBox(w * .28, .18, .18, accentMaterial, -w * .18, 4.6 + h * .40, .11);
+      addBox(w * .22, .18, .18, lightMaterial,  w * .16, 4.6 + h * .34, .11);
+    } else {
+      addBox(w, .12, d, woodMaterial, 0, 5.1, 0);
+      addBox(.08, .38, .08, metalMaterial, -w * .25, 4.88, 0);
+      addBox(.08, .38, .08, metalMaterial,  w * .25, 4.88, 0);
+      addBox(w * .22, .18, d * .52, lightMaterial, -w * .24, 5.28, 0);
+      addBox(w * .16, .22, d * .44, accentMaterial,  w * .10, 5.3, 0);
+      addSphere(.10, accentMaterial, w * .32, 5.32, 0);
+      addCylinder(.09, .12, .16, woodMaterial, w * .32, 5.08, 0, 14);
+    }
+  } else if (item.kind === 'light') {
+    if (name.includes('table')) {
+      addCylinder(.10, .14, .06, woodMaterial, 0, .03, 0, 18);
+      addCylinder(.04, .04, Math.max(.35, h * .55), metalMaterial, 0, Math.max(.35, h * .55) / 2 + .06, 0, 18);
+      addCylinder(.22, .14, Math.max(.24, h * .35), linenMaterial, 0, Math.max(.35, h * .55) + Math.max(.24, h * .35) / 2 + .02, 0, 18);
+      addSphere(.06, glowMaterial, 0, Math.max(.35, h * .55) + .08, 0);
+      addPointGlow(0, Math.max(.35, h * .55) + .08, 0, 1.35, 3.2);
+    } else if (name.includes('pendant')) {
+      const totalH = Math.max(6.5, h);
+      addCylinder(.015, .015, totalH - .6, darkMaterial, 0, totalH / 2 + .3, 0, 12);
+      addCylinder(.30, .18, .45, new THREE.MeshStandardMaterial({ color: 0xc69a54, roughness: .62 }), 0, totalH - .25, 0, 22);
+      addSphere(.08, glowMaterial, 0, totalH - .22, 0);
+      addPointGlow(0, totalH - .22, 0, 2.4, 4.8);
+    } else {
+      addCylinder(.18, .22, .08, darkMaterial, 0, .04, 0, 20);
+      addCylinder(.035, .04, Math.max(4.2, h * .78), metalMaterial, 0, Math.max(4.2, h * .78) / 2 + .08, 0, 18);
+      addCylinder(.28, .18, .42, linenMaterial, 0, Math.max(4.2, h * .78) + .22, 0, 18);
+      addSphere(.07, glowMaterial, 0, Math.max(4.2, h * .78) + .18, 0);
+      addPointGlow(0, Math.max(4.2, h * .78) + .18, 0, 1.8, 4.2);
+    }
+  } else if (item.kind === 'decor') {
+    addCylinder(Math.max(.12, w * .18), Math.max(.16, w * .22), Math.max(.18, h * .28), woodMaterial, 0, Math.max(.18, h * .28) / 2, 0, 16);
+    const leafMaterial = new THREE.MeshStandardMaterial({ color: 0x6f9d65, roughness: .86, side: THREE.DoubleSide });
+    for (let i = 0; i < 6; i++) {
+      const leaf = new THREE.Mesh(new THREE.BoxGeometry(.06, .36 + (i % 3) * .05, .18), leafMaterial);
+      const angle = (Math.PI * 2 * i) / 6;
+      leaf.position.set(Math.cos(angle) * .12, Math.max(.18, h * .28) + .22 + (i % 2) * .08, Math.sin(angle) * .12);
+      leaf.rotation.z = Math.sin(angle) * .65;
+      leaf.rotation.y = angle;
+      leaf.castShadow = true;
+      leaf.receiveShadow = true;
+      leaf.userData.itemId = item.id;
+      group.add(leaf);
+    }
   } else {
-    addBox(w, h, d, mainMaterial, 0, h / 2, 0);
+    addBox(w, h, d, woodMaterial, 0, h / 2, 0);
   }
 
   if (selectedType === 'furniture' && item.id === selectedId) {
@@ -1804,7 +1993,7 @@ function createFurnitureModel(item) {
       for (const material of materials) {
         if (material.emissive) {
           material.emissive.setHex(0x263fa8);
-          material.emissiveIntensity = .28;
+          material.emissiveIntensity = Math.max(material.emissiveIntensity || 0, .28);
         }
       }
     });
