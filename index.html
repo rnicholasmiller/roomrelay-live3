@@ -1,11 +1,11 @@
 <!doctype html>
-<!-- RoomRelay Build v7.0.0 -->
+<!-- RoomRelay Build v8.0.0 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#172033" />
-  <title>RoomRelay 3D v7.0.0 — Shared Room Planner</title>
+  <title>RoomRelay 3D v8.0.0 — Shared Room Planner</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -262,7 +262,7 @@
     <section id="joinView" class="panel join stack">
       <div>
         <div class="join-mark">⌂</div>
-        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v7.0.0</span></div>
+        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v8.0.0</span></div>
         <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, shelves, lights, and decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
@@ -284,7 +284,7 @@
         <div>
           <div class="brandline">
             <span class="brand">RoomRelay 3D</span>
-            <span class="version-badge" data-app-version>v7.0.0</span>
+            <span class="version-badge" data-app-version>v8.0.0</span>
             <span class="status"><span id="statusDot" class="dot connecting"></span><span id="statusText">Starting</span></span>
           </div>
           <div class="small muted">Room <span id="roomCodeLabel" class="code"></span> · <span id="peopleLabel">1 person</span></div>
@@ -381,7 +381,7 @@
               <label>Name<input id="itemName" maxlength="30" /></label>
               <label>Width (in)<input id="itemWidth" inputmode="decimal" type="number" min="6" max="240" step="1" /></label>
               <label>Depth (in)<input id="itemDepth" inputmode="decimal" type="number" min="6" max="240" step="1" /></label>
-              <label>Height (in)<input id="itemHeight" inputmode="decimal" type="number" min="2" max="120" step="1" /></label>
+              <label>Height (in)<input id="itemHeight" inputmode="decimal" type="number" min="0.05" max="120" step="0.05" /></label>
               <label>Elevation (in)<input id="itemElevation" inputmode="decimal" type="number" min="0" max="120" step="0.5" /></label>
             </div>
             <div class="row spread">
@@ -477,7 +477,7 @@
         <div id="threeHost" class="three-host">
           <div id="threePlacementBanner" class="three-placement-banner hidden"><span id="threePlacementText">Tap to place</span><button id="cancelThreePlacementBtn" class="btn compact" type="button">Cancel</button></div>
           <div id="threeStatus" class="three-status">Open this tab to load the 3D room.</div>
-          <div class="three-hint">Add object opens the placement menu · tap selects · hold 0.4 s to move · release restores camera orbit · mounted items move on walls</div>
+          <div class="three-hint">Add object opens the placement menu · chairs face the room automatically · rugs sit nearly flush · ceiling plants move overhead</div>
         </div>
       </section>
 
@@ -496,7 +496,7 @@
   <div id="threeCatalog" class="catalog-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="threeCatalogTitle">
     <section class="catalog-sheet">
       <div class="catalog-header">
-        <div><h2 id="threeCatalogTitle" style="margin-bottom:3px">Place an object in 3D</h2><div class="small muted">Choose an item, then tap the floor, a desk, or a wall.</div></div>
+        <div><h2 id="threeCatalogTitle" style="margin-bottom:3px">Place an object in 3D</h2><div class="small muted">Choose an item, then tap the floor, a surface, a wall, or a ceiling position.</div></div>
         <button id="closeThreeCatalogBtn" class="btn icon compact" type="button" aria-label="Close object menu">×</button>
       </div>
       <input id="threeCatalogSearch" type="search" placeholder="Search chairs, plants, shelves…" autocomplete="off" />
@@ -521,14 +521,14 @@ const $ = id => document.getElementById(id);
 const canvas = $('roomCanvas');
 const joinView = $('joinView');
 const plannerView = $('plannerView');
-const APP_VERSION = '7.0.0';
+const APP_VERSION = '8.0.0';
 const WALL_SNAP_DISTANCE = 12;
 const WALL_ROTATIONS = { top: 0, right: 270, bottom: 180, left: 90 };
 const HOLD_TO_MOVE_MS = 420;
 const HOLD_CANCEL_PX = 9;
 
 const PRESETS = [
-  { name: 'Daybed', kind: 'sofa', icon: '🛋', w: 78, d: 36, height: 34 },
+  { name: 'Daybed', kind: 'sofa', icon: '🛋', w: 78, d: 36, height: 34, autoFaceCenter: true },
   { name: 'Craft desk', kind: 'desk', icon: '🪵', w: 72, d: 28, height: 30 },
   { name: 'Double desk', kind: 'desk', icon: '⌘', w: 96, d: 30, height: 30 },
   { name: 'Craft island', kind: 'storage', icon: '▧', w: 60, d: 30, height: 36 },
@@ -536,22 +536,32 @@ const PRESETS = [
   { name: 'Bookcase', kind: 'storage', icon: '🗄', w: 32, d: 12, height: 72 },
   { name: 'Storage console', kind: 'storage', icon: '▥', w: 60, d: 16, height: 30 },
   { name: 'Dresser', kind: 'dresser', icon: '▤', w: 36, d: 20, height: 36 },
+  { name: 'Round side table', kind: 'storage', icon: '◉', w: 24, d: 24, height: 24 },
 
-  { name: 'Accent chair', kind: 'chair', icon: '🪑', w: 32, d: 32, height: 34 },
-  { name: 'Swivel office chair', kind: 'chair', icon: '♙', w: 27, d: 27, height: 42 },
-  { name: 'Lounge chair', kind: 'chair', icon: '◒', w: 34, d: 36, height: 35 },
-  { name: 'Dining chair', kind: 'chair', icon: '▱', w: 20, d: 22, height: 36 },
-  { name: 'Stool', kind: 'chair', icon: '◉', w: 18, d: 18, height: 24 },
-  { name: 'Ottoman', kind: 'chair', icon: '◼', w: 24, d: 24, height: 18 },
+  { name: 'Cozy chair', kind: 'chair', icon: '🪑', w: 38, d: 38, height: 36, autoFaceCenter: true },
+  { name: 'Bean bag chair', kind: 'chair', icon: '●', w: 42, d: 42, height: 28, autoFaceCenter: true },
+  { name: 'Accent chair', kind: 'chair', icon: '♜', w: 32, d: 32, height: 34, autoFaceCenter: true },
+  { name: 'Swivel office chair', kind: 'chair', icon: '♙', w: 27, d: 27, height: 42, autoFaceCenter: true },
+  { name: 'Lounge chair', kind: 'chair', icon: '◒', w: 34, d: 36, height: 35, autoFaceCenter: true },
+  { name: 'Dining chair', kind: 'chair', icon: '▱', w: 20, d: 22, height: 36, autoFaceCenter: true },
+  { name: 'Craft stool', kind: 'chair', icon: '◉', w: 18, d: 18, height: 24, autoFaceCenter: true },
+  { name: 'Floor cushion', kind: 'chair', icon: '◇', w: 28, d: 28, height: 8, autoFaceCenter: true },
+  { name: 'Ottoman', kind: 'chair', icon: '◼', w: 24, d: 24, height: 18, autoFaceCenter: true },
 
   { name: 'Floor lamp', kind: 'light', icon: '💡', w: 18, d: 18, height: 68 },
   { name: 'Table lamp', kind: 'light', icon: '🕯', w: 12, d: 12, height: 22, surfaceItem: true },
+  { name: 'Task lamp', kind: 'light', icon: '🔦', w: 10, d: 10, height: 20, surfaceItem: true },
   { name: 'Pendant light', kind: 'light', icon: '◔', w: 18, d: 18, height: 84, elevation: 0 },
+  { name: 'String lights', kind: 'light', icon: '✦', w: 72, d: 3, height: 10, wallMounted: true, wall: 'top', elevation: 76 },
 
   { name: 'Mounted TV', kind: 'tv', icon: '▰', w: 55, d: 4, height: 32, wallMounted: true, wall: 'top', elevation: 44 },
+  { name: 'Tabletop TV', kind: 'tv', icon: '📺', w: 32, d: 8, height: 23, surfaceItem: true },
   { name: 'Pegboard', kind: 'shelf', icon: '☷', w: 36, d: 4, height: 36, wallMounted: true, wall: 'top', elevation: 45 },
   { name: 'Wide pegboard', kind: 'shelf', icon: '▦', w: 60, d: 4, height: 36, wallMounted: true, wall: 'top', elevation: 45 },
+  { name: 'Thread rack', kind: 'shelf', icon: '⋮', w: 36, d: 4, height: 24, wallMounted: true, wall: 'top', elevation: 48 },
+  { name: 'Inspiration board', kind: 'decor', icon: '▧', w: 42, d: 3, height: 30, wallMounted: true, wall: 'top', elevation: 46 },
   { name: 'Floating shelf', kind: 'shelf', icon: '═', w: 36, d: 8, height: 8, wallMounted: true, wall: 'top', elevation: 54 },
+  { name: 'Blanket ladder', kind: 'decor', icon: '╫', w: 24, d: 5, height: 66, wallMounted: true, wall: 'top', elevation: 12 },
   { name: 'Wall art', kind: 'decor', icon: '▧', w: 30, d: 3, height: 24, wallMounted: true, wall: 'top', elevation: 48 },
   { name: 'Wall mirror', kind: 'decor', icon: '◫', w: 24, d: 3, height: 36, wallMounted: true, wall: 'top', elevation: 38 },
 
@@ -559,10 +569,15 @@ const PRESETS = [
   { name: 'Tall plant', kind: 'decor', icon: '🌿', w: 24, d: 24, height: 60 },
   { name: 'Desk plant', kind: 'decor', icon: '🌱', w: 10, d: 10, height: 14, surfaceItem: true },
   { name: 'Small succulent', kind: 'decor', icon: '🌵', w: 7, d: 7, height: 8, surfaceItem: true },
-  { name: 'Hanging plant', kind: 'decor', icon: '☘', w: 16, d: 16, height: 28, elevation: 62 },
+  { name: 'Ceiling pothos', kind: 'decor', icon: '☘', w: 18, d: 18, height: 32, ceilingMounted: true },
+  { name: 'Ceiling fern', kind: 'decor', icon: '🌿', w: 22, d: 22, height: 36, ceilingMounted: true },
 
   { name: 'Monitor', kind: 'other', icon: '🖥', w: 24, d: 8, height: 18, surfaceItem: true },
   { name: 'Laptop', kind: 'other', icon: '⌨', w: 14, d: 10, height: 7, surfaceItem: true },
+  { name: 'Sewing machine', kind: 'other', icon: '🧵', w: 18, d: 9, height: 13, surfaceItem: true },
+  { name: 'Cutting mat', kind: 'other', icon: '▦', w: 24, d: 18, height: 0.18, surfaceItem: true },
+  { name: 'Yarn bowl', kind: 'decor', icon: '🧶', w: 10, d: 10, height: 8, surfaceItem: true },
+  { name: 'Fabric stack', kind: 'decor', icon: '▥', w: 14, d: 10, height: 8, surfaceItem: true },
   { name: 'Mug', kind: 'decor', icon: '☕', w: 5, d: 5, height: 5, surfaceItem: true },
   { name: 'Pen cup', kind: 'decor', icon: '✎', w: 5, d: 5, height: 6, surfaceItem: true },
   { name: 'Desk organizer', kind: 'storage', icon: '▤', w: 12, d: 8, height: 6, surfaceItem: true },
@@ -573,8 +588,12 @@ const PRESETS = [
   { name: 'Storage basket', kind: 'storage', icon: '▢', w: 16, d: 12, height: 10, surfaceItem: true },
 
   { name: 'Rolling cart', kind: 'storage', icon: '▣', w: 16, d: 12, height: 32 },
+  { name: 'Woven floor basket', kind: 'storage', icon: '◡', w: 22, d: 22, height: 20 },
   { name: 'TV stand', kind: 'tv', icon: '▰', w: 48, d: 16, height: 24 },
-  { name: 'Area rug', kind: 'decor', icon: '▭', w: 72, d: 48, height: 1 },
+  { name: 'Vintage floral rug', kind: 'decor', icon: '▭', w: 84, d: 60, height: 0.16, rugStyle: 'floral' },
+  { name: 'Braided oval rug', kind: 'decor', icon: '⬭', w: 72, d: 48, height: 0.14, rugStyle: 'braided' },
+  { name: 'Checker craft rug', kind: 'decor', icon: '▦', w: 72, d: 48, height: 0.14, rugStyle: 'checker' },
+  { name: 'Neutral area rug', kind: 'decor', icon: '▭', w: 72, d: 48, height: 0.12, rugStyle: 'woven' },
   { name: 'Bed', kind: 'bed', icon: '🛏', w: 60, d: 80, height: 24 },
   { name: 'Custom', kind: 'custom', icon: '+', w: 36, d: 24, height: 30 }
 ];
@@ -626,7 +645,7 @@ function photoOpenings() {
 
 function freshState() {
   return {
-    version: 6,
+    version: 8,
     meta: { width: 150, depth: 126, wallHeight: 96, snap: true, threeSnap: false, wallSnap: true, lighting: 'day', rev: { n: 0, a: '' } },
     furniture: {},
     openings: photoOpenings(),
@@ -667,7 +686,7 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function storageKey() { return `roomrelay:v7:${currentCode}`; }
+function storageKey() { return `roomrelay:v8:${currentCode}`; }
 
 function safeGet(key) {
   try { return localStorage.getItem(key); } catch (_) { return null; }
@@ -699,12 +718,17 @@ function defaultHeight(name = '') {
 
 function isSurfaceItemName(name = '') {
   const text = name.toLowerCase();
-  return ['table lamp', 'desk plant', 'succulent', 'monitor', 'laptop', 'mug', 'pen cup', 'organizer', 'books', 'vase', 'photo frame', 'desk clock', 'basket'].some(token => text.includes(token));
+  return ['table lamp', 'task lamp', 'desk plant', 'succulent', 'tabletop tv', 'monitor', 'laptop', 'sewing machine', 'cutting mat', 'yarn bowl', 'fabric stack', 'mug', 'pen cup', 'organizer', 'books', 'vase', 'photo frame', 'desk clock', 'basket'].some(token => text.includes(token));
 }
 
 function isWallMountedName(name = '') {
   const text = name.toLowerCase();
-  return text.includes('mounted tv') || text.includes('pegboard') || text.includes('floating shelf') || text.includes('wall art') || text.includes('wall mirror');
+  return text.includes('mounted tv') || text.includes('pegboard') || text.includes('floating shelf') || text.includes('wall art') || text.includes('wall mirror') || text.includes('thread rack') || text.includes('inspiration board') || text.includes('blanket ladder') || text.includes('string lights');
+}
+
+function isCeilingMountedName(name = '') {
+  const text = name.toLowerCase();
+  return text.includes('ceiling pothos') || text.includes('ceiling fern') || text.includes('ceiling plant');
 }
 
 function defaultWallElevation(name = '') {
@@ -718,7 +742,8 @@ function defaultWallElevation(name = '') {
 
 function isSurfaceHost(item) {
   const text = String(item?.name || '').toLowerCase();
-  return Boolean(item && !item.deleted && (item.kind === 'desk' || text.includes('craft island') || text.includes('work table') || text.includes('worktable')));
+  const namedSurface = ['craft island', 'work table', 'worktable', 'tv stand', 'storage console', 'dresser', 'round side table', 'cube shelf'].some(token => text.includes(token));
+  return Boolean(item && !item.deleted && !item.wallMounted && !item.ceilingMounted && (item.kind === 'desk' || namedSurface));
 }
 
 function normalizeItem(raw) {
@@ -731,12 +756,16 @@ function normalizeItem(raw) {
   item.y = Number(item.y ?? 0);
   item.surfaceItem = Boolean(item.surfaceItem ?? isSurfaceItemName(item.name));
   item.wallMounted = Boolean(item.wallMounted ?? isWallMountedName(item.name));
+  item.ceilingMounted = Boolean(item.ceilingMounted ?? isCeilingMountedName(item.name));
   item.wall = WALLS.includes(item.wall) ? item.wall : (item.wallMounted ? 'top' : null);
   const rawElevation = item.elevation;
-  item.elevation = Number(rawElevation ?? (item.wallMounted ? defaultWallElevation(item.name) : 0));
+  const ceilingElevation = Math.max(0, (state?.meta?.wallHeight || 96) - item.height);
+  item.elevation = Number(rawElevation ?? (item.wallMounted ? defaultWallElevation(item.name) : item.ceilingMounted ? ceilingElevation : 0));
   if (item.wallMounted && item.elevation === 0) item.elevation = defaultWallElevation(item.name);
   item.rotation = Number(item.rotation ?? (item.wall ? WALL_ROTATIONS[item.wall] : 0));
   item.kind = item.kind || inferKind(item.name);
+  item.rugStyle = String(item.rugStyle || (item.name.toLowerCase().includes('rug') ? 'woven' : ''));
+  item.autoFaceCenter = Boolean(item.autoFaceCenter ?? (item.kind === 'chair' || item.kind === 'sofa'));
   item.parentId = item.parentId || null;
   item.parentOffsetX = Number(item.parentOffsetX || 0);
   item.parentOffsetY = Number(item.parentOffsetY || 0);
@@ -789,7 +818,7 @@ function saveLocal() {
 
 function loadLocal() {
   try {
-    const keys = [storageKey(), `roomrelay:v5:${currentCode}`, `roomrelay:v4:${currentCode}`, `roomrelay:v3:${currentCode}`, `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
+    const keys = [storageKey(), `roomrelay:v7:${currentCode}`, `roomrelay:v6:${currentCode}`, `roomrelay:v5:${currentCode}`, `roomrelay:v4:${currentCode}`, `roomrelay:v3:${currentCode}`, `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
     for (const key of keys) {
       const stored = safeGet(key);
       if (stored) {
@@ -833,6 +862,15 @@ function rotatedHalfExtents(item, rotation = item.rotation) {
     x: (item.w * cos + item.d * sin) / 2,
     y: (item.w * sin + item.d * cos) / 2
   };
+}
+
+function rotationFacingPoint(item, targetX = state.meta.width / 2, targetY = state.meta.depth / 2) {
+  const centerX = (Number(item.x) || 0) + (Number(item.w) || 0) / 2;
+  const centerY = (Number(item.y) || 0) + (Number(item.d) || 0) / 2;
+  const dx = targetX - centerX;
+  const dy = targetY - centerY;
+  if (Math.hypot(dx, dy) < 1) return Number(item.rotation) || 0;
+  return (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360;
 }
 
 
@@ -941,11 +979,14 @@ function placeSurfaceItem(input) {
 
 function clampItem(input) {
   const item = { ...input };
-  item.w = Math.max(6, Math.min(Number(item.w) || 6, state.meta.width));
-  item.d = Math.max(6, Math.min(Number(item.d) || 6, state.meta.depth));
-  item.height = Math.max(2, Math.min(Number(item.height) || 30, 120));
-  const maxElevation = item.wallMounted ? Math.max(0, state.meta.wallHeight - item.height) : Math.max(120, state.meta.wallHeight);
-  item.elevation = Math.max(0, Math.min(Number(item.elevation) || 0, maxElevation));
+  item.w = Math.max(3, Math.min(Number(item.w) || 6, state.meta.width));
+  item.d = Math.max(3, Math.min(Number(item.d) || 6, state.meta.depth));
+  const isFlatTextile = String(item.name || '').toLowerCase().includes('rug') || String(item.name || '').toLowerCase().includes('cutting mat');
+  const minHeight = isFlatTextile ? 0.08 : 2;
+  item.height = Math.max(minHeight, Math.min(Number(item.height) || (isFlatTextile ? .14 : 30), 120));
+  const maxElevation = item.wallMounted || item.ceilingMounted ? Math.max(0, state.meta.wallHeight - item.height) : Math.max(120, state.meta.wallHeight);
+  const defaultElevation = item.ceilingMounted ? Math.max(0, state.meta.wallHeight - item.height) : 0;
+  item.elevation = Math.max(0, Math.min(Number.isFinite(Number(item.elevation)) ? Number(item.elevation) : defaultElevation, maxElevation));
   item.rotation = ((Number(item.rotation) || 0) % 360 + 360) % 360;
   const extents = rotatedHalfExtents(item);
   let centerX = (Number(item.x) || 0) + item.w / 2;
@@ -976,6 +1017,7 @@ function nearestWallForItem(item) {
 
 function snapItemToWall(input, threshold = WALL_SNAP_DISTANCE) {
   let item = clampItem(input);
+  if (item.ceilingMounted) { item.wall = null; return item; }
   if (item.surfaceItem && item.parentId) return item;
   if (state.meta.wallSnap === false && !item.wallMounted) return item;
   let wall;
@@ -1032,6 +1074,7 @@ function threeSnapValue(value) {
 }
 
 function threeCatalogCategory(preset) {
+  if (preset.ceilingMounted) return 'ceiling';
   if (preset.wallMounted) return 'wall';
   if (preset.surfaceItem) return 'desktop';
   if (preset.kind === 'chair' || preset.kind === 'sofa' || preset.kind === 'bed') return 'seating';
@@ -1043,7 +1086,7 @@ function threeCatalogCategory(preset) {
 function renderThreeCatalog() {
   const filters = [
     ['all', 'All'], ['furniture', 'Furniture'], ['seating', 'Seating'],
-    ['wall', 'Wall items'], ['desktop', 'Desk objects'], ['decor', 'Decor + lights']
+    ['wall', 'Wall items'], ['ceiling', 'Ceiling'], ['desktop', 'Desk objects'], ['decor', 'Decor + lights']
   ];
   const filterHost = $('threeCatalogFilters');
   if (filterHost) {
@@ -1057,7 +1100,7 @@ function renderThreeCatalog() {
   if (!grid) return;
   grid.innerHTML = matches.length ? matches.map(preset => {
     const index = PRESETS.indexOf(preset);
-    const placement = preset.wallMounted ? 'Tap a wall' : preset.surfaceItem ? 'Tap a desk or floor' : 'Tap the floor';
+    const placement = preset.ceilingMounted ? 'Tap beneath ceiling spot' : preset.wallMounted ? 'Tap a wall' : preset.surfaceItem ? 'Tap a surface or floor' : 'Tap the floor';
     return `<button class="catalog-item" type="button" data-three-preset="${index}"><span class="catalog-icon">${preset.icon}</span><span class="catalog-name">${escapeHtml(preset.name)}</span><span class="catalog-meta">${placement}</span></button>`;
   }).join('') : '<div class="empty" style="grid-column:1/-1">No objects match that search.</div>';
 }
@@ -1079,7 +1122,7 @@ function updateThreePlacementBanner() {
     banner.classList.add('hidden');
     return;
   }
-  const instruction = threePlacementPreset.wallMounted ? 'tap a wall' : threePlacementPreset.surfaceItem ? 'tap a desk or floor' : 'tap the floor';
+  const instruction = threePlacementPreset.ceilingMounted ? 'tap beneath where it should hang' : threePlacementPreset.wallMounted ? 'tap a wall' : threePlacementPreset.surfaceItem ? 'tap a surface or floor' : 'tap the floor';
   $('threePlacementText').textContent = `Place ${threePlacementPreset.name}: ${instruction}`;
   banner.classList.remove('hidden');
 }
@@ -1093,7 +1136,7 @@ function beginThreePlacement(preset) {
     threeRuntime.controls.enabled = true;
   }
   updateThreePlacementBanner();
-  $('threeSelection').textContent = `Placement mode: ${preset.name} · tap ${preset.wallMounted ? 'a wall' : preset.surfaceItem ? 'a desk or the floor' : 'the floor'}`;
+  $('threeSelection').textContent = `Placement mode: ${preset.name} · tap ${preset.ceilingMounted ? 'beneath the ceiling position' : preset.wallMounted ? 'a wall' : preset.surfaceItem ? 'a surface or the floor' : 'the floor'}`;
 }
 
 function cancelThreePlacement(showMessage = true) {
@@ -1159,7 +1202,10 @@ function placePresetIn3D(event) {
       }
       const x = (runtime.planePoint.x + runtime.roomW / 2) * 12 - preset.w / 2;
       const y = (runtime.planePoint.z + runtime.roomD / 2) * 12 - preset.d / 2;
-      item = addFurniture(preset, x, y);
+      const placedPreset = { ...preset };
+      if (placedPreset.ceilingMounted) placedPreset.elevation = Math.max(0, state.meta.wallHeight - placedPreset.height);
+      if (placedPreset.autoFaceCenter && placedPreset.rotation == null) placedPreset.rotation = rotationFacingPoint({ ...placedPreset, x, y });
+      item = addFurniture(placedPreset, x, y);
     }
   }
 
@@ -1178,11 +1224,12 @@ function placePresetIn3D(event) {
 function addFurniture(preset, x = null, y = null) {
   const id = uid();
   const wallMounted = Boolean(preset.wallMounted ?? isWallMountedName(preset.name));
+  const ceilingMounted = Boolean(preset.ceilingMounted ?? isCeilingMountedName(preset.name));
   const surfaceItem = Boolean(preset.surfaceItem ?? isSurfaceItemName(preset.name));
   const wall = wallMounted ? (WALLS.includes(preset.wall) ? preset.wall : 'top') : null;
   const defaultX = x ?? Math.max(0, (state.meta.width - preset.w) / 2);
   const defaultY = y ?? (wall === 'top' ? -preset.d / 2 : Math.max(0, (state.meta.depth - preset.d) / 2));
-  let item = clampItem({
+  const preliminary = {
     id,
     name: preset.name,
     kind: preset.kind === 'custom' ? 'other' : preset.kind,
@@ -1191,11 +1238,14 @@ function addFurniture(preset, x = null, y = null) {
     height: preset.height,
     x: defaultX,
     y: defaultY,
-    elevation: Number(preset.elevation ?? (wallMounted ? defaultWallElevation(preset.name) : 0)),
+    elevation: Number(preset.elevation ?? (wallMounted ? defaultWallElevation(preset.name) : ceilingMounted ? Math.max(0, state.meta.wallHeight - preset.height) : 0)),
     rotation: Number(preset.rotation ?? (wall ? WALL_ROTATIONS[wall] : 0)),
     surfaceItem,
     wallMounted,
+    ceilingMounted,
     wall,
+    rugStyle: preset.rugStyle || '',
+    autoFaceCenter: Boolean(preset.autoFaceCenter),
     parentId: null,
     parentOffsetX: 0,
     parentOffsetY: 0,
@@ -1203,7 +1253,11 @@ function addFurniture(preset, x = null, y = null) {
     deleted: false,
     rev: nextRev(),
     updatedBy: myName
-  });
+  };
+  if (!wallMounted && !surfaceItem && !ceilingMounted && preliminary.autoFaceCenter && preset.rotation == null) {
+    preliminary.rotation = rotationFacingPoint(preliminary);
+  }
+  let item = clampItem(preliminary);
   if (wallMounted) item = snapItemToWall(item, Infinity);
   state.furniture[id] = item;
   selectedType = 'furniture';
@@ -1211,7 +1265,14 @@ function addFurniture(preset, x = null, y = null) {
   saveLocal();
   renderAll();
   actions?.item.send(item);
-  toast(surfaceItem ? `${item.name} added. Hold and move it over a desk to place it on top.` : wallMounted ? `${item.name} added on the ${WALL_LABELS[item.wall].toLowerCase()}. Hold it in 3D to move across or up the wall.` : `${item.name} added. Hold it briefly, then drag to move.`);
+  const message = surfaceItem
+    ? `${item.name} added. Hold and move it over a desk, table, dresser, console, or shelf to place it on top.`
+    : wallMounted
+      ? `${item.name} added on the ${WALL_LABELS[item.wall].toLowerCase()}. Hold it in 3D to move across or up the wall.`
+      : ceilingMounted
+        ? `${item.name} added at the ceiling. Hold it to move it across the room; use height mode to lower it.`
+        : `${item.name} added. Hold it briefly, then drag to move.`;
+  toast(message);
   return item;
 }
 
@@ -1325,7 +1386,7 @@ function updateRoom() {
 
 function applyPhotoRoom() {
   const hasEditedShell = activeOpenings().some(o => o.rev?.n > 0);
-  if (hasEditedShell && !window.confirm('Replace the current door and window layout with the v7 default positions? Furniture will stay.')) return;
+  if (hasEditedShell && !window.confirm('Replace the current door and window layout with the v8 default positions? Furniture will stay.')) return;
   state.meta = { ...state.meta, width: 150, depth: 126, wallHeight: 96, rev: nextRev() };
   const defaults = photoOpenings();
   state.openings = {};
@@ -1423,7 +1484,7 @@ function renderPlan() {
     el.setAttribute('aria-label', `${item.name}, ${Math.round(item.w)} by ${Math.round(item.d)} inches`);
     positionFurnitureElement(el, item);
     const parent = item.parentId ? state.furniture[item.parentId] : null;
-    const placementBadge = parent ? `<span class="surface-badge">on ${escapeHtml(parent.name)}</span>` : item.wallMounted ? `<span class="surface-badge">wall · ${Math.round(item.elevation)} in high</span>` : '';
+    const placementBadge = parent ? `<span class="surface-badge">on ${escapeHtml(parent.name)}</span>` : item.wallMounted ? `<span class="surface-badge">wall · ${Math.round(item.elevation)} in high</span>` : item.ceilingMounted ? `<span class="surface-badge">ceiling · hangs ${Math.round(state.meta.wallHeight - item.elevation - item.height)} in down</span>` : '';
     el.innerHTML = `<span>${escapeHtml(item.name)}<span class="size-label">${Math.round(item.w)}×${Math.round(item.d)} in</span>${placementBadge}</span>`;
     canvas.appendChild(el);
   }
@@ -1481,11 +1542,11 @@ function renderSelection() {
     $('itemName').value = furniture.name;
     $('itemWidth').value = Math.round(furniture.w);
     $('itemDepth').value = Math.round(furniture.d);
-    $('itemHeight').value = Math.round(furniture.height);
+    $('itemHeight').value = Math.round(furniture.height * 100) / 100;
     $('itemElevation').value = Math.round(furniture.elevation * 10) / 10;
     const wallStatus = snappedWallLabel(furniture);
     const parent = furniture.parentId ? state.furniture[furniture.parentId] : null;
-    const placement = parent ? ` · placed on ${parent.name}` : furniture.wallMounted ? ` · mounted on ${WALL_LABELS[furniture.wall || nearestWallForItem(furniture)[0]].toLowerCase()}` : wallStatus ? ` · ${wallStatus}` : '';
+    const placement = parent ? ` · placed on ${parent.name}` : furniture.wallMounted ? ` · mounted on ${WALL_LABELS[furniture.wall || nearestWallForItem(furniture)[0]].toLowerCase()}` : furniture.ceilingMounted ? ' · suspended from ceiling' : wallStatus ? ` · ${wallStatus}` : '';
     $('positionLabel').textContent = `${Math.round(furniture.x * 10) / 10} in from left · ${Math.round(furniture.y * 10) / 10} in from top · ${Math.round(furniture.elevation * 10) / 10} in high${placement}`;
   }
 
@@ -1575,11 +1636,12 @@ function moveDrag(event) {
     let next = clampItem({ ...item, x: snapValue(drag.startValueX + dx), y: snapValue(drag.startValueY + dy) });
     next = placeSurfaceItem(next);
     if (!next.parentId) next = snapItemToWall(next);
+    if (!next.wall && next.autoFaceCenter && !next.parentId && !next.ceilingMounted) next.rotation = rotationFacingPoint(next);
     Object.assign(item, next);
     positionFurnitureElement(drag.element, item);
     syncAttachedChildren(item.id, false);
     const parent = item.parentId ? state.furniture[item.parentId] : null;
-    const placement = parent ? ` · on ${parent.name}` : item.wallMounted ? ` · ${WALL_LABELS[item.wall].toLowerCase()}` : snappedWallLabel(item) ? ` · ${snappedWallLabel(item)}` : '';
+    const placement = parent ? ` · on ${parent.name}` : item.wallMounted ? ` · ${WALL_LABELS[item.wall].toLowerCase()}` : item.ceilingMounted ? ' · ceiling mounted' : snappedWallLabel(item) ? ` · ${snappedWallLabel(item)}` : '';
     $('positionLabel').textContent = `${Math.round(item.x)} in from left · ${Math.round(item.y)} in from top · ${Math.round(item.elevation)} in high${placement}`;
     const now = performance.now();
     if (now - lastDragSend > 75) {
@@ -2150,7 +2212,7 @@ function activate3DHold() {
     dragData.pointerAlongOffset = (data.wall === 'top' || data.wall === 'bottom' ? (data.x + data.w / 2) : (data.y + data.d / 2)) / 12 - openingAlongFeet({ wall: data.wall }, runtime.planePoint);
     dragData.pointerElevationOffset = (data.elevation || 0) / 12 - runtime.planePoint.y;
   } else if (entity.type === 'furniture' && mode === 'floor') {
-    const planeHeight = data.parentId ? (data.elevation || 0) / 12 : 0;
+    const planeHeight = data.parentId || data.ceilingMounted ? (data.elevation || 0) / 12 : 0;
     dragData.movePlane = new runtime.THREE.Plane(new runtime.THREE.Vector3(0, 1, 0), -planeHeight);
     if (!runtime.raycaster.ray.intersectPlane(dragData.movePlane, runtime.planePoint)) return;
     dragData.offsetX = object.position.x - runtime.planePoint.x;
@@ -2172,7 +2234,7 @@ function activate3DHold() {
   navigator.vibrate?.(18);
   const label = data.name;
   $('threeSelection').textContent = entity.type === 'furniture'
-    ? data.wallMounted ? `Moving ${label} on the ${WALL_LABELS[data.wall].toLowerCase()} · drag sideways or up/down` : data.surfaceItem ? `Moving ${label} · hover over a desk to place it on top` : `Moving ${label} · release to place`
+    ? data.wallMounted ? `Moving ${label} on the ${WALL_LABELS[data.wall].toLowerCase()} · drag sideways or up/down` : data.ceilingMounted ? `Moving ${label} across the ceiling · use height mode to lower it` : data.surfaceItem ? `Moving ${label} · hover over a surface to place it on top` : `Moving ${label} · release to place`
     : `Moving ${label} along its wall${data.type === 'window' ? ' · height mode changes sill height' : ''}`;
 }
 
@@ -2241,6 +2303,7 @@ function handle3DPointerMove(event) {
       });
       next = placeSurfaceItem(next);
       if (!next.parentId) next = snapItemToWall(next);
+      if (!next.wall && next.autoFaceCenter && !next.parentId && !next.ceilingMounted) next.rotation = rotationFacingPoint(next);
     }
     Object.assign(item, next);
     updateDraggedModel(item, drag.object);
@@ -2514,6 +2577,109 @@ function addTrimForWall(wall, trimMaterial) {
   addWallBox(threeRuntime.roomGroup, wall, length / 2, wallH - .12, length, .24, .16, trimMaterial, .09);
 }
 
+function createRugTexture(THREE, item) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 768;
+  canvas.height = 512;
+  const ctx = canvas.getContext('2d');
+  const style = String(item.rugStyle || item.name || 'woven').toLowerCase();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const roundedRect = (x, y, w, h, r) => {
+    ctx.beginPath();
+    if (typeof ctx.roundRect === 'function') ctx.roundRect(x, y, w, h, r);
+    else ctx.rect(x, y, w, h);
+  };
+
+  if (style.includes('braided')) {
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(1, .76);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, canvas.width * .46, canvas.height * .57, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#b9855c';
+    ctx.fill();
+    const colors = ['#ead9bf', '#a66d4d', '#d3b28d', '#7f8e77', '#c98f69'];
+    for (let i = 0; i < 16; i++) {
+      ctx.beginPath();
+      ctx.ellipse(0, 0, canvas.width * (.43 - i * .022), canvas.height * (.53 - i * .027), 0, 0, Math.PI * 2);
+      ctx.strokeStyle = colors[i % colors.length];
+      ctx.lineWidth = 12;
+      ctx.stroke();
+    }
+    ctx.restore();
+  } else if (style.includes('checker')) {
+    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 22);
+    ctx.fillStyle = '#e9ddc8';
+    ctx.fill();
+    const cell = 64;
+    for (let y = 24; y < canvas.height - 24; y += cell) {
+      for (let x = 24; x < canvas.width - 24; x += cell) {
+        ctx.fillStyle = ((x / cell + y / cell) % 2) ? '#8c9d82' : '#d39b72';
+        ctx.fillRect(x, y, Math.min(cell, canvas.width - 24 - x), Math.min(cell, canvas.height - 24 - y));
+      }
+    }
+    ctx.strokeStyle = '#6f765f';
+    ctx.lineWidth = 18;
+    ctx.strokeRect(18, 18, canvas.width - 36, canvas.height - 36);
+  } else if (style.includes('floral')) {
+    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 20);
+    ctx.fillStyle = '#d7c3a5';
+    ctx.fill();
+    ctx.strokeStyle = '#775e58';
+    ctx.lineWidth = 20;
+    ctx.strokeRect(22, 22, canvas.width - 44, canvas.height - 44);
+    ctx.strokeStyle = '#9a795f';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(48, 48, canvas.width - 96, canvas.height - 96);
+    const flowers = [
+      [150,130,'#a95f62'], [310,185,'#71876b'], [520,125,'#be8460'], [640,245,'#8f6878'],
+      [190,350,'#c08a66'], [390,320,'#a35f62'], [560,380,'#6f8d70']
+    ];
+    for (const [x,y,color] of flowers) {
+      ctx.strokeStyle = '#62785f';
+      ctx.lineWidth = 9;
+      ctx.beginPath(); ctx.moveTo(x, y + 18); ctx.quadraticCurveTo(x - 35, y + 55, x - 18, y + 90); ctx.stroke();
+      for (let i = 0; i < 6; i++) {
+        const a = i * Math.PI / 3;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.ellipse(x + Math.cos(a) * 22, y + Math.sin(a) * 22, 18, 10, a, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#e5c87b';
+      ctx.beginPath(); ctx.arc(x, y, 10, 0, Math.PI * 2); ctx.fill();
+    }
+  } else {
+    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 18);
+    ctx.fillStyle = '#cbbca7';
+    ctx.fill();
+    for (let y = 30; y < canvas.height - 30; y += 14) {
+      ctx.strokeStyle = y % 28 === 0 ? '#998b78' : '#dfd4c4';
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(30, y);
+      for (let x = 30; x < canvas.width - 30; x += 20) ctx.lineTo(x, y + Math.sin(x * .08 + y) * 2.5);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = '#8e806f';
+    ctx.lineWidth = 14;
+    ctx.strokeRect(22, 22, canvas.width - 44, canvas.height - 44);
+  }
+
+  // Fine fibers prevent the texture from looking like a flat printed card.
+  ctx.globalAlpha = .14;
+  for (let i = 0; i < 1400; i++) {
+    ctx.fillStyle = i % 2 ? '#ffffff' : '#4f463c';
+    ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 1.5, .7);
+  }
+  ctx.globalAlpha = 1;
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = Math.min(8, threeRuntime?.renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+  return texture;
+}
+
 function createFurnitureModel(item) {
   const { THREE } = threeRuntime;
   const group = new THREE.Group();
@@ -2566,6 +2732,16 @@ function createFurnitureModel(item) {
   };
   const addSphere = (radius, material, x = 0, y = radius, z = 0) => {
     const mesh = new THREE.Mesh(new THREE.SphereGeometry(Math.max(.03, radius), 18, 14), material);
+    mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.userData.itemId = item.id;
+    group.add(mesh);
+    return mesh;
+  };
+  const addScaledSphere = (rx, ry, rz, material, x = 0, y = ry, z = 0, segments = 24) => {
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, segments, Math.max(12, Math.floor(segments * .7))), material);
+    mesh.scale.set(Math.max(.03, rx), Math.max(.03, ry), Math.max(.03, rz));
     mesh.position.set(x, y, z);
     mesh.castShadow = true;
     mesh.receiveShadow = true;
@@ -2627,7 +2803,23 @@ function createFurnitureModel(item) {
       addBox(w * .18, .045, .055, metalMaterial,  w * .16, h * (i + .5) / drawers, d / 2 + .055);
     }
   } else if (item.kind === 'storage') {
-    if (name.includes('bookcase')) {
+    if (name.includes('round side table')) {
+      addCylinder(w * .48, w * .48, .16, new THREE.MeshStandardMaterial({ color: 0xc8a174, roughness: .68 }), 0, h - .08, 0, 36);
+      addCylinder(.08, .10, Math.max(.2, h - .18), woodMaterial, 0, (h - .18) / 2, 0, 18);
+      for (let i = 0; i < 3; i++) {
+        const angle = i * Math.PI * 2 / 3;
+        addBox(.08, Math.max(.2, h - .28), .08, woodMaterial, Math.cos(angle) * w * .27, (h - .28) / 2, Math.sin(angle) * d * .27);
+      }
+    } else if (name.includes('woven floor basket')) {
+      const basketMaterial = new THREE.MeshStandardMaterial({ color: 0xb98f62, roughness: .96 });
+      addCylinder(w * .42, w * .49, h * .84, basketMaterial, 0, h * .42, 0, 28);
+      addCylinder(w * .40, w * .43, h * .70, new THREE.MeshStandardMaterial({ color: 0x6f5540, roughness: .95 }), 0, h * .51, 0, 28);
+      for (let i = 0; i < 7; i++) addCylinder(w * (.43 - i * .008), w * (.45 - i * .008), .035, lightMaterial, 0, h * (.12 + i * .105), 0, 28);
+      const handleL = addCylinder(.04, .04, w * .45, darkMaterial, -w * .38, h * .77, 0, 12);
+      handleL.rotation.z = Math.PI / 2;
+      const handleR = addCylinder(.04, .04, w * .45, darkMaterial, w * .38, h * .77, 0, 12);
+      handleR.rotation.z = Math.PI / 2;
+    } else if (name.includes('bookcase')) {
       const frame = Math.max(.07, Math.min(.14, Math.min(w, h) * .055));
       const innerW = Math.max(.2, w - frame * 2);
       const innerH = Math.max(.2, h - frame * 2);
@@ -2698,68 +2890,140 @@ function createFurnitureModel(item) {
     if (name.includes('mounted')) {
       const screenD = Math.max(.08, Math.min(.22, d));
       addBox(w, h, screenD, darkMaterial, 0, h / 2, 0);
-      addBox(w * .92, h * .86, screenD + .015, new THREE.MeshStandardMaterial({ color: 0x10151c, roughness: .2, metalness: .15 }), 0, h / 2, screenD * .12);
+      addBox(w * .92, h * .86, screenD + .015, new THREE.MeshStandardMaterial({ color: 0x10151c, roughness: .18, metalness: .18 }), 0, h / 2, screenD * .12);
       addBox(w * .22, h * .16, .10, metalMaterial, 0, h * .44, -screenD / 2 - .05);
+    } else if (name.includes('tabletop')) {
+      const screenH = h * .78;
+      const screenD = Math.max(.07, Math.min(.13, d * .25));
+      addBox(w, screenH, screenD, darkMaterial, 0, h * .56, 0);
+      addBox(w * .92, screenH * .86, screenD + .012, new THREE.MeshStandardMaterial({ color: 0x101820, roughness: .16, metalness: .14 }), 0, h * .56, screenD * .13);
+      addBox(.08, h * .20, .08, metalMaterial, -w * .24, h * .12, 0);
+      addBox(.08, h * .20, .08, metalMaterial,  w * .24, h * .12, 0);
+      addBox(w * .22, .045, d * .46, darkMaterial, -w * .24, .025, 0);
+      addBox(w * .22, .045, d * .46, darkMaterial,  w * .24, .025, 0);
     } else {
-    const standH = Math.max(.25, h * .34);
-    addBox(w, standH, d, woodMaterial, 0, standH / 2, 0);
-    addBox(w * .74, standH * .56, d * .7, lightMaterial, 0, standH * .28, 0);
-    const screenH = Math.max(.45, h - standH + .35);
-    const screenD = Math.min(.12, d * .4);
-    addBox(w * .82, screenH, screenD, darkMaterial, 0, standH + screenH / 2, 0);
-    addBox(w * .75, screenH * .82, screenD + .015, new THREE.MeshStandardMaterial({ color: 0x12171e, roughness: .25, metalness: .2 }), 0, standH + screenH / 2, screenD * .12);
+      const standH = Math.max(.25, h * .34);
+      addBox(w, standH, d, woodMaterial, 0, standH / 2, 0);
+      addBox(w * .74, standH * .56, d * .7, lightMaterial, 0, standH * .28, 0);
+      const screenH = Math.max(.45, h - standH + .35);
+      const screenD = Math.min(.12, d * .4);
+      addBox(w * .82, screenH, screenD, darkMaterial, 0, standH + screenH / 2, 0);
+      addBox(w * .75, screenH * .82, screenD + .015, new THREE.MeshStandardMaterial({ color: 0x12171e, roughness: .25, metalness: .2 }), 0, standH + screenH / 2, screenD * .12);
     }
   } else if (item.kind === 'chair') {
-    if (name.includes('ottoman') || name.includes('stool')) {
+    // Every chair is modeled with its back toward local -Z and its front toward +Z.
+    // That matches the app's rotation and wall-facing calculations.
+    if (name.includes('bean bag')) {
+      const beanMaterial = new THREE.MeshStandardMaterial({ color: 0xb78f82, roughness: .98 });
+      const bag = addScaledSphere(w * .47, h * .46, d * .47, beanMaterial, 0, h * .46, 0, 32);
+      bag.rotation.y = .18;
+      addScaledSphere(w * .20, h * .10, d * .20, new THREE.MeshStandardMaterial({ color: 0x8f6e67, roughness: .98 }), 0, h * .80, -d * .04, 24);
+      for (let i = 0; i < 7; i++) {
+        const seam = addBox(.018, h * .58, .018, darkMaterial, Math.sin(i * .9) * w * .22, h * .47, Math.cos(i * .9) * d * .22);
+        seam.rotation.z = (i - 3) * .08;
+      }
+    } else if (name.includes('cozy chair')) {
+      const cozyMaterial = new THREE.MeshStandardMaterial({ color: 0xc8aa91, roughness: .96 });
+      const seatY = h * .35;
+      addScaledSphere(w * .43, h * .18, d * .38, cozyMaterial, 0, seatY, d * .05, 28);
+      const back = addScaledSphere(w * .44, h * .42, d * .16, cozyMaterial, 0, h * .62, -d * .34, 28);
+      back.rotation.x = -.10;
+      addScaledSphere(w * .14, h * .24, d * .34, cozyMaterial, -w * .39, h * .42, 0, 24);
+      addScaledSphere(w * .14, h * .24, d * .34, cozyMaterial,  w * .39, h * .42, 0, 24);
+      addScaledSphere(w * .30, h * .09, d * .24, linenMaterial, 0, seatY + h * .12, d * .08, 24);
+      addScaledSphere(w * .25, h * .13, d * .09, accentMaterial, 0, h * .64, -d * .16, 24);
+      for (const x of [-w * .29, w * .29]) for (const z of [-d * .25, d * .23]) addBox(.09, h * .20, .09, woodMaterial, x, h * .10, z);
+    } else if (name.includes('floor cushion')) {
+      const cushion = addScaledSphere(w * .48, h * .42, d * .48, fabricMaterial, 0, h * .42, 0, 28);
+      cushion.scale.y = Math.max(.10, h * .38);
+      addScaledSphere(w * .10, h * .04, d * .10, accentMaterial, 0, h * .76, 0, 18);
+      for (let i = 0; i < 4; i++) {
+        const angle = i * Math.PI / 2;
+        const tuft = addSphere(.035, darkMaterial, Math.cos(angle) * w * .22, h * .64, Math.sin(angle) * d * .22);
+        tuft.scale.y = .45;
+      }
+    } else if (name.includes('ottoman') || name.includes('stool')) {
       const round = name.includes('stool');
       if (round) {
-        addCylinder(w * .42, w * .46, Math.max(.18, h * .28), fabricMaterial, 0, h * .72, 0, 24);
-        addCylinder(.06, .07, h * .66, metalMaterial, 0, h * .36, 0, 16);
-        addCylinder(w * .30, w * .34, .08, darkMaterial, 0, .04, 0, 24);
+        addCylinder(w * .42, w * .46, Math.max(.18, h * .28), fabricMaterial, 0, h * .72, 0, 28);
+        addCylinder(.06, .07, h * .66, metalMaterial, 0, h * .36, 0, 18);
+        addCylinder(w * .30, w * .34, .08, darkMaterial, 0, .04, 0, 28);
+        for (let i = 0; i < 5; i++) {
+          const angle = i * Math.PI * 2 / 5;
+          const spoke = addBox(w * .27, .04, .05, metalMaterial, Math.cos(angle) * w * .13, .12, Math.sin(angle) * d * .13);
+          spoke.rotation.y = -angle;
+          addCylinder(.045, .045, .05, darkMaterial, Math.cos(angle) * w * .27, .035, Math.sin(angle) * d * .27, 12);
+        }
       } else {
-        addBox(w, h * .42, d, fabricMaterial, 0, h * .21, 0);
-        addBox(w * .96, .10, d * .96, accentMaterial, 0, h * .42 + .05, 0);
+        addScaledSphere(w * .47, h * .23, d * .47, fabricMaterial, 0, h * .34, 0, 24);
+        addBox(w * .84, .10, d * .84, accentMaterial, 0, h * .53, 0);
         const leg = Math.min(.12, w * .1, d * .1);
-        for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, Math.max(.14, h * .2), leg, woodMaterial, x, Math.max(.14, h * .2) / 2, z);
+        for (const x of [-w / 2 + leg * 1.4, w / 2 - leg * 1.4]) for (const z of [-d / 2 + leg * 1.4, d / 2 - leg * 1.4]) addBox(leg, Math.max(.14, h * .22), leg, woodMaterial, x, Math.max(.14, h * .22) / 2, z);
       }
     } else if (name.includes('office') || name.includes('swivel')) {
       const seatY = Math.min(1.65, h * .46);
-      addBox(w * .84, .18, d * .78, fabricMaterial, 0, seatY, 0);
-      addBox(w * .78, Math.max(.75, h - seatY), .16, fabricMaterial, 0, seatY + (h - seatY) / 2, -d * .34);
+      addScaledSphere(w * .42, .16, d * .36, fabricMaterial, 0, seatY, d * .02, 24);
+      const back = addScaledSphere(w * .39, Math.max(.46, (h - seatY) * .48), .10, fabricMaterial, 0, seatY + (h - seatY) * .43, -d * .35, 24);
+      back.rotation.x = -.08;
       addCylinder(.055, .065, seatY - .12, metalMaterial, 0, (seatY - .12) / 2, 0, 18);
+      addCylinder(.13, .13, .10, darkMaterial, 0, seatY * .31, 0, 20);
       for (let i = 0; i < 5; i++) {
         const angle = i * Math.PI * 2 / 5;
-        const x = Math.cos(angle) * w * .28;
-        const z = Math.sin(angle) * d * .28;
-        const arm = addBox(w * .28, .045, .055, metalMaterial, x / 2, .14, z / 2);
-        arm.rotation.y = -angle;
+        const x = Math.sin(angle) * w * .31;
+        const z = Math.cos(angle) * d * .31;
+        const spoke = addBox(w * .31, .045, .055, metalMaterial, x / 2, .14, z / 2);
+        spoke.rotation.y = angle;
         addCylinder(.055, .055, .05, darkMaterial, x, .035, z, 12);
       }
-      addBox(.10, .45, .10, metalMaterial, -w * .42, seatY + .16, 0);
-      addBox(.10, .45, .10, metalMaterial,  w * .42, seatY + .16, 0);
-    } else if (name.includes('lounge')) {
-      const seatY = .62;
-      addBox(w * .90, .26, d * .72, fabricMaterial, 0, seatY, .08);
-      const back = addBox(w * .90, h * .62, .22, fabricMaterial, 0, seatY + h * .30, -d * .32);
-      back.rotation.x = -.18;
-      addBox(.18, seatY + .28, d * .72, fabricMaterial, -w * .44, (seatY + .28) / 2, .02);
-      addBox(.18, seatY + .28, d * .72, fabricMaterial,  w * .44, (seatY + .28) / 2, .02);
-      for (const x of [-w * .34, w * .34]) for (const z of [-d * .22, d * .24]) addBox(.08, seatY, .08, woodMaterial, x, seatY / 2, z);
-      addBox(w * .46, .12, d * .36, accentMaterial, 0, seatY + .20, .05);
-    } else {
-      const seatY = Math.min(h * .44, 1.5);
-      addBox(w * .92, .20, d * .90, fabricMaterial, 0, seatY, 0);
-      addBox(w * .92, Math.max(.55, h - seatY), .20, fabricMaterial, 0, seatY + (h - seatY) / 2, -d / 2 + .10);
-      if (!name.includes('dining')) {
-        addBox(.18, seatY + .12, d * .78, fabricMaterial, -w / 2 + .09, (seatY + .12) / 2, 0);
-        addBox(.18, seatY + .12, d * .78, fabricMaterial,  w / 2 - .09, (seatY + .12) / 2, 0);
+      for (const x of [-w * .40, w * .40]) {
+        addBox(.065, .42, .065, metalMaterial, x, seatY + .13, 0);
+        addBox(.22, .07, d * .34, fabricMaterial, x, seatY + .35, d * .02);
       }
-      const leg = Math.min(.11, w * .08, d * .08);
-      for (const x of [-w / 2 + leg, w / 2 - leg]) for (const z of [-d / 2 + leg, d / 2 - leg]) addBox(leg, seatY, leg, woodMaterial, x, seatY / 2, z);
-      if (!name.includes('dining')) addBox(w * .5, .12, d * .42, accentMaterial, 0, seatY + .17, .05);
+    } else if (name.includes('lounge')) {
+      const seatY = .60;
+      addScaledSphere(w * .44, .18, d * .35, fabricMaterial, 0, seatY, d * .06, 26);
+      const back = addScaledSphere(w * .43, h * .34, .13, fabricMaterial, 0, seatY + h * .31, -d * .34, 26);
+      back.rotation.x = -.17;
+      addScaledSphere(.13, seatY * .42, d * .33, fabricMaterial, -w * .43, seatY * .66, .02, 22);
+      addScaledSphere(.13, seatY * .42, d * .33, fabricMaterial,  w * .43, seatY * .66, .02, 22);
+      for (const x of [-w * .34, w * .34]) for (const z of [-d * .22, d * .24]) addBox(.08, seatY, .08, woodMaterial, x, seatY / 2, z);
+      addScaledSphere(w * .22, .10, d * .18, accentMaterial, 0, seatY + .22, d * .08, 20);
+    } else if (name.includes('dining')) {
+      const seatY = Math.min(h * .45, 1.55);
+      addBox(w * .90, .15, d * .84, woodMaterial, 0, seatY, .02);
+      addBox(w * .82, .08, d * .74, fabricMaterial, 0, seatY + .11, .05);
+      const leg = Math.min(.09, w * .075, d * .075);
+      for (const x of [-w * .38, w * .38]) for (const z of [-d * .34, d * .34]) addBox(leg, seatY, leg, woodMaterial, x, seatY / 2, z);
+      addBox(.09, h - seatY, .09, woodMaterial, -w * .38, seatY + (h - seatY) / 2, -d * .37);
+      addBox(.09, h - seatY, .09, woodMaterial,  w * .38, seatY + (h - seatY) / 2, -d * .37);
+      for (let i = -1; i <= 1; i++) addBox(w * .18, h * .42, .07, woodMaterial, i * w * .25, seatY + h * .21, -d * .37);
+      addBox(w * .82, .10, .09, woodMaterial, 0, h * .92, -d * .37);
+    } else {
+      const seatY = Math.min(h * .43, 1.48);
+      addScaledSphere(w * .43, .17, d * .38, fabricMaterial, 0, seatY, d * .05, 24);
+      const back = addScaledSphere(w * .42, Math.max(.38, (h - seatY) * .45), .12, fabricMaterial, 0, seatY + (h - seatY) * .43, -d * .36, 24);
+      back.rotation.x = -.08;
+      addScaledSphere(.12, seatY * .36, d * .33, fabricMaterial, -w * .43, seatY * .69, .02, 20);
+      addScaledSphere(.12, seatY * .36, d * .33, fabricMaterial,  w * .43, seatY * .69, .02, 20);
+      const leg = Math.min(.10, w * .08, d * .08);
+      for (const x of [-w * .34, w * .34]) for (const z of [-d * .26, d * .24]) addBox(leg, seatY * .78, leg, woodMaterial, x, seatY * .39, z);
+      addScaledSphere(w * .24, .09, d * .18, accentMaterial, 0, seatY + .18, d * .07, 20);
     }
   } else if (item.kind === 'shelf') {
-    if (name.includes('pegboard')) {
+    if (name.includes('thread rack')) {
+      addBox(w, h, .07, new THREE.MeshStandardMaterial({ color: 0xd8ba8a, roughness: .86 }), 0, h / 2, 0);
+      const rows = 4;
+      const cols = Math.max(6, Math.min(10, Math.round(w / .38)));
+      const spoolColors = [0xc36f69, 0xe6bd69, 0x7b9b88, 0x7c82ad, 0xd69b74, 0xb78ca6];
+      for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+        const x = -w * .43 + c * (w * .86 / Math.max(1, cols - 1));
+        const y = h * .18 + r * h * .21;
+        const peg = addCylinder(.018, .018, .24, metalMaterial, x, y, .08, 10);
+        peg.rotation.x = Math.PI / 2;
+        const spool = addCylinder(.055, .075, .12, new THREE.MeshStandardMaterial({ color: spoolColors[(r * cols + c) % spoolColors.length], roughness: .82 }), x, y, .17, 14);
+        spool.rotation.x = Math.PI / 2;
+      }
+    } else if (name.includes('pegboard')) {
       addBox(w, h, .08, new THREE.MeshStandardMaterial({ color: 0xb78f62, roughness: .88 }), 0, h / 2, 0);
       const columns = Math.max(5, Math.min(10, Math.round(w / .45)));
       const rows = Math.max(4, Math.min(8, Math.round(h / .48)));
@@ -2778,7 +3042,28 @@ function createFurnitureModel(item) {
       addCylinder(.09, .12, .16, woodMaterial, w * .32, .08, 0, 14);
     }
   } else if (item.kind === 'light') {
-    if (name.includes('table')) {
+    if (name.includes('string lights')) {
+      const cable = addBox(w * .94, .025, .025, darkMaterial, 0, h * .72, 0);
+      cable.rotation.z = -.04;
+      const bulbs = Math.max(7, Math.min(14, Math.round(w / .45)));
+      for (let i = 0; i < bulbs; i++) {
+        const x = -w * .44 + i * (w * .88 / Math.max(1, bulbs - 1));
+        const sag = Math.sin(i / Math.max(1, bulbs - 1) * Math.PI) * h * .22;
+        addBox(.012, sag + .10, .012, darkMaterial, x, h * .70 - sag / 2, 0);
+        addSphere(.055, glowMaterial, x, h * .64 - sag, .02);
+        addPointGlow(x, h * .64 - sag, .04, .35, 1.4);
+      }
+    } else if (name.includes('task lamp')) {
+      addCylinder(.12, .16, .05, darkMaterial, 0, .025, 0, 18);
+      const lower = addBox(.05, h * .42, .05, metalMaterial, 0, h * .22, 0);
+      lower.rotation.z = -.28;
+      const upper = addBox(.05, h * .34, .05, metalMaterial, .10, h * .54, 0);
+      upper.rotation.z = .42;
+      const shade = addCylinder(.18, .10, .26, new THREE.MeshStandardMaterial({ color: 0x8b9d8a, roughness: .62 }), .19, h * .72, .01, 18);
+      shade.rotation.z = -.55;
+      addSphere(.05, glowMaterial, .20, h * .69, .04);
+      addPointGlow(.20, h * .69, .08, .9, 2.5);
+    } else if (name.includes('table')) {
       addCylinder(.10, .14, .06, woodMaterial, 0, .03, 0, 18);
       addCylinder(.04, .04, Math.max(.35, h * .55), metalMaterial, 0, Math.max(.35, h * .55) / 2 + .06, 0, 18);
       addCylinder(.22, .14, Math.max(.24, h * .35), linenMaterial, 0, Math.max(.35, h * .55) + Math.max(.24, h * .35) / 2 + .02, 0, 18);
@@ -2799,14 +3084,73 @@ function createFurnitureModel(item) {
     }
   } else if (item.kind === 'decor') {
     if (name.includes('rug')) {
-      addBox(w, Math.max(.025, h), d, new THREE.MeshStandardMaterial({ color: 0xb8a690, roughness: .98 }), 0, Math.max(.025, h) / 2, 0);
-      addBox(w * .86, .012, d * .78, accentMaterial, 0, Math.max(.025, h) + .008, 0);
+      const rugHeight = Math.max(.006, Math.min(.018, h));
+      const rugMaterial = new THREE.MeshStandardMaterial({
+        map: createRugTexture(THREE, item),
+        color: 0xffffff,
+        roughness: 1,
+        metalness: 0,
+        transparent: true,
+        alphaTest: .025,
+        side: THREE.DoubleSide
+      });
+      const rug = new THREE.Mesh(new THREE.PlaneGeometry(w, d), rugMaterial);
+      rug.rotation.x = -Math.PI / 2;
+      rug.position.y = rugHeight;
+      rug.receiveShadow = true;
+      rug.userData.itemId = item.id;
+      group.add(rug);
+      if (!String(item.rugStyle || '').includes('braided')) {
+        const fringeMaterial = new THREE.MeshStandardMaterial({ color: 0xd8cbb7, roughness: 1 });
+        const strands = Math.max(10, Math.min(28, Math.round(w / .22)));
+        for (let i = 0; i < strands; i++) {
+          const x = -w * .46 + i * (w * .92 / Math.max(1, strands - 1));
+          addBox(.018, .008, .14, fringeMaterial, x, rugHeight + .002, -d / 2 - .06);
+          addBox(.018, .008, .14, fringeMaterial, x, rugHeight + .002,  d / 2 + .06);
+        }
+      }
+    } else if (name.includes('inspiration board')) {
+      addBox(w, h, Math.max(.05, d), woodMaterial, 0, h / 2, 0);
+      addBox(w * .91, h * .86, Math.max(.055, d) + .01, new THREE.MeshStandardMaterial({ color: 0xb98d63, roughness: .96 }), 0, h / 2, .02);
+      const noteColors = [0xf2d97e, 0xd69ba3, 0x9cc3b0, 0x9fb6d5, 0xe8b985];
+      for (let i = 0; i < 9; i++) {
+        const note = addBox(w * (.13 + (i % 3) * .025), h * (.15 + (i % 2) * .04), .025, new THREE.MeshStandardMaterial({ color: noteColors[i % noteColors.length], roughness: .9 }), -w * .32 + (i % 3) * w * .31, h * .24 + Math.floor(i / 3) * h * .25, d / 2 + .03);
+        note.rotation.z = (i % 2 ? 1 : -1) * .045;
+        addSphere(.022, darkMaterial, note.position.x, note.position.y + h * .06, d / 2 + .055);
+      }
+    } else if (name.includes('blanket ladder')) {
+      addBox(.10, h, .10, woodMaterial, -w * .40, h / 2, 0);
+      addBox(.10, h, .10, woodMaterial,  w * .40, h / 2, 0);
+      const blanketColors = [fabricMaterial, accentMaterial, new THREE.MeshStandardMaterial({ color: 0xb98f82, roughness: .96 })];
+      for (let i = 0; i < 5; i++) {
+        addBox(w * .82, .085, .10, woodMaterial, 0, h * (.14 + i * .18), 0);
+        if (i > 1) {
+          const cloth = addBox(w * (.52 - (i - 2) * .05), h * .17, .035, blanketColors[(i - 2) % blanketColors.length], i % 2 ? -w * .10 : w * .08, h * (.14 + i * .18) - h * .075, .08);
+          cloth.rotation.z = i % 2 ? -.03 : .04;
+        }
+      }
     } else if (name.includes('wall art') || name.includes('photo frame')) {
       addBox(w, h, Math.max(.05, d), woodMaterial, 0, h / 2, 0);
       addBox(w * .86, h * .82, Math.max(.055, d) + .01, new THREE.MeshStandardMaterial({ color: name.includes('photo') ? 0x9fb7ca : 0xc8a97b, roughness: .72 }), 0, h / 2, .02);
     } else if (name.includes('mirror')) {
       addBox(w, h, Math.max(.05, d), woodMaterial, 0, h / 2, 0);
       addBox(w * .88, h * .90, Math.max(.055, d) + .01, new THREE.MeshStandardMaterial({ color: 0xbfd5dc, roughness: .12, metalness: .45 }), 0, h / 2, .02);
+    } else if (name.includes('yarn bowl')) {
+      addCylinder(w * .42, w * .47, h * .58, new THREE.MeshStandardMaterial({ color: 0xb98e69, roughness: .72 }), 0, h * .29, 0, 24);
+      const yarnColors = [0xc66f72, 0x7f9b8a, 0xd6a266];
+      for (let i = 0; i < 3; i++) {
+        const ball = addScaledSphere(w * .19, h * .22, d * .19, new THREE.MeshStandardMaterial({ color: yarnColors[i], roughness: .98 }), (i - 1) * w * .20, h * .68 + (i % 2) * h * .08, 0, 22);
+        for (let j = 0; j < 4; j++) {
+          const band = addBox(w * .30, .012, .018, darkMaterial, ball.position.x, ball.position.y + (j - 1.5) * h * .05, .18);
+          band.rotation.z = (j - 1.5) * .16;
+        }
+      }
+    } else if (name.includes('fabric stack')) {
+      const colors = [0x9db5a2, 0xd3a08a, 0xb9a5c9, 0xe2c57e];
+      for (let i = 0; i < 4; i++) {
+        const layer = addBox(w * (1 - i * .045), h * .22, d * (1 - i * .035), new THREE.MeshStandardMaterial({ color: colors[i], roughness: .98 }), (i % 2 ? .03 : -.03), h * (.12 + i * .22), 0);
+        layer.rotation.y = (i - 1.5) * .035;
+      }
     } else if (name.includes('mug')) {
       addCylinder(w * .38, w * .42, h * .78, new THREE.MeshStandardMaterial({ color: 0xe9e5dc, roughness: .72 }), 0, h * .39, 0, 20);
       const handle = addCylinder(w * .12, w * .12, h * .48, woodMaterial, w * .48, h * .42, 0, 12);
@@ -2825,28 +3169,49 @@ function createFurnitureModel(item) {
     } else if (name.includes('clock')) {
       addBox(w, h, Math.max(.05, d), darkMaterial, 0, h / 2, 0);
       addCylinder(w * .42, w * .42, .035, lightMaterial, 0, h * .54, d / 2 + .02, 24).rotation.x = Math.PI / 2;
-    } else if (name.includes('plant') || name.includes('succulent')) {
-      const hanging = name.includes('hanging');
+    } else if (name.includes('plant') || name.includes('succulent') || name.includes('pothos') || name.includes('fern')) {
+      const hanging = item.ceilingMounted || name.includes('hanging') || name.includes('ceiling');
       const tall = name.includes('tall');
-      const potH = Math.max(.16, h * (tall ? .22 : .28));
-      addCylinder(Math.max(.10, w * .18), Math.max(.14, w * .24), potH, woodMaterial, 0, hanging ? h * .62 : potH / 2, 0, 18);
+      const fern = name.includes('fern');
+      const potH = Math.max(.16, h * (tall ? .22 : hanging ? .20 : .28));
       if (hanging) {
-        for (let i = 0; i < 3; i++) { const cord = addBox(.015, h * .45, .015, darkMaterial, (i - 1) * .12, h * .83, 0); cord.rotation.z = (i - 1) * .10; }
-      }
-      const leafMaterial = new THREE.MeshStandardMaterial({ color: tall ? 0x557f53 : 0x6f9d65, roughness: .86, side: THREE.DoubleSide });
-      const leafCount = tall ? 10 : name.includes('succulent') ? 7 : 6;
-      for (let i = 0; i < leafCount; i++) {
-        const leafH = (tall ? .72 : .34) + (i % 3) * (tall ? .12 : .05);
-        const leaf = new THREE.Mesh(new THREE.BoxGeometry(tall ? .08 : .05, leafH, tall ? .24 : .16), leafMaterial);
-        const angle = Math.PI * 2 * i / leafCount;
-        const baseY = hanging ? h * .48 : potH;
-        leaf.position.set(Math.cos(angle) * (tall ? .17 : .10), baseY + leafH * .45 + (i % 2) * .08, Math.sin(angle) * (tall ? .17 : .10));
-        leaf.rotation.z = Math.sin(angle) * .58;
-        leaf.rotation.y = angle;
-        leaf.castShadow = true;
-        leaf.receiveShadow = true;
-        leaf.userData.itemId = item.id;
-        group.add(leaf);
+        const potY = h * .58;
+        addCylinder(Math.max(.11, w * .19), Math.max(.15, w * .25), potH, new THREE.MeshStandardMaterial({ color: 0xb37b54, roughness: .84 }), 0, potY, 0, 20);
+        for (let i = 0; i < 3; i++) {
+          const cord = addBox(.014, h * .38, .014, darkMaterial, (i - 1) * w * .13, h * .81, 0);
+          cord.rotation.z = (i - 1) * .12;
+        }
+        addCylinder(.10, .10, .04, darkMaterial, 0, h - .02, 0, 16);
+        const leafMaterial = new THREE.MeshStandardMaterial({ color: fern ? 0x527e59 : 0x5f8e58, roughness: .9, side: THREE.DoubleSide });
+        const vines = fern ? 10 : 7;
+        for (let i = 0; i < vines; i++) {
+          const angle = Math.PI * 2 * i / vines;
+          const vineLength = h * (.30 + (i % 3) * .08);
+          const stem = addBox(.018, vineLength, .018, leafMaterial, Math.cos(angle) * w * .13, potY - vineLength * .45, Math.sin(angle) * d * .13);
+          stem.rotation.z = Math.cos(angle) * .22;
+          const leaves = fern ? 5 : 4;
+          for (let j = 0; j < leaves; j++) {
+            const leaf = addScaledSphere(fern ? .12 : .10, fern ? .035 : .05, fern ? .22 : .14, leafMaterial, Math.cos(angle) * (w * .13 + j * .025), potY - vineLength * (.12 + j / (leaves + 1)), Math.sin(angle) * (d * .13 + j * .025), 14);
+            leaf.rotation.y = angle;
+            leaf.rotation.z = (j % 2 ? 1 : -1) * .35;
+          }
+        }
+      } else {
+        addCylinder(Math.max(.10, w * .18), Math.max(.14, w * .24), potH, woodMaterial, 0, potH / 2, 0, 18);
+        const leafMaterial = new THREE.MeshStandardMaterial({ color: tall ? 0x557f53 : 0x6f9d65, roughness: .86, side: THREE.DoubleSide });
+        const leafCount = tall ? 10 : name.includes('succulent') ? 7 : 6;
+        for (let i = 0; i < leafCount; i++) {
+          const leafH = (tall ? .72 : .34) + (i % 3) * (tall ? .12 : .05);
+          const leaf = new THREE.Mesh(new THREE.BoxGeometry(tall ? .08 : .05, leafH, tall ? .24 : .16), leafMaterial);
+          const angle = Math.PI * 2 * i / leafCount;
+          leaf.position.set(Math.cos(angle) * (tall ? .17 : .10), potH + leafH * .45 + (i % 2) * .08, Math.sin(angle) * (tall ? .17 : .10));
+          leaf.rotation.z = Math.sin(angle) * .58;
+          leaf.rotation.y = angle;
+          leaf.castShadow = true;
+          leaf.receiveShadow = true;
+          leaf.userData.itemId = item.id;
+          group.add(leaf);
+        }
       }
     } else {
       addBox(w, h, d, accentMaterial, 0, h / 2, 0);
@@ -2862,6 +3227,23 @@ function createFurnitureModel(item) {
       const screen = addBox(w * .92, h * .76, .06, darkMaterial, 0, h * .42, -d * .42);
       screen.rotation.x = -.18;
       addBox(w * .72, .02, d * .58, lightMaterial, 0, .08, .06);
+    } else if (name.includes('sewing machine')) {
+      const machineMaterial = new THREE.MeshStandardMaterial({ color: 0xe9e4da, roughness: .72 });
+      addBox(w * .78, h * .42, d * .68, machineMaterial, 0, h * .23, 0);
+      addBox(w * .60, h * .52, d * .38, machineMaterial, -w * .10, h * .62, -d * .10);
+      addBox(w * .20, h * .42, d * .20, machineMaterial, w * .27, h * .44, -d * .05);
+      addBox(w * .34, .045, d * .42, metalMaterial, w * .12, h * .43, d * .12);
+      addCylinder(.03, .03, h * .30, metalMaterial, w * .18, h * .52, d * .12, 12);
+      addCylinder(.10, .10, .08, darkMaterial, -w * .34, h * .72, -d * .06, 18).rotation.x = Math.PI / 2;
+      addCylinder(.08, .08, .06, accentMaterial, 0, h * .93, -d * .05, 16);
+      addBox(w * .16, .03, .03, darkMaterial, 0, h * .99, -d * .05);
+    } else if (name.includes('cutting mat')) {
+      const matHeight = Math.max(.005, Math.min(.015, h));
+      const mat = addBox(w, matHeight, d, new THREE.MeshStandardMaterial({ color: 0x6f9b83, roughness: .92 }), 0, matHeight / 2, 0);
+      const gridMaterial = new THREE.MeshStandardMaterial({ color: 0xd6e4d8, roughness: .9 });
+      for (let i = 1; i < 8; i++) addBox(.008, .004, d * .94, gridMaterial, -w / 2 + i * w / 8, matHeight + .003, 0);
+      for (let i = 1; i < 6; i++) addBox(w * .94, .004, .008, gridMaterial, 0, matHeight + .003, -d / 2 + i * d / 6);
+      mat.receiveShadow = true;
     } else {
       addBox(w, h, d, woodMaterial, 0, h / 2, 0);
     }
@@ -3107,12 +3489,12 @@ function update3DSelection() {
   rebuild3D();
   if (selectedType === 'furniture') {
     const item = state.furniture[selectedId];
-    $('threeSelection').textContent = item ? `Selected: ${item.name} · hold briefly to move${item.surfaceItem ? '; hover over a desk to place it on top' : item.wallMounted ? '; move across or up/down its wall' : ''}` : 'Tap selects · hold briefly to move · small décor snaps onto desks · mounted items move on walls';
+    $('threeSelection').textContent = item ? `Selected: ${item.name} · hold briefly to move${item.surfaceItem ? '; hover over a surface to place it on top' : item.wallMounted ? '; move across or up/down its wall' : item.ceilingMounted ? '; move overhead or use height mode' : ''}` : 'Tap selects · hold briefly to move · small décor snaps onto surfaces · mounted items move on walls or ceiling';
   } else if (selectedType === 'opening') {
     const opening = state.openings[selectedId];
-    $('threeSelection').textContent = opening ? `Selected: ${opening.name} · drag directly along its wall${opening.type === 'window' ? ' or use height mode' : ''}` : 'Tap selects · hold briefly to move · small décor snaps onto desks · mounted items move on walls';
+    $('threeSelection').textContent = opening ? `Selected: ${opening.name} · drag directly along its wall${opening.type === 'window' ? ' or use height mode' : ''}` : 'Tap selects · hold briefly to move · small décor snaps onto surfaces · mounted items move on walls';
   } else {
-    $('threeSelection').textContent = 'Tap selects · hold briefly to move · small décor snaps onto desks · mounted items move on walls';
+    $('threeSelection').textContent = 'Tap selects · hold briefly to move · small décor snaps onto surfaces · mounted items move on walls';
   }
 }
 
@@ -3224,7 +3606,7 @@ $('itemElevation').addEventListener('change', () => {
 });
 $('rotateBtn').addEventListener('click', () => {
   const item = selectedType === 'furniture' && selectedId ? state.furniture[selectedId] : null;
-  if (item) patchItem(selectedId, { w: item.d, d: item.w });
+  if (item) patchItem(selectedId, { rotation: (item.rotation || 0) + 90, autoFaceCenter: false });
 });
 $('duplicateBtn').addEventListener('click', () => {
   const item = selectedType === 'furniture' && selectedId ? state.furniture[selectedId] : null;
@@ -3308,11 +3690,11 @@ function adjustSelected3D(patchFurniture, patchWindow = null) {
     if (opening?.type === 'window') patchOpening(selectedId, typeof patchWindow === 'function' ? patchWindow(opening) : patchWindow);
   }
 }
-$('threeRotateLeftBtn').addEventListener('click', () => adjustSelected3D(item => ({ rotation: item.rotation - 15 })));
-$('threeRotateRightBtn').addEventListener('click', () => adjustSelected3D(item => ({ rotation: item.rotation + 15 })));
+$('threeRotateLeftBtn').addEventListener('click', () => adjustSelected3D(item => ({ rotation: item.rotation - 15, autoFaceCenter: false })));
+$('threeRotateRightBtn').addEventListener('click', () => adjustSelected3D(item => ({ rotation: item.rotation + 15, autoFaceCenter: false })));
 $('threeLowerBtn').addEventListener('click', () => adjustSelected3D(item => ({ elevation: item.elevation - 1 }), opening => ({ sill: opening.sill - 1 })));
 $('threeRaiseBtn').addEventListener('click', () => adjustSelected3D(item => ({ elevation: item.elevation + 1 }), opening => ({ sill: opening.sill + 1 })));
-$('threeFloorBtn').addEventListener('click', () => adjustSelected3D({ elevation: 0 }, { sill: 0 }));
+$('threeFloorBtn').addEventListener('click', () => adjustSelected3D(item => ({ elevation: 0, ceilingMounted: false }), { sill: 0 }));
 $('resetViewBtn').addEventListener('click', () => reset3DView(false));
 $('topViewBtn').addEventListener('click', () => reset3DView(true));
 window.addEventListener('resize', () => { if (currentTab === 'plan') renderPlan(); resize3D(); });
