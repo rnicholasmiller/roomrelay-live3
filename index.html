@@ -1,14 +1,16 @@
 <!doctype html>
-<!-- RoomRelay Build v13.0.0 -->
+<!-- RoomRelay Build v13.0.1 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#172033" />
-  <title>RoomRelay 3D v13.0.0 — Shared Room Planner</title>
+  <title>RoomRelay 3D v13.0.1 — Shared Room Planner</title>
   <style>
     :root {
       color-scheme: light dark;
+      --roomrelay-visible-height: 100dvh;
+      --roomrelay-browser-bottom: 0px;
       --bg: #eef1f6;
       --panel: #ffffff;
       --panel2: #f7f8fb;
@@ -375,7 +377,7 @@
     .three-v12 .three-hint { bottom: 68px; left: 50%; transform: translateX(-50%); white-space: nowrap; opacity: .82; }
     .three-v12 .three-placement-banner { top: 70px; z-index: 76; }
     .three-panel.focus-mode { position: fixed; inset: 0; z-index: 1000; padding: 0; margin: 0; background: #0f1720; border-radius: 0; }
-    .three-panel.focus-mode .three-host { width: 100vw; height: 100svh; min-height: 0; max-height: none; border: 0; border-radius: 0; }
+    .three-panel.focus-mode .three-host { width: 100vw; height: var(--roomrelay-visible-height, 100dvh); min-height: 0; max-height: none; border: 0; border-radius: 0; }
     body.three-focus { overflow: hidden; overscroll-behavior: none; }
     .catalog-backdrop { z-index: 1600; }
     .cozy-collection-note { border: 1px solid color-mix(in srgb, #d798b3 46%, var(--border)); background: color-mix(in srgb, #f6dbe6 34%, var(--panel)); }
@@ -385,12 +387,12 @@
       .three-v12 .three-host { height: calc(100svh - 158px); min-height: 520px; border-radius: 16px; }
       .three-viewport-head { top: 8px; left: 8px; max-width: 58%; padding: 6px 8px; }
       .three-v12 .three-presence { top: 8px; right: 8px; padding: 4px 7px; font-size: .7rem; }
-      .three-v12 .three-commandbar { bottom: max(8px, env(safe-area-inset-bottom)); max-width: calc(100% - 16px); padding: 4px; gap: 4px; }
+      .three-v12 .three-commandbar { bottom: max(8px, env(safe-area-inset-bottom), var(--roomrelay-browser-bottom, 0px)); max-width: calc(100% - 16px); padding: 4px; gap: 4px; }
       .viewport-tool, .three-v12 .tool-menu > summary { min-height: 40px; min-width: 40px; padding: 7px 9px; }
       .viewport-tool-label { display: none; }
       #threeAddObjectBtn .viewport-tool-label { display: inline; }
       .three-v12 .tool-menu-caret { display: none; }
-      .three-v12 .tool-menu-panel { bottom: max(62px, calc(env(safe-area-inset-bottom) + 54px)); max-height: 54svh; }
+      .three-v12 .tool-menu-panel { bottom: max(62px, calc(env(safe-area-inset-bottom) + 54px), calc(var(--roomrelay-browser-bottom, 0px) + 54px)); max-height: min(54svh, calc(var(--roomrelay-visible-height, 100dvh) - 92px)); }
       .three-v12 .three-hint { display: none; }
       .three-v12 .three-placement-banner { top: 54px; }
       .compact-toggle-row { grid-template-columns: 1fr; }
@@ -404,7 +406,7 @@
     <section id="joinView" class="panel join stack">
       <div>
         <div class="join-mark">⌂</div>
-        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v13.0.0</span></div>
+        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v13.0.1</span></div>
         <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, realistic seating, soft-cozy furniture, lighting, and detailed decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
@@ -426,7 +428,7 @@
         <div>
           <div class="brandline">
             <span class="brand">RoomRelay 3D</span>
-            <span class="version-badge" data-app-version>v13.0.0</span>
+            <span class="version-badge" data-app-version>v13.0.1</span>
             <span class="status"><span id="statusDot" class="dot connecting"></span><span id="statusText">Starting</span></span>
           </div>
           <div class="small muted">Room <span id="roomCodeLabel" class="code"></span> · <span id="peopleLabel">1 person</span></div>
@@ -582,7 +584,7 @@
       <section id="threeTab" class="hidden panel three-panel three-v12">
         <div id="threeHost" class="three-host">
           <div class="three-viewport-head" aria-live="polite">
-            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v13.0.0</span></div>
+            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v13.0.1</span></div>
             <div id="threeSelection" class="three-statusline">Tap to select · hold to move</div>
           </div>
           <div id="threePresence" class="three-presence">Only you in 3D</div>
@@ -758,7 +760,7 @@ const $ = id => document.getElementById(id);
 const canvas = $('roomCanvas');
 const joinView = $('joinView');
 const plannerView = $('plannerView');
-const APP_VERSION = '13.0.0';
+const APP_VERSION = '13.0.1';
 const WALL_SNAP_DISTANCE = 12;
 const WALL_ROTATIONS = { top: 0, right: 270, bottom: 180, left: 90 };
 const HOLD_TO_MOVE_MS = 420;
@@ -2333,13 +2335,44 @@ async function shareRoom() {
   copyShareLink();
 }
 
+function visibleViewportMetrics() {
+  const viewport = window.visualViewport;
+  const layoutHeight = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 1);
+  const top = viewport ? viewport.offsetTop : 0;
+  const height = viewport ? viewport.height : layoutHeight;
+  const bottom = top + height;
+  const reportedBottomOcclusion = Math.max(0, layoutHeight - bottom);
+  const mobileBrowser = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    && !window.matchMedia('(display-mode: standalone)').matches;
+  // Some Chromium variants report zero occlusion while their bottom toolbar overlays the page.
+  const fallbackBottomOcclusion = mobileBrowser && reportedBottomOcclusion < 24 ? 76 : 0;
+  return {
+    top,
+    height,
+    bottom,
+    reportedBottomOcclusion,
+    fallbackBottomOcclusion
+  };
+}
+
+function updateVisibleViewportMetrics() {
+  const metrics = visibleViewportMetrics();
+  document.documentElement.style.setProperty('--roomrelay-visible-height', `${Math.max(320, Math.round(metrics.height))}px`);
+  // The host uses the visual viewport when the browser reports it. This is only a fallback for overlay-style toolbars.
+  document.documentElement.style.setProperty('--roomrelay-browser-bottom', `${Math.round(metrics.fallbackBottomOcclusion)}px`);
+  return metrics;
+}
+
 function fitThreeHostToViewport() {
   const host = $('threeHost');
   const panel = $('threeTab');
   if (!host || !panel || panel.classList.contains('hidden') || panel.classList.contains('focus-mode')) return;
-  const top = host.getBoundingClientRect().top;
-  const available = Math.max(440, window.innerHeight - Math.max(0, top) - 8);
-  host.style.height = `${available}px`;
+  const metrics = updateVisibleViewportMetrics();
+  const hostTop = host.getBoundingClientRect().top;
+  const viewportTop = metrics.top;
+  const effectiveBottom = metrics.bottom - metrics.fallbackBottomOcclusion;
+  const available = Math.max(360, effectiveBottom - Math.max(hostTop, viewportTop) - 8);
+  host.style.height = `${Math.floor(available)}px`;
 }
 
 function showTab(name) {
@@ -5021,6 +5054,23 @@ document.addEventListener('keydown', event => {
   else closeThreeToolMenus();
 });
 renderThreeCatalog();
+
+let viewportFitFrame = 0;
+function scheduleViewportFit() {
+  cancelAnimationFrame(viewportFitFrame);
+  viewportFitFrame = requestAnimationFrame(() => {
+    updateVisibleViewportMetrics();
+    if (currentTab === 'three') {
+      fitThreeHostToViewport();
+      resize3D();
+    }
+  });
+}
+updateVisibleViewportMetrics();
+window.addEventListener('resize', scheduleViewportFit, { passive: true });
+window.addEventListener('orientationchange', scheduleViewportFit, { passive: true });
+window.visualViewport?.addEventListener('resize', scheduleViewportFit, { passive: true });
+window.visualViewport?.addEventListener('scroll', scheduleViewportFit, { passive: true });
 
 document.querySelectorAll('[data-app-version]').forEach(element => { element.textContent = `v${APP_VERSION}`; });
 document.documentElement.dataset.roomrelayVersion = APP_VERSION;
