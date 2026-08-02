@@ -1,11 +1,11 @@
 <!doctype html>
-<!-- RoomRelay Build v17.1.0 -->
+<!-- RoomRelay Build v17.1.2 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#172033" />
-  <title>RoomRelay 3D v17.1.0 — Shared Room Planner</title>
+  <title>RoomRelay 3D v17.1.2 — Shared Room Planner</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -72,6 +72,16 @@
     body.dragging { overscroll-behavior: none; }
     button, input, textarea, select { font: inherit; color: inherit; }
     button { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    /* Safari/iOS interaction guards: prevent long-press selection, callouts, drag ghosts, and double-tap zoom on app controls. */
+    .app, .panel, .room, .room *, .three-host, .three-host *, .catalog-backdrop, .catalog-sheet, .radial-wheel, .tool-menu, .tool-menu-panel, button, summary {
+      -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-user-drag: none;
+    }
+    button, summary, select, label, .tab, .viewport-tool, .catalog-item, .catalog-filter { touch-action: manipulation; }
+    input, textarea, select, [contenteditable="true"] {
+      -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; -webkit-user-drag: auto; touch-action: manipulation;
+    }
+    img, svg, canvas { -webkit-user-drag: none; }
+    .three-host, .three-host canvas, .room, .furniture, .opening { overscroll-behavior: none; }
     .hidden { display: none !important; }
     .app { width: min(100%, 1040px); margin: 0 auto; padding: 12px; }
     .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); }
@@ -454,7 +464,7 @@
     <section id="joinView" class="panel join stack">
       <div>
         <div class="join-mark">⌂</div>
-        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v17.1.0</span></div>
+        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v17.1.2</span></div>
         <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, realistic seating, IKEA-inspired storage, lighting, and cozy decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
@@ -476,7 +486,7 @@
         <div>
           <div class="brandline">
             <span class="brand">RoomRelay 3D</span>
-            <span class="version-badge" data-app-version>v17.1.0</span>
+            <span class="version-badge" data-app-version>v17.1.2</span>
             <span class="status"><span id="statusDot" class="dot connecting"></span><span id="statusText">Starting</span></span>
           </div>
           <div class="small muted">Room <span id="roomCodeLabel" class="code"></span> · <span id="peopleLabel">1 person</span></div>
@@ -655,7 +665,7 @@
       <section id="threeTab" class="hidden panel three-panel three-v12">
         <div id="threeHost" class="three-host">
           <div class="three-viewport-head" aria-live="polite">
-            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v17.1.0</span></div>
+            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v17.1.2</span></div>
             <div id="threeSelection" class="three-statusline">Tap to select · hold to move · triple-tap selected item to delete</div>
           </div>
           <div id="threePresence" class="three-presence">Only you in 3D</div>
@@ -828,25 +838,41 @@
 
   <div id="toast" class="toast hidden" aria-live="polite"></div>
 
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
-      }
-    }
-  </script>
 
   <script type="module">
 const $ = id => document.getElementById(id);
 const canvas = $('roomCanvas');
 const joinView = $('joinView');
 const plannerView = $('plannerView');
-const APP_VERSION = '17.1.0';
+const APP_VERSION = '17.1.2';
 const WALL_SNAP_DISTANCE = 12;
 const WALL_ROTATIONS = { top: 0, right: 270, bottom: 180, left: 90 };
 const HOLD_TO_MOVE_MS = 420;
 const HOLD_CANCEL_PX = 9;
+const IOS_DEVICE = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const SAFARI_BROWSER = /Safari/i.test(navigator.userAgent) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome|Android/i.test(navigator.userAgent);
+const IOS_SAFARI = IOS_DEVICE && SAFARI_BROWSER;
+const THREE_CDN_CANDIDATES = [
+  {
+    three: 'https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js',
+    orbit: 'https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/controls/OrbitControls.js'
+  },
+  {
+    three: 'https://unpkg.com/three@0.185.1/build/three.module.js',
+    orbit: 'https://unpkg.com/three@0.185.1/examples/jsm/controls/OrbitControls.js'
+  }
+];
+let threeModuleLoadPromise = null;
+
+function promiseWithTimeout(promise, ms, label) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${label} timed out after ${Math.round(ms / 1000)} seconds`)), ms);
+    })
+  ]).finally(() => clearTimeout(timer));
+}
 
 const PRESETS = [
   { name: 'Daybed', kind: 'sofa', icon: '🛋', w: 78, d: 36, height: 34, autoFaceCenter: true },
@@ -1600,6 +1626,7 @@ function fallbackPreviewSvg(preset) {
 }
 
 function ensureCatalogThumbnailRenderer() {
+  if (IOS_DEVICE) return null;
   if (catalogThumbnailRenderer || !threeRuntime?.THREE) return catalogThumbnailRenderer;
   const THREE = threeRuntime.THREE;
   const canvas = document.createElement('canvas');
@@ -1644,6 +1671,7 @@ function renderPresetThumbnailData(preset, index) {
 }
 
 function hydrateCatalogThumbnails(matches) {
+  if (IOS_DEVICE) return;
   const token = ++catalogThumbnailQueueToken;
   const queue = matches.map(preset => ({ preset, index: PRESETS.indexOf(preset) }));
   const run = deadline => {
@@ -2895,7 +2923,7 @@ async function connectLive(reconnect = false) {
     clearTimeout(connectionStatusTimer);
     connectionStatusTimer = setTimeout(() => {
       if (!peers.size && !plannerView.classList.contains('hidden')) {
-        toast('No partner found yet. Confirm the same room code and v17.1.0 on both phones, then tap Reconnect.');
+        toast('No partner found yet. Confirm the same room code and v17.1.2 on both phones, then tap Reconnect.');
       }
     }, 12000);
   }
@@ -3042,6 +3070,82 @@ function send3DPresence(force = false) {
   actions.presence.send(buildPresencePayload());
 }
 
+async function importOrbitControlsCompat(threeUrl, orbitUrl) {
+  const response = await fetch(orbitUrl, { mode: 'cors', cache: 'force-cache' });
+  if (!response.ok) throw new Error(`OrbitControls download failed (${response.status})`);
+  const source = await response.text();
+  const patched = source.replace(/from\s+['"]three['"]/g, `from '${threeUrl}'`);
+  if (patched === source && /from\s+['"]three['"]/.test(source)) throw new Error('OrbitControls dependency rewrite failed');
+  const blobUrl = URL.createObjectURL(new Blob([patched], { type: 'text/javascript' }));
+  try {
+    return await import(blobUrl);
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+  }
+}
+
+async function loadThreeModulesCompat() {
+  if (threeModuleLoadPromise) return threeModuleLoadPromise;
+  threeModuleLoadPromise = (async () => {
+    const failures = [];
+    for (const candidate of THREE_CDN_CANDIDATES) {
+      try {
+        const THREE = await promiseWithTimeout(import(candidate.three), 12000, 'Three.js download');
+        let controlsModule;
+        try {
+          // Modern Safari and Chromium can use the direct module when an import map is available,
+          // but the rewritten copy works on older iOS Safari without import-map support.
+          controlsModule = await promiseWithTimeout(importOrbitControlsCompat(candidate.three, candidate.orbit), 12000, 'OrbitControls download');
+        } catch (orbitError) {
+          failures.push(`${candidate.orbit}: ${orbitError?.message || orbitError}`);
+          continue;
+        }
+        if (!THREE?.WebGLRenderer || !controlsModule?.OrbitControls) throw new Error('Incomplete Three.js module');
+        return { THREE, controlsModule, source: new URL(candidate.three).hostname };
+      } catch (error) {
+        failures.push(`${candidate.three}: ${error?.message || error}`);
+      }
+    }
+    throw new Error(`Unable to load the 3D engine. ${failures.join(' | ')}`);
+  })();
+  try {
+    return await threeModuleLoadPromise;
+  } catch (error) {
+    threeModuleLoadPromise = null;
+    throw error;
+  }
+}
+
+function makeCompatibleRenderer(THREE) {
+  const attempts = IOS_DEVICE ? [
+    { antialias: false, alpha: false, precision: 'mediump', powerPreference: 'low-power' },
+    { antialias: false, alpha: false, precision: 'lowp', powerPreference: 'default' }
+  ] : [
+    { antialias: true, alpha: false, precision: 'highp', powerPreference: 'high-performance' },
+    { antialias: false, alpha: false, precision: 'mediump', powerPreference: 'default' }
+  ];
+  let lastError;
+  for (const options of attempts) {
+    try { return new THREE.WebGLRenderer(options); }
+    catch (error) { lastError = error; }
+  }
+  throw lastError || new Error('WebGL could not start');
+}
+
+function show3DLoadError(error) {
+  const status = $('threeStatus');
+  status.classList.remove('hidden');
+  const reason = escapeHtml(error?.message || String(error || 'Unknown error'));
+  status.innerHTML = `<div class="stack" style="max-width:420px"><strong>3D could not start on this device.</strong><span class="small">The 2D room and live connection are still working. Update iOS if available, then retry. This build includes an older-Safari module fallback and a low-memory iPhone renderer.</span><button id="retry3DBtn" class="btn primary" type="button">Retry 3D</button><details class="tiny muted"><summary>Technical details</summary><div style="overflow-wrap:anywhere;margin-top:6px">${reason}</div></details></div>`;
+  $('retry3DBtn')?.addEventListener('click', () => {
+    status.textContent = 'Retrying the 3D room…';
+    threeRuntime = null;
+    threeLoading = false;
+    threeModuleLoadPromise = null;
+    init3D();
+  }, { once: true });
+}
+
 async function init3D() {
   if (threeRuntime || threeLoading) {
     if (threeRuntime) {
@@ -3054,17 +3158,16 @@ async function init3D() {
   threeLoading = true;
   $('threeStatus').textContent = 'Loading the photo-inspired 3D room…';
   try {
-    const THREE = await import('three');
-    const controlsModule = await import('three/addons/controls/OrbitControls.js');
+    const { THREE, controlsModule, source: moduleSource } = await loadThreeModulesCompat();
     const host = $('threeHost');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xe5e0d5);
     scene.fog = new THREE.Fog(0xe5e0d5, 22, 55);
     const camera = new THREE.PerspectiveCamera(54, 1, .05, 200);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    const renderer = makeCompatibleRenderer(THREE);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, IOS_DEVICE ? 1 : 2));
+    renderer.shadowMap.enabled = !IOS_DEVICE;
+    renderer.shadowMap.type = IOS_DEVICE ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.05;
@@ -3084,7 +3187,7 @@ async function init3D() {
     const warm = new THREE.DirectionalLight(0xfff4df, 3.1);
     warm.position.set(-5, 12, 7);
     warm.castShadow = true;
-    warm.shadow.mapSize.set(1536, 1536);
+    warm.shadow.mapSize.set(IOS_DEVICE ? 512 : 1536, IOS_DEVICE ? 512 : 1536);
     warm.shadow.camera.near = 1;
     warm.shadow.camera.far = 40;
     warm.shadow.camera.left = -15;
@@ -3109,7 +3212,7 @@ async function init3D() {
     const planePoint = new THREE.Vector3();
 
     threeRuntime = {
-      THREE, scene, camera, renderer, controls, roomGroup, openingGroup, furnitureGroup, presenceGroup, lightingGroup,
+      THREE, scene, camera, renderer, controls, roomGroup, openingGroup, furnitureGroup, presenceGroup, lightingGroup, moduleSource, iosCompatibility: IOS_DEVICE,
       ambient, hemi, warm, fill, raycaster, pointer, floorPlane, planePoint, furnitureObjects: new Map(), openingObjects: new Map(), presenceObjects: new Map(), wallObjects: [], drag: null, pendingHold: null,
       activePointers: new Map(), pointerEntities: new Map(), pinchResize: null, tapTracker: null, surfaceHold: null, radial: null,
       pointerStart: null, animationId: null, roomW: 12.5, roomD: 10.5
@@ -3125,6 +3228,13 @@ async function init3D() {
     window.addEventListener('blur', () => restore3DCameraControls(), true);
     document.addEventListener('visibilitychange', () => { if (document.hidden) restore3DCameraControls(); });
     renderer.domElement.addEventListener('contextmenu', event => event.preventDefault());
+    renderer.domElement.addEventListener('webglcontextlost', event => {
+      event.preventDefault();
+      restore3DCameraControls();
+      const status = $('threeStatus');
+      status.classList.remove('hidden');
+      status.textContent = 'The iPhone paused the 3D graphics to save memory. Close other tabs, then tap 3D again.';
+    }, false);
 
     $('threeStatus').classList.add('hidden');
     $('threeSnapToggle').checked = state.meta.threeSnap === true;
@@ -3134,7 +3244,7 @@ async function init3D() {
     resize3D();
     rebuild3D();
     reset3DView(false);
-    hydrateCatalogThumbnails(PRESETS.filter(preset => preset.kind !== 'custom'));
+    if (!IOS_DEVICE) hydrateCatalogThumbnails(PRESETS.filter(preset => preset.kind !== 'custom'));
     const animate = () => {
       if (!threeRuntime) return;
       threeRuntime.animationId = requestAnimationFrame(animate);
@@ -3146,7 +3256,7 @@ async function init3D() {
     animate();
     send3DPresence(true);
   } catch (error) {
-    $('threeStatus').textContent = 'The 3D viewer could not load. Check that the page has internet access, then reload.';
+    show3DLoadError(error);
     console.error(error);
   } finally {
     threeLoading = false;
@@ -3569,6 +3679,7 @@ function finishRadialWheel(event, canceled=false) {
 function handle3DPointerDown(event) {
   const runtime = threeRuntime;
   if (!runtime || event.button > 0) return;
+  if (event.pointerType === 'touch' || event.pointerType === 'pen') event.preventDefault();
   runtime.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY, pointerType: event.pointerType });
   if (threePlacementPreset) {
     if (runtime.activePointers.size > 1) return;
@@ -3609,6 +3720,7 @@ function handle3DPointerDown(event) {
 function handle3DPointerMove(event) {
   const runtime = threeRuntime;
   if (!runtime) return;
+  if ((event.pointerType === 'touch' || event.pointerType === 'pen') && runtime.activePointers.has(event.pointerId)) event.preventDefault();
   if (runtime.activePointers.has(event.pointerId)) runtime.activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY, pointerType: event.pointerType });
   if (radialPointerMove(event)) { event.preventDefault(); event.stopPropagation(); return; }
   const surfaceHold = runtime.surfaceHold;
@@ -3704,6 +3816,7 @@ function handle3DPointerMove(event) {
 function handle3DPointerUp(event) {
   const runtime = threeRuntime;
   if (!runtime) return;
+  if (event.pointerType === 'touch' || event.pointerType === 'pen') event.preventDefault();
   if (finishRadialWheel(event, event.type === 'pointercancel')) { runtime.activePointers.delete(event.pointerId); runtime.pointerEntities.delete(event.pointerId); return; }
   if (runtime.surfaceHold?.pointerId === event.pointerId) clearSurfaceHold();
   if (runtime.pinchResize && runtime.pinchResize.pointerIds.includes(event.pointerId)) {
@@ -3956,8 +4069,8 @@ function addTrimForWall(wall, trimMaterial) {
 function createRugTexture(THREE, item) {
   const widthIn = Math.max(12, Number(item.w) || 60);
   const depthIn = Math.max(12, Number(item.d) || 48);
-  const maxPixels = 1024;
-  const minPixels = 320;
+  const maxPixels = IOS_DEVICE ? 512 : 1024;
+  const minPixels = IOS_DEVICE ? 192 : 320;
   const aspect = Math.max(.25, Math.min(4, widthIn / depthIn));
   const canvas = document.createElement('canvas');
   if (aspect >= 1) { canvas.width = maxPixels; canvas.height = Math.max(minPixels, Math.round(maxPixels / aspect)); }
@@ -6251,6 +6364,47 @@ document.addEventListener('keydown', event => {
   else closeThreeToolMenus();
 });
 renderThreeCatalog();
+
+function isEditableInteractionTarget(target) {
+  return target instanceof Element && Boolean(target.closest('input, textarea, select, [contenteditable="true"]'));
+}
+
+function installSafariTouchGuards() {
+  const ua = navigator.userAgent || '';
+  const isiOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isWebKit = /AppleWebKit/.test(ua);
+  document.documentElement.classList.toggle('ios-touch', isiOS);
+  document.documentElement.classList.toggle('webkit-touch', isWebKit && navigator.maxTouchPoints > 0);
+
+  const preventNativeSelection = event => {
+    if (!isEditableInteractionTarget(event.target)) event.preventDefault();
+  };
+  const preventViewportGesture = event => {
+    if (!isEditableInteractionTarget(event.target)) event.preventDefault();
+  };
+
+  // Long-press selection/callouts and image drag ghosts interfere with hold-to-move and triple-tap.
+  plannerView.addEventListener('selectstart', preventNativeSelection, { capture: true });
+  plannerView.addEventListener('dragstart', preventNativeSelection, { capture: true });
+  $('threeHost').addEventListener('contextmenu', preventNativeSelection, { capture: true });
+  canvas.addEventListener('contextmenu', preventNativeSelection, { capture: true });
+  $('threeCatalog').addEventListener('contextmenu', preventNativeSelection, { capture: true });
+
+  // Safari emits proprietary gesture events for pinch/double-tap zoom even when pointer events are active.
+  for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+    $('threeHost').addEventListener(type, preventViewportGesture, { passive: false, capture: true });
+  }
+  $('threeHost').addEventListener('dblclick', preventViewportGesture, { passive: false, capture: true });
+
+  // Clear any stale native selection after a touch gesture without blurring form controls.
+  document.addEventListener('pointerup', event => {
+    if ((event.pointerType === 'touch' || event.pointerType === 'pen') && !isEditableInteractionTarget(event.target)) {
+      const selection = window.getSelection?.();
+      if (selection && !selection.isCollapsed) selection.removeAllRanges();
+    }
+  }, { capture: true });
+}
+installSafariTouchGuards();
 
 let viewportFitFrame = 0;
 function scheduleViewportFit() {
