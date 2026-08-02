@@ -1,11 +1,11 @@
 <!doctype html>
-<!-- RoomRelay Build v12.0.0 -->
+<!-- RoomRelay Build v13.0.0 -->
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#172033" />
-  <title>RoomRelay 3D v12.0.0 — Shared Room Planner</title>
+  <title>RoomRelay 3D v13.0.0 — Shared Room Planner</title>
   <style>
     :root {
       color-scheme: light dark;
@@ -273,6 +273,10 @@
     .catalog-icon { font-size: 1.45rem; line-height: 1; }
     .catalog-name { font-size: .82rem; font-weight: 800; line-height: 1.1; }
     .catalog-meta { font-size: .69rem; color: var(--muted); }
+    .catalog-quality { display:inline-flex; align-items:center; gap:4px; padding:2px 6px; border-radius:999px; background:color-mix(in srgb, var(--accent) 12%, var(--panel)); color:var(--accent); font-size:.62rem; font-weight:850; letter-spacing:.02em; }
+    .rug-control-card { border:1px solid color-mix(in srgb, var(--accent) 26%, var(--border)); border-radius:13px; padding:10px; background:color-mix(in srgb, var(--soft) 58%, var(--panel)); display:grid; gap:9px; }
+    .rug-control-title { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:.82rem; font-weight:800; }
+    .rug-control-note { margin:0; color:var(--muted); font-size:.74rem; line-height:1.35; }
     @media (min-width: 760px) { .catalog-backdrop { align-items: center; } .catalog-sheet { border-radius: 22px; } .catalog-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
     @media (max-width: 430px) { .catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
@@ -400,7 +404,7 @@
     <section id="joinView" class="panel join stack">
       <div>
         <div class="join-mark">⌂</div>
-        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v12.0.0</span></div>
+        <div class="row"><h1 style="margin-bottom:0">RoomRelay 3D</h1><span class="version-badge" data-app-version>v13.0.0</span></div>
         <p class="muted" style="margin-top:7px">Build the room shell, place doors and windows, then arrange detailed furniture, realistic seating, soft-cozy furniture, lighting, and detailed decor together in 2D or 3D.</p>
       </div>
       <div id="fileWarning" class="notice warning hidden">This downloaded file can be tested here, but sharing requires it to be hosted on GitHub Pages or another website.</div>
@@ -422,7 +426,7 @@
         <div>
           <div class="brandline">
             <span class="brand">RoomRelay 3D</span>
-            <span class="version-badge" data-app-version>v12.0.0</span>
+            <span class="version-badge" data-app-version>v13.0.0</span>
             <span class="status"><span id="statusDot" class="dot connecting"></span><span id="statusText">Starting</span></span>
           </div>
           <div class="small muted">Room <span id="roomCodeLabel" class="code"></span> · <span id="peopleLabel">1 person</span></div>
@@ -578,7 +582,7 @@
       <section id="threeTab" class="hidden panel three-panel three-v12">
         <div id="threeHost" class="three-host">
           <div class="three-viewport-head" aria-live="polite">
-            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v12.0.0</span></div>
+            <div class="three-viewport-title"><strong>3D room</strong><span class="version-badge" data-app-version>v13.0.0</span></div>
             <div id="threeSelection" class="three-statusline">Tap to select · hold to move</div>
           </div>
           <div id="threePresence" class="three-presence">Only you in 3D</div>
@@ -636,9 +640,40 @@
                     <div class="tool-grid measure-grid">
                       <label>Width (in)<input id="threeItemWidth" type="number" min="1" max="240" step="0.5" /></label>
                       <label>Depth (in)<input id="threeItemDepth" type="number" min="1" max="240" step="0.5" /></label>
-                      <label>Height (in)<input id="threeItemHeight" type="number" min="1" max="144" step="0.5" /></label>
+                      <label>Height (in)<input id="threeItemHeight" type="number" min="0.05" max="144" step="0.05" /></label>
                     </div>
                   </details>
+                  <details class="advanced-fields">
+                    <summary>Material and finish</summary>
+                    <div class="tool-grid">
+                      <label>Color / finish
+                        <select id="threeItemFinish">
+                          <option value="default">Model default</option><option value="cream">Warm cream</option><option value="blush">Dusty blush</option><option value="sage">Soft sage</option><option value="terracotta">Terracotta</option><option value="oak">Natural oak</option><option value="walnut">Walnut</option><option value="black">Matte black</option>
+                        </select>
+                      </label>
+                      <label>Upholstery texture
+                        <select id="threeItemFabric">
+                          <option value="auto">Model default</option><option value="woven">Woven linen</option><option value="boucle">Bouclé</option><option value="sherpa">Sherpa</option><option value="velvet">Velvet</option><option value="knit">Chunky knit</option>
+                        </select>
+                      </label>
+                    </div>
+                  </details>
+                  <div id="threeRugControls" class="rug-control-card hidden">
+                    <div class="rug-control-title"><span>Rug designer</span><span>Texture-safe resizing</span></div>
+                    <div class="tool-grid">
+                      <label>Pattern
+                        <select id="threeRugStyle"><option value="woven">Neutral woven</option><option value="floral">Vintage floral</option><option value="blushfloral">Blush floral</option><option value="braided">Braided</option><option value="checker">Checker craft</option><option value="moroccan">Moroccan diamond</option><option value="botanical">Sage botanical</option><option value="gingham">Pink gingham</option><option value="jute">Natural jute</option><option value="fauxfur">Cloud faux fur</option></select>
+                      </label>
+                      <label>Shape
+                        <select id="threeRugShape"><option value="rect">Rectangle</option><option value="oval">Oval</option><option value="round">Round</option><option value="runner">Runner</option><option value="organic">Organic / cloud</option></select>
+                      </label>
+                      <label>Pattern tile (in)<input id="threeRugPatternScale" type="number" min="12" max="144" step="1" /></label>
+                      <label>Edge
+                        <select id="threeRugFringe"><option value="true">Fringe</option><option value="false">Bound edge</option></select>
+                      </label>
+                    </div>
+                    <p class="rug-control-note">The pattern repeats at a fixed real-world scale, so changing width or depth never stretches the artwork.</p>
+                  </div>
                   <button id="threeApplyFurnitureBtn" class="btn compact primary" type="button">Apply changes</button>
                 </div>
 
@@ -723,7 +758,7 @@ const $ = id => document.getElementById(id);
 const canvas = $('roomCanvas');
 const joinView = $('joinView');
 const plannerView = $('plannerView');
-const APP_VERSION = '12.0.0';
+const APP_VERSION = '13.0.0';
 const WALL_SNAP_DISTANCE = 12;
 const WALL_ROTATIONS = { top: 0, right: 270, bottom: 180, left: 90 };
 const HOLD_TO_MOVE_MS = 420;
@@ -740,6 +775,8 @@ const PRESETS = [
   { name: 'Dresser', kind: 'dresser', icon: '▤', w: 36, d: 20, height: 36 },
   { name: 'Round side table', kind: 'storage', icon: '◉', w: 24, d: 24, height: 24 },
   { name: 'Printer table', kind: 'desk', icon: '▣', w: 24, d: 24, height: 30 },
+  { name: 'Sculptural side table', kind: 'storage', icon: '◉', w: 20, d: 20, height: 23, premium: true, finish: 'oak' },
+  { name: 'Vinyl record cabinet', kind: 'storage', icon: '▥', w: 42, d: 17, height: 30, premium: true, finish: 'walnut' },
 
   { name: 'Makeup vanity desk', kind: 'desk', icon: '✨', w: 48, d: 20, height: 58, collection: 'soft-cozy' },
   { name: 'Rattan nightstand', kind: 'storage', icon: '▤', w: 24, d: 18, height: 25, collection: 'soft-cozy' },
@@ -764,6 +801,11 @@ const PRESETS = [
   { name: 'Sherpa lounge chair', kind: 'chair', icon: '◒', w: 35, d: 37, height: 34, autoFaceCenter: true },
   { name: 'Knit floor pouf', kind: 'chair', icon: '◉', w: 24, d: 24, height: 16, autoFaceCenter: false },
   { name: 'Curved loveseat', kind: 'sofa', icon: '🛋', w: 62, d: 36, height: 34, autoFaceCenter: true },
+  { name: 'Upholstered chaise lounge', kind: 'sofa', icon: '◒', w: 68, d: 31, height: 34, autoFaceCenter: true, premium: true, collection: 'soft-cozy', finish: 'cream', fabricStyle: 'boucle' },
+  { name: 'Window seat bench', kind: 'sofa', icon: '▰', w: 60, d: 23, height: 28, autoFaceCenter: true, premium: true, collection: 'soft-cozy', finish: 'oak', fabricStyle: 'woven' },
+  { name: 'Rattan egg chair', kind: 'chair', icon: '◉', w: 42, d: 40, height: 58, autoFaceCenter: true, premium: true, collection: 'soft-cozy', finish: 'oak', fabricStyle: 'cream' },
+  { name: 'Tufted storage ottoman', kind: 'chair', icon: '▰', w: 36, d: 19, height: 19, autoFaceCenter: true, premium: true, collection: 'soft-cozy', finish: 'blush', fabricStyle: 'velvet' },
+  { name: 'Floor cushion stack', kind: 'chair', icon: '≋', w: 28, d: 28, height: 14, autoFaceCenter: false, premium: true, collection: 'soft-cozy', finish: 'sage', fabricStyle: 'knit' },
 
   { name: 'Pink velvet bench', kind: 'sofa', icon: '▰', w: 48, d: 18, height: 24, autoFaceCenter: true, collection: 'soft-cozy' },
   { name: 'Vanity stool', kind: 'chair', icon: '◉', w: 18, d: 18, height: 20, autoFaceCenter: true, collection: 'soft-cozy' },
@@ -847,6 +889,9 @@ const PRESETS = [
   { name: 'Rolling cart', kind: 'storage', icon: '▣', w: 16, d: 12, height: 32 },
   { name: 'Magazine rack', kind: 'storage', icon: '▱', w: 18, d: 10, height: 20 },
   { name: 'Cozy cat bed', kind: 'decor', icon: '◡', w: 28, d: 24, height: 10 },
+  { name: 'Cozy cat tree', kind: 'decor', icon: '♧', w: 34, d: 28, height: 60, premium: true, collection: 'soft-cozy' },
+  { name: 'Reading nook tent', kind: 'decor', icon: '△', w: 48, d: 42, height: 68, premium: true, collection: 'soft-cozy' },
+  { name: 'Candle and book tray', kind: 'decor', icon: '✦', w: 18, d: 13, height: 10, surfaceItem: true, premium: true, collection: 'soft-cozy' },
   { name: 'Blanket basket', kind: 'storage', icon: '⌑', w: 22, d: 18, height: 24 },
   { name: 'Woven floor basket', kind: 'storage', icon: '◡', w: 22, d: 22, height: 20 },
   { name: 'TV stand', kind: 'tv', icon: '▰', w: 48, d: 16, height: 24 },
@@ -854,6 +899,10 @@ const PRESETS = [
   { name: 'Braided oval rug', kind: 'decor', icon: '⬭', w: 72, d: 48, height: 0.14, rugStyle: 'braided' },
   { name: 'Checker craft rug', kind: 'decor', icon: '▦', w: 72, d: 48, height: 0.14, rugStyle: 'checker' },
   { name: 'Neutral area rug', kind: 'decor', icon: '▭', w: 72, d: 48, height: 0.12, rugStyle: 'woven' },
+  { name: 'Moroccan diamond rug', kind: 'decor', icon: '◇', w: 84, d: 60, height: 0.10, rugStyle: 'moroccan', rugShape: 'rect', rugPatternScale: 48, rugFringe: true, premium: true },
+  { name: 'Sage botanical rug', kind: 'decor', icon: '❧', w: 72, d: 48, height: 0.10, rugStyle: 'botanical', rugShape: 'rect', rugPatternScale: 54, rugFringe: false, premium: true, collection: 'soft-cozy' },
+  { name: 'Pink gingham rug', kind: 'decor', icon: '▦', w: 66, d: 48, height: 0.09, rugStyle: 'gingham', rugShape: 'rect', rugPatternScale: 32, rugFringe: false, premium: true, collection: 'soft-cozy' },
+  { name: 'Natural jute runner', kind: 'decor', icon: '▬', w: 84, d: 27, height: 0.11, rugStyle: 'jute', rugShape: 'runner', rugPatternScale: 36, rugFringe: true, premium: true },
 
   { name: 'Blush floral rug', kind: 'decor', icon: '❀', w: 72, d: 48, height: 0.12, rugStyle: 'blushfloral', collection: 'soft-cozy' },
   { name: 'Cloud faux-fur rug', kind: 'decor', icon: '☁', w: 60, d: 42, height: 0.10, rugStyle: 'fauxfur', collection: 'soft-cozy' },
@@ -908,7 +957,7 @@ function photoOpenings() {
 
 function freshState() {
   return {
-    version: 12,
+    version: 13,
     meta: { width: 150, depth: 126, wallHeight: 96, snap: true, threeSnap: false, wallSnap: true, lighting: 'day', rev: { n: 0, a: '' } },
     furniture: {},
     openings: photoOpenings(),
@@ -949,7 +998,7 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function storageKey() { return `roomrelay:v12:${currentCode}`; }
+function storageKey() { return `roomrelay:v13:${currentCode}`; }
 
 function safeGet(key) {
   try { return localStorage.getItem(key); } catch (_) { return null; }
@@ -1005,7 +1054,7 @@ function defaultWallElevation(name = '') {
 
 function isSurfaceHost(item) {
   const text = String(item?.name || '').toLowerCase();
-  const namedSurface = ['craft island', 'work table', 'worktable', 'printer table', 'tv stand', 'storage console', 'dresser', 'round side table', 'cube shelf'].some(token => text.includes(token));
+  const namedSurface = ['craft island', 'work table', 'worktable', 'printer table', 'tv stand', 'storage console', 'dresser', 'round side table', 'sculptural side table', 'side table', 'cube shelf'].some(token => text.includes(token));
   return Boolean(item && !item.deleted && !item.wallMounted && !item.ceilingMounted && (item.kind === 'desk' || namedSurface));
 }
 
@@ -1028,6 +1077,13 @@ function normalizeItem(raw) {
   item.rotation = Number(item.rotation ?? (item.wall ? WALL_ROTATIONS[item.wall] : 0));
   item.kind = item.kind || inferKind(item.name);
   item.rugStyle = String(item.rugStyle || (item.name.toLowerCase().includes('rug') ? 'woven' : ''));
+  item.finish = ['default','cream','blush','sage','terracotta','oak','walnut','black'].includes(item.finish) ? item.finish : 'default';
+  item.fabricStyle = ['auto','woven','boucle','sherpa','velvet','knit'].includes(item.fabricStyle) ? item.fabricStyle : 'auto';
+  const rugStyleLower = item.rugStyle.toLowerCase();
+  const defaultRugShape = rugStyleLower.includes('braided') ? 'oval' : rugStyleLower.includes('fauxfur') ? 'organic' : 'rect';
+  item.rugShape = ['rect','oval','round','runner','organic'].includes(item.rugShape) ? item.rugShape : defaultRugShape;
+  item.rugPatternScale = Math.max(12, Math.min(144, Number(item.rugPatternScale) || 60));
+  item.rugFringe = Boolean(item.rugFringe ?? (!rugStyleLower.includes('braided') && !rugStyleLower.includes('fauxfur')));
   item.autoFaceCenter = Boolean(item.autoFaceCenter ?? (item.kind === 'chair' || item.kind === 'sofa'));
   item.parentId = item.parentId || null;
   item.parentOffsetX = Number(item.parentOffsetX || 0);
@@ -1081,7 +1137,7 @@ function saveLocal() {
 
 function loadLocal() {
   try {
-    const keys = [storageKey(), `roomrelay:v8:${currentCode}`, `roomrelay:v7:${currentCode}`, `roomrelay:v6:${currentCode}`, `roomrelay:v5:${currentCode}`, `roomrelay:v4:${currentCode}`, `roomrelay:v3:${currentCode}`, `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
+    const keys = [storageKey(), `roomrelay:v12:${currentCode}`, `roomrelay:v11:${currentCode}`, `roomrelay:v10:${currentCode}`, `roomrelay:v9:${currentCode}`, `roomrelay:v8:${currentCode}`, `roomrelay:v7:${currentCode}`, `roomrelay:v6:${currentCode}`, `roomrelay:v5:${currentCode}`, `roomrelay:v4:${currentCode}`, `roomrelay:v3:${currentCode}`, `roomrelay:v2:${currentCode}`, `roomrelay:v1:${currentCode}`];
     for (const key of keys) {
       const stored = safeGet(key);
       if (stored) {
@@ -1348,7 +1404,7 @@ function threeCatalogCategory(preset) {
 
 function renderThreeCatalog() {
   const filters = [
-    ['all', 'All'], ['soft', 'Soft cozy'], ['furniture', 'Furniture'], ['seating', 'Seating'],
+    ['all', 'All'], ['detail', 'High detail'], ['soft', 'Soft cozy'], ['furniture', 'Furniture'], ['seating', 'Seating'],
     ['wall', 'Wall items'], ['ceiling', 'Ceiling'], ['desktop', 'Desk objects'], ['decor', 'Decor + lights']
   ];
   const filterHost = $('threeCatalogFilters');
@@ -1357,14 +1413,15 @@ function renderThreeCatalog() {
   }
   const query = String($('threeCatalogSearch')?.value || '').trim().toLowerCase();
   const matches = PRESETS.filter(preset => preset.kind !== 'custom')
-    .filter(preset => threeCatalogFilter === 'all' || (threeCatalogFilter === 'soft' ? preset.collection === 'soft-cozy' : threeCatalogCategory(preset) === threeCatalogFilter))
+    .filter(preset => threeCatalogFilter === 'all' || (threeCatalogFilter === 'detail' ? preset.premium === true : threeCatalogFilter === 'soft' ? preset.collection === 'soft-cozy' : threeCatalogCategory(preset) === threeCatalogFilter))
     .filter(preset => !query || `${preset.name} ${preset.kind} ${threeCatalogCategory(preset)}`.toLowerCase().includes(query));
   const grid = $('threeCatalogGrid');
   if (!grid) return;
   grid.innerHTML = matches.length ? matches.map(preset => {
     const index = PRESETS.indexOf(preset);
     const placement = preset.ceilingMounted ? 'Tap beneath ceiling spot' : preset.wallMounted ? 'Tap a wall' : preset.surfaceItem ? 'Tap a surface or floor' : 'Tap the floor';
-    return `<button class="catalog-item" type="button" data-three-preset="${index}"><span class="catalog-icon">${preset.icon}</span><span class="catalog-name">${escapeHtml(preset.name)}</span><span class="catalog-meta">${placement}</span></button>`;
+    const quality = preset.premium ? '<span class="catalog-quality">Detailed model</span>' : '';
+    return `<button class="catalog-item" type="button" data-three-preset="${index}"><span class="catalog-icon">${preset.icon}</span><span class="catalog-name">${escapeHtml(preset.name)}</span>${quality}<span class="catalog-meta">${placement}</span></button>`;
   }).join('') : '<div class="empty" style="grid-column:1/-1">No objects match that search.</div>';
 }
 
@@ -1508,6 +1565,11 @@ function addFurniture(preset, x = null, y = null) {
     ceilingMounted,
     wall,
     rugStyle: preset.rugStyle || '',
+    finish: preset.finish || 'default',
+    fabricStyle: preset.fabricStyle || 'auto',
+    rugShape: preset.rugShape || (String(preset.rugStyle || '').includes('braided') ? 'oval' : String(preset.rugStyle || '').includes('fauxfur') ? 'organic' : 'rect'),
+    rugPatternScale: Number(preset.rugPatternScale || 60),
+    rugFringe: Boolean(preset.rugFringe ?? (!String(preset.rugStyle || '').includes('braided') && !String(preset.rugStyle || '').includes('fauxfur'))),
     autoFaceCenter: Boolean(preset.autoFaceCenter),
     parentId: null,
     parentOffsetX: 0,
@@ -1857,6 +1919,7 @@ function syncThreeCommandbar() {
   $('threeInspectorEmpty').classList.toggle('hidden', hasSelection);
   $('threeFurnitureInspector').classList.toggle('hidden', !furniture);
   $('threeOpeningInspector').classList.toggle('hidden', !opening);
+  if (!furniture) $('threeRugControls').classList.add('hidden');
 
   if (furniture) {
     $('threeItemName').value = furniture.name || 'Object';
@@ -1864,6 +1927,16 @@ function syncThreeCommandbar() {
     $('threeItemDepth').value = Math.round(furniture.d * 10) / 10;
     $('threeItemHeight').value = Math.round(furniture.height * 10) / 10;
     $('threeItemElevation').value = Math.round(furniture.elevation * 10) / 10;
+    $('threeItemFinish').value = furniture.finish || 'default';
+    $('threeItemFabric').value = furniture.fabricStyle || 'auto';
+    const isRug = String(furniture.name || '').toLowerCase().includes('rug');
+    $('threeRugControls').classList.toggle('hidden', !isRug);
+    if (isRug) {
+      $('threeRugStyle').value = furniture.rugStyle || 'woven';
+      $('threeRugShape').value = furniture.rugShape || 'rect';
+      $('threeRugPatternScale').value = Math.round((furniture.rugPatternScale || 60) * 10) / 10;
+      $('threeRugFringe').value = String(furniture.rugFringe !== false);
+    }
   }
   if (opening) {
     $('threeOpeningName').value = opening.name || (opening.type === 'window' ? 'Window' : 'Door');
@@ -2914,6 +2987,9 @@ function createRugTexture(THREE, item) {
   canvas.height = 512;
   const ctx = canvas.getContext('2d');
   const style = String(item.rugStyle || item.name || 'woven').toLowerCase();
+  let seed = 2166136261;
+  for (const ch of `${style}:${item.id || item.name || 'rug'}`) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619) >>> 0;
+  const random = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   const roundedRect = (x, y, w, h, r) => {
@@ -2934,10 +3010,10 @@ function createRugTexture(THREE, item) {
     }
     ctx.globalAlpha=.34;
     for (let i=0;i<2600;i++) {
-      const a=Math.random()*Math.PI*2, r=Math.sqrt(Math.random());
+      const a=random()*Math.PI*2, r=Math.sqrt(random());
       const x=Math.cos(a)*canvas.width*.43*r, y=Math.sin(a)*canvas.height*.40*r;
-      ctx.strokeStyle=i%3?'#fff8f5':'#caaeb5'; ctx.lineWidth=.7+Math.random()*1.4;
-      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+(Math.random()-.5)*8,y+(Math.random()-.5)*8); ctx.stroke();
+      ctx.strokeStyle=i%3?'#fff8f5':'#caaeb5'; ctx.lineWidth=.7+random()*1.4;
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+(random()-.5)*8,y+(random()-.5)*8); ctx.stroke();
     }
     ctx.restore();
   } else if (style.includes('blush')) {
@@ -2951,6 +3027,42 @@ function createRugTexture(THREE, item) {
       ctx.fillStyle='#d7ad63'; ctx.beginPath(); ctx.arc(x,y,r*.23,0,Math.PI*2); ctx.fill();
       ctx.strokeStyle='#7d9a78'; ctx.lineWidth=7; ctx.beginPath(); ctx.moveTo(x,y+r*.4); ctx.quadraticCurveTo(x-r*.8,y+r*1.3,x-r*.45,y+r*2); ctx.stroke();
     }
+  } else if (style.includes('moroccan')) {
+    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 24);
+    ctx.fillStyle = '#eee6d7'; ctx.fill();
+    ctx.strokeStyle = '#2f3b43'; ctx.lineWidth = 7;
+    const tile = 118;
+    for (let y = -tile; y < canvas.height + tile; y += tile) {
+      for (let x = -tile; x < canvas.width + tile; x += tile) {
+        ctx.beginPath(); ctx.moveTo(x, y + tile/2); ctx.lineTo(x + tile/2, y); ctx.lineTo(x + tile, y + tile/2); ctx.lineTo(x + tile/2, y + tile); ctx.closePath(); ctx.stroke();
+        ctx.fillStyle = ((x+y)/tile)%2 ? '#c78372' : '#7b9987'; ctx.beginPath(); ctx.arc(x+tile/2,y+tile/2,9,0,Math.PI*2); ctx.fill();
+      }
+    }
+    ctx.strokeStyle='#b68b64'; ctx.lineWidth=18; ctx.strokeRect(20,20,canvas.width-40,canvas.height-40);
+  } else if (style.includes('botanical')) {
+    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 24);
+    ctx.fillStyle='#dfe5d5'; ctx.fill();
+    ctx.strokeStyle='#66806a'; ctx.lineWidth=7;
+    for (let i=0;i<18;i++) {
+      const x=55+random()*(canvas.width-110), y=45+random()*(canvas.height-90), len=55+random()*90, a=-1.2+random()*2.4;
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.quadraticCurveTo(x+Math.cos(a)*len*.5-20,y+Math.sin(a)*len*.5,x+Math.cos(a)*len,y+Math.sin(a)*len); ctx.stroke();
+      for (let j=1;j<5;j++) { const px=x+Math.cos(a)*len*j/5, py=y+Math.sin(a)*len*j/5; ctx.fillStyle=j%2?'#8ca17e':'#b28f7e'; ctx.beginPath(); ctx.ellipse(px+Math.cos(a+Math.PI/2)*13,py+Math.sin(a+Math.PI/2)*13,17,7,a,0,Math.PI*2); ctx.fill(); }
+    }
+    ctx.strokeStyle='#8a9b7d'; ctx.lineWidth=15; ctx.strokeRect(20,20,canvas.width-40,canvas.height-40);
+  } else if (style.includes('gingham')) {
+    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 20);
+    ctx.fillStyle='#f5e7e8'; ctx.fill();
+    const cell=72;
+    ctx.globalAlpha=.48;
+    for(let x=18;x<canvas.width-18;x+=cell){ctx.fillStyle='#cf8fa0';ctx.fillRect(x,18,cell/2,canvas.height-36);}
+    for(let y=18;y<canvas.height-18;y+=cell){ctx.fillStyle='#c78295';ctx.fillRect(18,y,canvas.width-36,cell/2);}
+    ctx.globalAlpha=1; ctx.strokeStyle='#9d6474';ctx.lineWidth=14;ctx.strokeRect(20,20,canvas.width-40,canvas.height-40);
+  } else if (style.includes('jute')) {
+    roundedRect(12, 12, canvas.width - 24, canvas.height - 24, 16);
+    ctx.fillStyle='#b89468';ctx.fill();
+    for(let y=22;y<canvas.height-22;y+=7){ctx.strokeStyle=y%14?'#cfb089':'#8e6b49';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(22,y);for(let x=22;x<canvas.width-22;x+=14)ctx.lineTo(x,y+(random()-.5)*3);ctx.stroke();}
+    for(let x=22;x<canvas.width-22;x+=18){ctx.strokeStyle='rgba(92,66,43,.35)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,22);ctx.lineTo(x+(random()-.5)*5,canvas.height-22);ctx.stroke();}
+    ctx.strokeStyle='#7d5d3e';ctx.lineWidth=16;ctx.strokeRect(20,20,canvas.width-40,canvas.height-40);
   } else if (style.includes('braided')) {
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
@@ -3031,12 +3143,17 @@ function createRugTexture(THREE, item) {
   ctx.globalAlpha = .14;
   for (let i = 0; i < 1400; i++) {
     ctx.fillStyle = i % 2 ? '#ffffff' : '#4f463c';
-    ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 1.5, .7);
+    ctx.fillRect(random() * canvas.width, random() * canvas.height, 1.5, .7);
   }
   ctx.globalAlpha = 1;
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = Math.min(8, threeRuntime?.renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  const tileWidthInches = Math.max(12, Number(item.rugPatternScale) || 60);
+  const tileHeightInches = tileWidthInches * (canvas.height / canvas.width);
+  texture.repeat.set(Math.max(.20, Number(item.w || 60) / tileWidthInches), Math.max(.20, Number(item.d || 48) / tileHeightInches));
+  texture.anisotropy = Math.min(12, threeRuntime?.renderer?.capabilities?.getMaxAnisotropy?.() || 1);
   return texture;
 }
 
@@ -3144,8 +3261,9 @@ function createFurnitureModel(item) {
     decor: 0x7da472,
     other: 0x8473a7
   };
-  const mainColor = palette[item.kind] || palette.other;
-  const woodMaterial = new THREE.MeshStandardMaterial({ color: mainColor, roughness: .72, metalness: .04 });
+  const finishPalette = { cream: 0xe7ded0, blush: 0xd49aa8, sage: 0x90a88f, terracotta: 0xb9745c, oak: 0xb98858, walnut: 0x6f4933, black: 0x292b2f };
+  const mainColor = finishPalette[item.finish] || palette[item.kind] || palette.other;
+  const woodMaterial = new THREE.MeshStandardMaterial({ color: mainColor, roughness: item.finish === 'black' ? .58 : .72, metalness: .04 });
   const darkMaterial = new THREE.MeshStandardMaterial({ color: 0x393a3c, roughness: .58, metalness: .12 });
   const lightMaterial = new THREE.MeshStandardMaterial({ color: 0xe8e1d7, roughness: .86 });
   const linenMaterial = new THREE.MeshStandardMaterial({ color: 0xd8d1c4, roughness: .92 });
@@ -3234,9 +3352,12 @@ function createFurnitureModel(item) {
     group.add(mesh);
     return mesh;
   };
-  const makeFabric = (style, base, accent, roughness = .96) => new THREE.MeshStandardMaterial({
-    map: createFabricTexture(THREE, style, base, accent), color: 0xffffff, roughness, metalness: 0
-  });
+  const makeFabric = (style, base, accent, roughness = .96) => {
+    const colorways = { cream: ['#e8dfd2','#b9aa99'], blush: ['#d7a0ad','#95616f'], sage: ['#9eb39b','#617a64'], terracotta: ['#bd7963','#75493e'], oak: ['#c39a6f','#886441'], walnut: ['#7b5642','#4d3328'], black: ['#3a3b40','#17181b'] };
+    const chosenStyle = item.fabricStyle && item.fabricStyle !== 'auto' ? item.fabricStyle : style;
+    const chosen = colorways[item.finish];
+    return new THREE.MeshStandardMaterial({ map: createFabricTexture(THREE, chosenStyle, chosen?.[0] || base, chosen?.[1] || accent), color: 0xffffff, roughness: chosenStyle === 'velvet' ? .88 : roughness, metalness: 0 });
+  };
 
   if (item.kind === 'bed') {
     const frameH = Math.min(.45, h * .26);
@@ -3267,7 +3388,29 @@ function createFurnitureModel(item) {
     addBox(pillowW, .16, pillowD, lightMaterial,  w * .23, frameH + mattressH + .12, -d * .34);
     addBox(w, Math.min(.9, h * .38), .14, woodMaterial, 0, Math.min(.9, h * .38) / 2 + frameH, -d / 2 + .07);
   } else if (item.kind === 'sofa') {
-    if (name.includes('pink velvet bench')) {
+    if (name.includes('chaise lounge')) {
+      const upholstery=makeFabric('boucle','#ded3c5','#afa091');
+      const piping=new THREE.MeshStandardMaterial({color:0xb79b84,roughness:.92});
+      const seatY=Math.max(.42,h*.34);
+      addScaledSphere(w*.47,h*.12,d*.37,upholstery,0,seatY,d*.04,40);
+      addScaledSphere(w*.42,h*.10,d*.31,makeFabric('woven','#ebe3d8','#c5b6a7'),w*.02,seatY+h*.11,d*.06,36);
+      const back=addExtrudedPanel([[-w*.47,-h*.10],[-w*.44,h*.28],[-w*.28,h*.48],[w*.22,h*.43],[w*.42,h*.20],[w*.47,-h*.10]],Math.max(.16,d*.16),upholstery,0,h*.64,-d*.34,.06); back.rotation.x=-.10;
+      addScaledSphere(w*.11,h*.18,d*.30,upholstery,-w*.43,h*.45,0,30);
+      addScaledSphere(w*.10,h*.16,d*.27,upholstery,w*.43,h*.42,0,30);
+      addTube([[-w*.40,seatY+h*.08,d*.35],[0,seatY+h*.10,d*.39],[w*.40,seatY+h*.08,d*.35]],.018,piping,34,7);
+      addCylinder(w*.11,w*.11,d*.70,makeFabric('velvet','#a98273','#6d5148'),-w*.27,seatY+h*.22,d*.03,26).rotation.x=Math.PI/2;
+      for(const x of [-w*.34,w*.34])for(const z of [-d*.25,d*.23]){const leg=addCylinder(.045,.07,h*.20,woodMaterial,x,h*.10,z,14);leg.rotation.z=x>0?-.05:.05;leg.rotation.x=z>0?-.06:.06;}
+    } else if (name.includes('window seat bench')) {
+      const oak=new THREE.MeshStandardMaterial({color:item.finish==='walnut'?0x76513a:0xb88b5c,roughness:.72});
+      const cushion=makeFabric('woven','#d9d0c4','#a99d90');
+      const baseH=Math.max(.75,h*.56);
+      addBox(w,baseH,d*.92,oak,0,baseH/2,0);
+      const bays=3;for(let i=1;i<bays;i++)addBox(.06,baseH*.80,d*.78,lightMaterial,-w/2+i*w/bays,baseH*.42,0);
+      for(let i=0;i<bays;i++){const cx=-w/2+w*(i+.5)/bays;addBox(w/bays*.72,baseH*.55,d*.66,new THREE.MeshStandardMaterial({color:i%2?0xb5a28d:0xd6c5af,roughness:.95}),cx,baseH*.34,.03);addBox(w/bays*.18,.03,.035,darkMaterial,cx,baseH*.40,d*.39);}
+      addScaledSphere(w*.48,h*.11,d*.43,cushion,0,baseH+h*.07,0,36);
+      for(const [x,c] of [[-w*.28,0xc88e99],[0,0x8aa18a],[w*.28,0xd2b786]])addScaledSphere(w*.13,h*.12,d*.13,new THREE.MeshStandardMaterial({color:c,roughness:.94}),x,baseH+h*.25,-d*.08,24);
+      addBox(w,.09,d*.96,oak,0,.045,0);
+    } else if (name.includes('pink velvet bench')) {
       const pinkVelvet=makeFabric('velvet','#c98598','#854f60',.90);
       const seatH=Math.max(.36,h*.54);
       addScaledSphere(w*.47,.16,d*.42,pinkVelvet,0,seatH,0,34);
@@ -3358,7 +3501,21 @@ function createFurnitureModel(item) {
       addBox(w * .18, .045, .055, metalMaterial,  w * .16, h * (i + .5) / drawers, d / 2 + .055);
     }
   } else if (item.kind === 'storage') {
-    if (name.includes('rattan nightstand')) {
+    if (name.includes('sculptural side table')) {
+      const stone=new THREE.MeshStandardMaterial({color:item.finish==='black'?0x34363a:item.finish==='blush'?0xd7b0aa:0xd8c5ac,roughness:.56,metalness:.02});
+      addLathe([[.04,0],[w*.34,.03],[w*.42,h*.08],[w*.28,h*.26],[w*.19,h*.52],[w*.30,h*.76],[w*.42,h*.91],[w*.45,h]],stone,64);
+      addCylinder(w*.47,w*.47,.10,new THREE.MeshStandardMaterial({color:item.finish==='walnut'?0x704b36:0xc49b70,roughness:.62}),0,h-.05,0,64);
+      addCylinder(w*.38,w*.40,.025,new THREE.MeshStandardMaterial({color:0xe8d7bf,roughness:.45}),0,h+.015,0,64);
+    } else if (name.includes('vinyl record cabinet')) {
+      const frame=new THREE.MeshStandardMaterial({color:item.finish==='oak'?0xb98a5d:0x71503b,roughness:.68});
+      const brass=new THREE.MeshStandardMaterial({color:0xc1a05d,roughness:.35,metalness:.58});
+      addBox(w,h*.86,d,frame,0,h*.48,0); addBox(w,.12,d,frame,0,h-.06,0);
+      addBox(.07,h*.72,d*.86,lightMaterial,0,h*.47,0);
+      const sleeves=[0xb56f73,0xd1ad6f,0x718e8c,0x8c769d,0xd8c9ad,0x596a7b];
+      for(let side=-1;side<=1;side+=2){for(let i=0;i<7;i++){const x=side*w*.25+(i-3)*w*.035;const rec=addBox(w*.055,h*.54,d*.60,new THREE.MeshStandardMaterial({color:sleeves[(i+(side>0?2:0))%sleeves.length],roughness:.88}),x,h*.45,d*.10);rec.rotation.z=(i-3)*.018;}}
+      for(const x of [-w*.22,w*.22])addBox(w*.12,.035,.05,brass,x,h*.49,d*.51);
+      for(const x of [-w*.36,w*.36])for(const z of [-d*.34,d*.34]){const leg=addCylinder(.04,.065,h*.15,brass,x,h*.075,z,14);leg.rotation.z=x>0?-.05:.05;}
+    } else if (name.includes('rattan nightstand')) {
       const cane=new THREE.MeshStandardMaterial({color:0xc69b67,roughness:.88});
       const frame=new THREE.MeshStandardMaterial({color:0xa9784e,roughness:.72});
       addBox(w,.12,d,frame,0,h-.06,0);
@@ -3525,7 +3682,28 @@ function createFurnitureModel(item) {
     const knitMaterial = makeFabric('knit', '#b89479', '#785c49');
     const caneMaterial = new THREE.MeshStandardMaterial({ color: 0xb98a55, roughness: .78, metalness: 0 });
 
-    if (name.includes('vanity stool')) {
+    if (name.includes('rattan egg chair')) {
+      const rattan=new THREE.MeshStandardMaterial({color:item.finish==='walnut'?0x6f4b32:0xb88955,roughness:.82});
+      const cushion=makeFabric('boucle','#e3d8cb','#b9aa9c');
+      const centerY=h*.58;
+      for(let i=0;i<14;i++){const a=-Math.PI*.70+i*(Math.PI*1.40/13);addTube([[Math.sin(a)*w*.18,h*.18,Math.cos(a)*d*.16],[Math.sin(a)*w*.45,centerY,Math.cos(a)*d*.42],[Math.sin(a)*w*.22,h*.94,Math.cos(a)*d*.20]],.026,rattan,34,8);}
+      for(const y of [h*.30,h*.48,h*.67,h*.84]){const ring=new THREE.Mesh(new THREE.TorusGeometry(w*(.28+(y/h)*.12),.022,8,56),rattan);ring.rotation.x=Math.PI/2;ring.scale.z=d/Math.max(.01,w);ring.position.y=y;ring.castShadow=true;ring.userData.itemId=item.id;group.add(ring);}
+      addScaledSphere(w*.35,h*.19,d*.34,cushion,0,h*.36,d*.04,38);addScaledSphere(w*.32,h*.25,d*.13,cushion,0,h*.60,-d*.28,36);
+      addScaledSphere(w*.18,h*.10,d*.13,accentMaterial,0,h*.50,d*.12,24);
+      addCylinder(.06,.08,h*.20,darkMaterial,0,h*.10,0,18);addCylinder(w*.30,w*.37,.07,darkMaterial,0,.035,0,48);
+    } else if (name.includes('tufted storage ottoman')) {
+      const velvet=makeFabric('velvet','#c998a7','#875967',.88);const baseMat=new THREE.MeshStandardMaterial({color:item.finish==='walnut'?0x6d4b37:0xb8885b,roughness:.70});
+      addBox(w,h*.64,d,baseMat,0,h*.32,0);addBox(w*.91,h*.49,d*.91,new THREE.MeshStandardMaterial({color:0xe1d7cc,roughness:.94}),0,h*.36,.01);
+      addScaledSphere(w*.48,h*.17,d*.47,velvet,0,h*.78,0,38);
+      for(let ix=-2;ix<=2;ix++)for(let iz=-1;iz<=1;iz++){addSphere(.024,new THREE.MeshStandardMaterial({color:0xc4a264,metalness:.42,roughness:.38}),ix*w*.16,h*.83,iz*d*.24);}
+      addTube([[-w*.45,h*.68,-d*.44],[0,h*.66,-d*.48],[w*.45,h*.68,-d*.44]],.015,darkMaterial,24,6);
+      for(const x of [-w*.38,w*.38])for(const z of [-d*.34,d*.34])addCylinder(.045,.065,h*.12,baseMat,x,h*.06,z,12);
+    } else if (name.includes('floor cushion stack')) {
+      const mats=[makeFabric('knit','#94a991','#607563'),makeFabric('velvet','#c98f9d','#805661'),makeFabric('woven','#dac8af','#a28d73')];
+      const layers=[[0,.20,0,.44],[.04,.46,-.02,.40],[-.03,.71,.03,.36]];
+      layers.forEach(([x,y,z,s],i)=>{const c=addScaledSphere(w*s,h*.16,d*s,mats[i],x*w,y*h,z*d,34);c.rotation.y=(i-1)*.15;addSphere(.025,darkMaterial,x*w,y*h+h*.05,z*d);});
+      for(let i=0;i<12;i++){const a=i*Math.PI*2/12;addTube([[Math.cos(a)*w*.35,h*.15,Math.sin(a)*d*.35],[Math.cos(a)*w*.39,h*.22,Math.sin(a)*d*.39]],.012,mats[2],10,5);}
+    } else if (name.includes('vanity stool')) {
       const blush=makeFabric('velvet','#d99aaa','#8d5968',.90);
       addScaledSphere(w*.44,h*.20,d*.44,blush,0,h*.70,0,30);
       addCylinder(w*.36,w*.38,.10,new THREE.MeshStandardMaterial({color:0xc9a45f,roughness:.34,metalness:.55}),0,h*.48,0,28);
@@ -3897,6 +4075,30 @@ function createFurnitureModel(item) {
     } else if (name.includes('bow wall hooks')) {
       const blush=makeFabric('velvet','#d89aaa','#905c69'); addBox(w*.90,.08,d*.35,new THREE.MeshStandardMaterial({color:0xe9d7d1,roughness:.74}),0,h*.54,0);
       for (let i=-1;i<=1;i++) { const x=i*w*.30; addScaledSphere(w*.12,h*.26,d*.18,blush,x-w*.07,h*.62,.04,20).rotation.z=.38; addScaledSphere(w*.12,h*.26,d*.18,blush,x+w*.07,h*.62,.04,20).rotation.z=-.38; addSphere(.055,new THREE.MeshStandardMaterial({color:0xc5a25f,metalness:.50,roughness:.35}),x,h*.62,d*.14); addCylinder(.025,.035,d*.55,darkMaterial,x,h*.36,d*.17,10).rotation.x=Math.PI/2; }
+    } else if (name.includes('cozy cat tree')) {
+      const sisal=createFabricTexture(THREE,'woven','#b89a72','#81694e');sisal.repeat.set(1.2,4.5);const sisalMat=new THREE.MeshStandardMaterial({map:sisal,color:0xffffff,roughness:1});
+      const plush=makeFabric('sherpa','#ded5c7','#b6aa99');const wood=new THREE.MeshStandardMaterial({color:0xa77c54,roughness:.76});
+      addBox(w*.88,.10,d*.82,wood,0,.05,0);
+      const posts=[[-w*.28,h*.31,-d*.22],[w*.25,h*.48,d*.18],[-w*.05,h*.72,-d*.10]];
+      posts.forEach(([x,y,z],i)=>addCylinder(.10,.11,y*1.75,sisalMat,x,y*.88,z,20));
+      addCylinder(w*.32,w*.34,.12,plush,-w*.28,h*.36,-d*.22,36);
+      addCylinder(w*.30,w*.32,.12,plush,w*.25,h*.56,d*.18,36);
+      addCylinder(w*.36,w*.38,.14,plush,-w*.05,h*.82,-d*.10,40);
+      const cave=addScaledSphere(w*.30,h*.18,d*.29,plush,w*.20,h*.25,-d*.04,34);addCylinder(w*.16,w*.16,h*.22,new THREE.MeshStandardMaterial({color:0x4c4038,roughness:1}),w*.20,h*.27,d*.22,30).rotation.x=Math.PI/2;
+      addTube([[-w*.05,h*.87,-d*.10],[-w*.05,h*.98,-d*.10]],.018,darkMaterial,10,6);addSphere(.065,new THREE.MeshStandardMaterial({color:0xc37e87,roughness:.88}),-w*.05,h*.95,-d*.10);
+    } else if (name.includes('reading nook tent')) {
+      const pole=new THREE.MeshStandardMaterial({color:0xb98b5d,roughness:.68});const cloth=makeFabric('woven','#e6d8cc','#bca695');
+      const apex=[0,h*.98,0];for(const [x,z] of [[-w*.42,-d*.40],[w*.42,-d*.40],[-w*.42,d*.40],[w*.42,d*.40]])addTube([[x,.04,z],apex],.045,pole,28,10);
+      const left=addExtrudedPanel([[-w*.44,0],[0,h*.96],[0,0]],.035,cloth,-w*.21,h*.48,-d*.40,.02);left.rotation.y=.01;
+      const right=addExtrudedPanel([[0,0],[0,h*.96],[w*.44,0]],.035,cloth,w*.21,h*.48,-d*.40,.02);right.rotation.y=-.01;
+      addScaledSphere(w*.39,h*.07,d*.35,makeFabric('knit','#c8a88e','#7e6452'),0,h*.09,.05,34);
+      addScaledSphere(w*.16,h*.09,d*.13,makeFabric('velvet','#c68998','#815663'),-w*.16,h*.20,-d*.08,24);addScaledSphere(w*.16,h*.09,d*.13,accentMaterial,w*.16,h*.20,-d*.05,24);
+      for(let i=0;i<10;i++){const a=-Math.PI*.85+i*(Math.PI*1.7/9);const x=Math.sin(a)*w*.38,y=h*(.70+.18*Math.cos(a)),z=-d*.41;addSphere(.028,glowMaterial,x,y,z);addPointGlow(x,y,z,.08,.5);}
+    } else if (name.includes('candle and book tray')) {
+      const tray=new THREE.MeshStandardMaterial({color:0xb7895e,roughness:.68});addBox(w,.06,d,tray,0,.03,0);addBox(w,.10,.04,tray,0,.09,-d*.46);addBox(w,.10,.04,tray,0,.09,d*.46);
+      const bookColors=[0x8e6f77,0x789080,0xc4a177];for(let i=0;i<3;i++){const b=addBox(w*.48,.10,d*.46,new THREE.MeshStandardMaterial({color:bookColors[i],roughness:.88}),-w*.14,.14+i*.10,-d*.05);b.rotation.y=(i-1)*.05;}
+      for(const [x,z,hh] of [[w*.25,-d*.18,h*.64],[w*.34,d*.12,h*.48]]){addCylinder(w*.075,w*.085,hh,new THREE.MeshStandardMaterial({color:0xe8dfcf,roughness:.96}),x,hh/2+.07,z,20);addSphere(.035,glowMaterial,x,hh+.09,z);addPointGlow(x,hh+.09,z,.18,.8);}
+      addScaledSphere(w*.08,h*.09,d*.08,new THREE.MeshStandardMaterial({color:0x7f9c79,roughness:.9}),w*.02,h*.37,d*.20,16);
     } else if (name.includes('flower bouquet')) {
       addLathe([[.02,0],[w*.28,.02],[w*.37,h*.20],[w*.30,h*.48],[w*.16,h*.58],[.07,h*.60]],new THREE.MeshStandardMaterial({color:0xe7d8df,roughness:.40}),30);
       const stem=new THREE.MeshStandardMaterial({color:0x6f966c,roughness:.88}); const flowerColors=[0xd47f92,0xf0d5c8,0xb58ab0,0xe4b965,0xc9879a];
@@ -3918,29 +4120,27 @@ function createFurnitureModel(item) {
     } else if (name.includes('bow pillow')) {
       const bow=makeFabric('velvet','#d6a0b0','#8f6070'); const l=addScaledSphere(w*.28,h*.40,d*.40,bow,-w*.20,h*.48,0,28); l.rotation.z=.40; const r=addScaledSphere(w*.28,h*.40,d*.40,bow,w*.20,h*.48,0,28); r.rotation.z=-.40; addScaledSphere(w*.13,h*.28,d*.46,new THREE.MeshStandardMaterial({color:0xe2bdc8,roughness:.92}),0,h*.48,0,22); addExtrudedPanel([[-w*.08,0],[0,-h*.32],[w*.08,0]],d*.18,bow,-w*.05,h*.18,0,.02); addExtrudedPanel([[-w*.08,0],[0,-h*.32],[w*.08,0]],d*.18,bow,w*.05,h*.18,0,.02);
     } else if (name.includes('rug')) {
-      const rugHeight = Math.max(.006, Math.min(.018, h));
+      const rugHeight = Math.max(.004, Math.min(.014, h));
       const rugMaterial = new THREE.MeshStandardMaterial({
-        map: createRugTexture(THREE, item),
-        color: 0xffffff,
-        roughness: 1,
-        metalness: 0,
-        transparent: true,
-        alphaTest: .025,
-        side: THREE.DoubleSide
+        map: createRugTexture(THREE, item), color: 0xffffff, roughness: .98, metalness: 0,
+        transparent: true, alphaTest: .025, side: THREE.DoubleSide
       });
-      const rug = new THREE.Mesh(new THREE.PlaneGeometry(w, d), rugMaterial);
+      const shape = item.rugShape || (String(item.rugStyle || '').includes('braided') ? 'oval' : 'rect');
+      let geometry;
+      if (shape === 'oval' || shape === 'round') geometry = new THREE.CircleGeometry(.5, 96);
+      else geometry = new THREE.PlaneGeometry(w, d, 8, 8);
+      const rug = new THREE.Mesh(geometry, rugMaterial);
       rug.rotation.x = -Math.PI / 2;
-      rug.position.y = rugHeight;
-      rug.receiveShadow = true;
-      rug.userData.itemId = item.id;
-      group.add(rug);
-      if (!String(item.rugStyle || '').includes('braided')) {
-        const fringeMaterial = new THREE.MeshStandardMaterial({ color: 0xd8cbb7, roughness: 1 });
-        const strands = Math.max(10, Math.min(28, Math.round(w / .22)));
+      if (shape === 'oval' || shape === 'round') rug.scale.set(shape === 'round' ? Math.min(w,d) : w, shape === 'round' ? Math.min(w,d) : d, 1);
+      rug.position.y = rugHeight; rug.receiveShadow = true; rug.userData.itemId = item.id; group.add(rug);
+      if (item.rugFringe !== false && !['oval','round','organic'].includes(shape)) {
+        const fringeMaterial = new THREE.MeshStandardMaterial({ color: item.finish === 'blush' ? 0xd7b8bd : 0xd8cbb7, roughness: 1 });
+        const strands = Math.max(12, Math.min(42, Math.round(w / .16)));
         for (let i = 0; i < strands; i++) {
-          const x = -w * .46 + i * (w * .92 / Math.max(1, strands - 1));
-          addBox(.018, .008, .14, fringeMaterial, x, rugHeight + .002, -d / 2 - .06);
-          addBox(.018, .008, .14, fringeMaterial, x, rugHeight + .002,  d / 2 + .06);
+          const x = -w * .47 + i * (w * .94 / Math.max(1, strands - 1));
+          const sway = Math.sin(i * 1.7) * .025;
+          const front=addBox(.012,.006,.16,fringeMaterial,x,rugHeight+.002,-d/2-.07+sway); front.rotation.y=sway;
+          const back=addBox(.012,.006,.16,fringeMaterial,x,rugHeight+.002,d/2+.07-sway); back.rotation.y=-sway;
         }
       }
     } else if (name.includes('throw pillow')) {
@@ -4703,7 +4903,13 @@ $('threeApplyFurnitureBtn').addEventListener('click', () => {
     w: Number($('threeItemWidth').value) || item.w,
     d: Number($('threeItemDepth').value) || item.d,
     height: Number($('threeItemHeight').value) || item.height,
-    elevation: Math.max(0, Number($('threeItemElevation').value) || 0)
+    elevation: Math.max(0, Number($('threeItemElevation').value) || 0),
+    finish: $('threeItemFinish').value,
+    fabricStyle: $('threeItemFabric').value,
+    rugStyle: String(item.name || '').toLowerCase().includes('rug') ? $('threeRugStyle').value : item.rugStyle,
+    rugShape: String(item.name || '').toLowerCase().includes('rug') ? $('threeRugShape').value : item.rugShape,
+    rugPatternScale: String(item.name || '').toLowerCase().includes('rug') ? Math.max(12, Number($('threeRugPatternScale').value) || 60) : item.rugPatternScale,
+    rugFringe: String(item.name || '').toLowerCase().includes('rug') ? $('threeRugFringe').value === 'true' : item.rugFringe
   });
   toast(`${name} updated.`);
 });
